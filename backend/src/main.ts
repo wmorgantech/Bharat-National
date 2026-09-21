@@ -1,9 +1,14 @@
 import 'dotenv/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { isProduction, requireEnv } from './config/env';
+
+const SWAGGER_PATH = 'api-docs';
 
 const DEV_ORIGINS = [
   'http://localhost:5173',
@@ -37,13 +42,58 @@ function resolveAllowedOrigins(logger: Logger): string[] {
   return DEV_ORIGINS;
 }
 
+/**
+ * Trust-proxy is OFF unless explicitly configured. Getting this wrong has two
+ * failure modes: left unset behind a proxy, every client shares one rate-limit
+ * bucket; set to a blanket `true`, X-Forwarded-For becomes attacker-controlled
+ * and rate limiting can be bypassed entirely. So it is opt-in and explicit.
+ */
+function applyTrustProxy(app: NestExpressApplication, logger: Logger): void {
+  const raw = (process.env.TRUST_PROXY ?? '0').trim();
+
+  if (raw === '' || raw === '0' || raw.toLowerCase() === 'false') {
+    logger.log('trust proxy disabled (client IP taken from the socket)');
+    return;
+  }
+
+  const hops = Number(raw);
+  const value: number | string = Number.isFinite(hops) ? hops : raw;
+
+  app.set('trust proxy', value);
+  logger.log(`trust proxy enabled: ${value}`);
+}
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // Fail fast rather than starting with an unsigned-in-practice token secret.
   requireEnv('JWT_SECRET');
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  applyTrustProxy(app, logger);
+
+  // Security headers. Swagger UI ships inline scripts and styles, which the
+  // default CSP blocks, so the docs path gets the same headers minus CSP.
+  // CORP is relaxed to cross-origin because this API is consumed by the
+  // storefront and admin SPAs from a different origin by design; reads are
+  // still governed by the CORS allow-list below.
+  const apiHelmet = helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  });
+  const docsHelmet = helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  });
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const isSwagger =
+      req.path === `/${SWAGGER_PATH}` ||
+      req.path.startsWith(`/${SWAGGER_PATH}/`) ||
+      req.path.startsWith(`/${SWAGGER_PATH}-`);
+
+    return isSwagger ? docsHelmet(req, res, next) : apiHelmet(req, res, next);
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -92,8 +142,8 @@ async function bootstrap() {
       .addBearerAuth()
       .build();
     const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api-docs', app, swaggerDocument);
-    logger.log('Swagger UI enabled at /api-docs');
+    SwaggerModule.setup(SWAGGER_PATH, app, swaggerDocument);
+    logger.log(`Swagger UI enabled at /${SWAGGER_PATH}`);
   } else {
     logger.log('Swagger UI disabled (production)');
   }

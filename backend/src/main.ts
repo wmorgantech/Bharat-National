@@ -5,11 +5,20 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { join } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { isProduction, requireEnv } from './config/env';
 
 const SWAGGER_PATH = 'api-docs';
+
+/**
+ * Must stay in step with the multer destination in upload.controller.ts, which
+ * writes to './uploads' relative to the working directory. Resolved from
+ * process.cwd() rather than __dirname so it points at backend/uploads in both
+ * `nest start` and `node dist/main` runs.
+ */
+const UPLOADS_DIR = 'uploads';
 
 const DEV_ORIGINS = [
   'http://localhost:5173',
@@ -134,6 +143,23 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     maxAge: 86400,
+  });
+
+  // Serve previously uploaded images so the URLs handed back by
+  // POST /upload/image actually resolve.
+  //
+  // These are public: an <img> tag cannot attach a Bearer token, and product
+  // imagery is public content anyway. Uploading stays admin-only and keeps its
+  // type, size and random-filename rules - this route only reads. Registered
+  // after helmet and CORS so static responses still carry those headers, in
+  // particular X-Content-Type-Options: nosniff.
+  app.useStaticAssets(join(process.cwd(), UPLOADS_DIR), {
+    prefix: `/${UPLOADS_DIR}`,
+    // No directory listing and no implicit index file.
+    index: false,
+    // Never serve dotfiles that happen to land in the folder.
+    dotfiles: 'deny',
+    redirect: false,
   });
 
   // API documentation exposes the full route surface, so it stays off in

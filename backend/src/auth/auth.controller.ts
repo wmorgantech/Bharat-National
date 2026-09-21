@@ -1,10 +1,12 @@
 // auth.controller.ts
 import { Controller, Post, Body, Get, Request } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './public.decorator';
+import { LOGIN_THROTTLE, SIGNUP_THROTTLE } from '../common/throttle.config';
 
 
 @ApiTags('Auth')
@@ -13,6 +15,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
+  @Throttle(SIGNUP_THROTTLE)
   @Post('signup')
   @ApiOperation({ summary: 'User signup' })
   @ApiBody({ type: SignupDto })
@@ -21,6 +24,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(LOGIN_THROTTLE)
   @Post('login')
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginDto })

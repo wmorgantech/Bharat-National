@@ -4,12 +4,17 @@ import {
   Post,
   Body,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CreateAdminDto, LoginAdminDto } from './dto/create-admin.dto';
 
 import { Public } from 'src/auth/public.decorator';
 import { Roles } from 'src/auth/roles.decorator';
+import {
+  ADMIN_LOGIN_THROTTLE,
+  ADMIN_REGISTER_THROTTLE,
+} from '../common/throttle.config';
 
 
 @ApiTags('Admin')
@@ -23,6 +28,7 @@ export class AdminController {
    */
   @Post('register')
   @Roles('ADMIN', 'SUPER_ADMIN')
+  @Throttle(ADMIN_REGISTER_THROTTLE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Register a new admin (existing admin only)' })
   register(@Body() createAdminDto: CreateAdminDto) {
@@ -30,6 +36,7 @@ export class AdminController {
   }
 
   @Public()
+  @Throttle(ADMIN_LOGIN_THROTTLE)
   @Post('login')
   @ApiOperation({ summary: 'Admin login' })
   login(@Body() loginAdminDto: LoginAdminDto) {

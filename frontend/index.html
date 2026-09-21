@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bharat National Computers</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Inter Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Global CSS Variables -->
+    <style>
+      :root {
+        --primary: #00897b;
+        --primary-dark: #00695c;
+        --primary-light: #26a69a;
+        --primary-lighthead: #c9ceccff;
+        --primary-breadcrumb: #0f615dff;
+
+    
+        --grey-100: #f2f4f7;
+        --grey-200: #e4e6eb;
+        --grey-300: #d0d5dd;
+        --grey-600: #a2a6ad;
+        --grey-700: #344054;
+        --grey-900: #1a1a1a;
+
+        --text-dark: #000000;
+        --text-light: #ffffff;
+
+        --success: #2ecc71;
+        --warning: #f1c40f;
+        --danger: #e74c3c;
+
+        
+
+
+
+        --radius: 8px;
+        --shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      body {
+        background: var(--grey-100);
+        color: var(--text-dark);
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

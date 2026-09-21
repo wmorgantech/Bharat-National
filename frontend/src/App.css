@@ -1,0 +1,42 @@
+/* Tailwind CDN */
+@import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css");
+
+/* Inter Font (Premium clean UI font) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+:root {
+  /* PRIMARY BRAND COLORS */
+  --primary: #00897B;     /* Teal Green - Main Brand */
+  --primary-dark: #00695C;
+  --primary-light: #26A69A;
+
+  /* GREYS */
+  --grey-100: #F2F4F7;    /* Light Grey Background */
+  --grey-200: #E4E6EB;
+  --grey-300: #D0D5DD;
+  --grey-600: #475467;
+  --grey-700: #344054;
+
+  --grey-900: #1A1A1A;
+
+  /* TEXT */
+  --text-dark: #000000;
+  --text-light: #FFFFFF;
+
+  /* STATUS COLORS (OPTIONAL) */
+  --success: #2ECC71;
+  --warning: #F1C40F;
+  --danger: #E74C3C;
+
+  /* SPACING (OPTIONAL) */
+  --radius: 8px;
+  --shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Optional Global Body Style */
+body {
+  background: var(--grey-100);
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+}
+

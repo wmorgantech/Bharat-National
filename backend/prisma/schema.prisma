@@ -1,0 +1,132 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User{
+  id        Int    @id @default(autoincrement())
+  name      String
+  email     String? @unique
+  password  String?
+  role      String   @default("USER")
+  address   String?
+  city      String?
+  state     String?
+  mobilenumber    String? @unique
+  pincode   String?
+  otp       String?
+  otpExpiredAt  DateTime ?
+  createdAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders        Order[]
+ 
+}
+
+model Category{
+  id            Int      @id @default(autoincrement())
+  name          String 
+  imageUrl      String
+  description   String
+  isActive      Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Product       Product[]   
+}
+
+
+model Brand{
+  id              Int     @id @default(autoincrement())
+  name            String 
+  imageUrl        String
+  description     String
+  isActive        Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt 
+  Product        Product[]  
+}
+
+model Product{
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String
+  price           Int
+  imageUrl        String[]
+  categoryId      Int
+  brandId         Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category        Category @relation(fields: [categoryId], references: [id])
+  brand           Brand    @relation(fields: [brandId], references: [id])  
+  orderItems      OrderItem[]
+}
+
+
+
+model Order {
+  id          Int          @id @default(autoincrement())
+  userId        Int
+  fullName    String
+  email       String ?
+  phone       String
+  address     String?
+  pincode     String?
+  state       String?
+  paymentMethod String?
+  place       String
+  totalAmount Int
+  status        String     @default("PLACED") 
+ cancelRemarks  String? 
+  isActive    Boolean      @default(true)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+   user          User     @relation(fields: [userId], references: [id])   
+
+  orderItem   OrderItem[]
+}
+
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId   Int
+  product     Product @relation(fields: [productId], references: [id])
+
+  productName String  
+  unitPrice   Int     
+  quantity    Int
+}
+
+model Contact {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String
+  email       String
+  interestedIn String?
+  message     String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

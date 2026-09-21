@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  ParseIntPipe,
   Delete,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -46,27 +47,30 @@ export class ProductController {
 
   @Public()
   @Get('category/:id')
-  findByCategory(@Param('id') categoryId: string) {
-    return this.productService.findByCategory(+categoryId);
+  findByCategory(@Param('id', ParseIntPipe) categoryId: number) {
+    return this.productService.findByCategory(categoryId);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.productService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productService.update(+id, updateProductDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    return this.productService.update(id, updateProductDto);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  remove(@Param('id') id: string) {
-    return this.productService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.productService.remove(id);
   }
 }

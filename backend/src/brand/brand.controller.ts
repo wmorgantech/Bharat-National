@@ -6,6 +6,7 @@ import {
   Body,
   Patch,
   Param,
+  ParseIntPipe,
   Delete,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -41,24 +42,24 @@ export class BrandController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.brandService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.brandService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateBrandDto: UpdateBrandDto,
   ) {
-    return this.brandService.update(+id, updateBrandDto);
+    return this.brandService.update(id, updateBrandDto);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  remove(@Param('id') id: string) {
-    return this.brandService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.brandService.remove(id);
   }
 }

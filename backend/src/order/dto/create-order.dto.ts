@@ -27,13 +27,15 @@ export class CreateOrderDto {
   )
   cartId?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 1,
-    description: 'Logged-in user ID (from User table)',
+    description:
+      'Target user ID. Ignored for customers (taken from the auth token); only an admin may use it to place an order on behalf of a customer.',
   })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  userId: number;
+  userId?: number;
 
   @ApiProperty({
     example: 'John Doe',

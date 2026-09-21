@@ -1,7 +1,12 @@
 // src/overview/overview.controller.ts (Simpler version)
 import { Controller, Get } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OverviewService } from './overview.service';
+import { Roles } from 'src/auth/roles.decorator';
 
+@ApiTags('Overview')
+@ApiBearerAuth()
+@Roles('ADMIN', 'SUPER_ADMIN')
 @Controller('overview')
 export class OverviewController {
   constructor(private readonly overviewService: OverviewService) {}

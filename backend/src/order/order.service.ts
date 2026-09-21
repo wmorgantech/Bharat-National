@@ -1,21 +1,55 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { AuthUser } from '../auth/jwt.strategy';
+
+/**
+ * Customer fields safe to embed in an order response. Deliberately excludes
+ * `password`, `otp` and `otpExpiredAt`.
+ */
+const SAFE_USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  mobilenumber: true,
+  address: true,
+  city: true,
+  state: true,
+  pincode: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+};
 
 @Injectable()
 export class OrderService {
   private prisma = new PrismaClient();
 
-  async create(createOrderDto: CreateOrderDto) {
-      const { userId, items, state,  cancelRemarks } = createOrderDto;
+  private isAdmin(requester: AuthUser): boolean {
+    return requester.type === 'ADMIN';
+  }
+
+  async create(createOrderDto: CreateOrderDto, requester: AuthUser) {
+      const { items, state,  cancelRemarks } = createOrderDto;
 
     if (!items || items.length === 0) {
       throw new BadRequestException('Items are required');
+    }
+
+    // Ownership comes from the authenticated token. An admin may place an order
+    // on behalf of a customer; a customer can only order for themselves.
+    const userId = this.isAdmin(requester)
+      ? createOrderDto.userId
+      : requester.userId;
+
+    if (!userId) {
+      throw new BadRequestException('userId is required');
     }
 
     // ✅ Validate user
@@ -86,9 +120,13 @@ export class OrderService {
     };
   }
 
- findAll(userId?: number) {
+ findAll(requester: AuthUser, userId?: number) {
+  // Non-admins are always scoped to their own orders; any userId supplied by
+  // the client is ignored rather than trusted.
+  const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
+
   return this.prisma.order.findMany({
-    where: userId ? { userId } : {},
+    where: scopedUserId ? { userId: scopedUserId } : {},
     orderBy: { createdAt: 'desc' },
     include: {
       orderItem: { include: { product: true } },
@@ -102,7 +140,7 @@ export class OrderService {
       orderBy: { createdAt: 'desc' },
       include: {
         orderItem: { include: { product: true } },
-        user: true,
+        user: { select: SAFE_USER_SELECT },
       },
     });
   }
@@ -112,11 +150,22 @@ export class OrderService {
       where: { id },
       include: {
         orderItem: { include: { product: true } },
-        user: true,
+        user: { select: SAFE_USER_SELECT },
       },
     });
 
     if (!order) throw new NotFoundException('Order not found');
+    return order;
+  }
+
+  /** Same as findOne, but enforces that the caller owns the order. */
+  async findOneForRequester(id: number, requester: AuthUser) {
+    const order = await this.findOne(id);
+
+    if (!this.isAdmin(requester) && order.userId !== requester.userId) {
+      throw new ForbiddenException('You do not have access to this order');
+    }
+
     return order;
   }
 
@@ -187,9 +236,15 @@ async update(id: number, updateOrderDto: UpdateOrderDto) {
     };
   }
 
-  async findLastByUser(userId: number) {
+  async findLastByUser(requester: AuthUser, userId?: number) {
+  const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
+
+  if (!scopedUserId) {
+    throw new BadRequestException('userId is required');
+  }
+
   const order = await this.prisma.order.findFirst({
-    where: { userId },
+    where: { userId: scopedUserId },
     orderBy: { createdAt: 'desc' },
     include: {
       orderItem: true,
@@ -289,7 +344,7 @@ async findAllWithUsers(userId?: number) {
       orderItem: {
         include: { product: true }
       },
-      user: true,
+      user: { select: SAFE_USER_SELECT },
     },
   });
   return orders;

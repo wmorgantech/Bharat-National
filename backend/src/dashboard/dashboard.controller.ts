@@ -1,7 +1,12 @@
 // src/dashboard/dashboard.controller.ts
 import { Controller, Get } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
+import { Roles } from 'src/auth/roles.decorator';
 
+@ApiTags('Dashboard')
+@ApiBearerAuth()
+@Roles('ADMIN', 'SUPER_ADMIN')
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}

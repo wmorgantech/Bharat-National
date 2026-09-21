@@ -41,6 +41,26 @@ function positiveIntEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+/**
+ * SameSite policy for the refresh cookies.
+ *
+ * Defaults to 'strict', which is correct for the current local setup (the API
+ * and both apps are all on localhost, so they are same-site despite the
+ * different ports) and is the safest starting point. Production topology is
+ * not confirmed yet: if the API ends up on a different registrable domain than
+ * the apps, this must be set to 'none' (which additionally requires HTTPS) and
+ * CSRF protection has to be added before doing so.
+ */
+export function getCookieSameSite(): 'strict' | 'lax' | 'none' {
+  const raw = (process.env.COOKIE_SAMESITE ?? 'strict').trim().toLowerCase();
+
+  if (raw === 'lax' || raw === 'none' || raw === 'strict') {
+    return raw;
+  }
+
+  return 'strict';
+}
+
 /** Sliding lifetime of an individual refresh token, in days. */
 export function getRefreshTokenTtlDays(): number {
   return positiveIntEnv('REFRESH_TOKEN_TTL_DAYS', 7);

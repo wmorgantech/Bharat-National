@@ -34,7 +34,8 @@ export class AuthService {
         name: data.name,
         mobilenumber: data.mobilenumber,
         password: hashedPassword,
-        role: data.role || 'USER',
+        // Role is fixed server-side; it is never taken from the request body.
+        role: 'USER',
       },
     });
 

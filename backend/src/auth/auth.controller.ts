@@ -1,10 +1,10 @@
 // auth.controller.ts
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Request } from '@nestjs/common';
 import { ApiTags, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 
 
 @ApiTags('Auth')
@@ -12,6 +12,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @Post('signup')
   @ApiOperation({ summary: 'User signup' })
   @ApiBody({ type: SignupDto })
@@ -19,6 +20,7 @@ export class AuthController {
     return this.authService.signup(body);
   }
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginDto })
@@ -26,5 +28,10 @@ export class AuthController {
     return this.authService.login(body);
   }
 
-  
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Current authenticated principal' })
+  me(@Request() req) {
+    return req.user;
+  }
 }

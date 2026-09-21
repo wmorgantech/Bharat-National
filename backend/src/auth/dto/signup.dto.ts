@@ -1,6 +1,6 @@
 // dto/signup.dto.ts
-import { IsString, Length, IsOptional, IsIn } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class SignupDto {
   @ApiProperty({ example: 'John Doe', description: 'User full name' })
@@ -17,14 +17,7 @@ export class SignupDto {
   @Length(6, 20, { message: 'Password must be between 6 and 20 characters' })
   password: string;
 
-  @ApiPropertyOptional({ 
-    example: 'USER', 
-    description: 'User role (USER or ADMIN)',
-    enum: ['USER', 'ADMIN']
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(['USER', 'ADMIN'], { message: 'Role must be either USER or ADMIN' })
-  role?: string;
+  // NOTE: `role` is deliberately not accepted here. Public signup always
+  // creates a USER; admin accounts are issued only from the Admin module.
 }
 

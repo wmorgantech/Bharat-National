@@ -34,9 +34,9 @@ export default function LoginPage() {
 
       const data = await loginAdmin(email, password);
 
-      // Store tokens and admin data
+      // Store the access token; the refresh token is an HttpOnly cookie
       if (data.access_token) {
-        setTokens(data.access_token, data.refresh_token);
+        setTokens(data.access_token);
       }
       localStorage.setItem("admin", JSON.stringify(data.admin));
       localStorage.setItem("isAdminLoggedIn", "true");

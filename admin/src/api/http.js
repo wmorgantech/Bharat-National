@@ -4,7 +4,6 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ACCESS_TOKEN_KEY = "authToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
 
 export function getAuthToken() {
   try {
@@ -14,18 +13,13 @@ export function getAuthToken() {
   }
 }
 
-export function getRefreshToken() {
-  try {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setTokens(accessToken, refreshToken) {
+/**
+ * Only the access token is stored by the app. The refresh token lives in an
+ * HttpOnly cookie set by the server and is never readable from JavaScript.
+ */
+export function setTokens(accessToken) {
   try {
     if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   } catch {
     // ignore storage errors
   }
@@ -34,7 +28,6 @@ export function setTokens(accessToken, refreshToken) {
 export function clearSession() {
   try {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem("admin");
     localStorage.removeItem("isAdminLoggedIn");
   } catch {
@@ -72,14 +65,13 @@ function redirectToLogin() {
 let refreshPromise = null;
 
 async function requestNewAccessToken() {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-
   try {
+    // No body: the refresh token travels as an HttpOnly cookie, which requires
+    // credentials to be included on the request.
     const res = await fetch(`${API_URL}/admin/refresh`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
     if (!res.ok) {
@@ -93,7 +85,7 @@ async function requestNewAccessToken() {
       return null;
     }
 
-    setTokens(data.access_token, data.refresh_token);
+    setTokens(data.access_token);
     return data.access_token;
   } catch {
     return null;

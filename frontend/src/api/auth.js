@@ -1,4 +1,4 @@
-import { clearSession, getRefreshToken, setTokens } from "./http";
+import { clearSession, setTokens } from "./http";
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 
@@ -16,8 +16,10 @@ const handleResponse = async (response) => {
 export const auth = {
   // ✅ SIGNUP
   async signup(userData) {
+    // credentials are required for the server to set the HttpOnly refresh cookie
     const response = await fetch(`${VITE_API_URL}/auth/signup`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
     });
@@ -29,14 +31,15 @@ export const auth = {
   async login(mobilenumber, password) {
     const response = await fetch(`${VITE_API_URL}/auth/login`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mobilenumber, password }),
     });
 
     const data = await handleResponse(response);
 
-    // ✅ store tokens & user
-    setTokens(data.access_token, data.refresh_token);
+    // ✅ store access token & user; the refresh token is an HttpOnly cookie
+    setTokens(data.access_token);
     localStorage.setItem("user", JSON.stringify(data.user));
 
     return data;
@@ -44,18 +47,15 @@ export const auth = {
 
   // ✅ LOGOUT (revokes the refresh token server-side, then clears local state)
   async logout() {
-    const refreshToken = getRefreshToken();
-
-    if (refreshToken) {
-      try {
-        await fetch(`${VITE_API_URL}/auth/logout`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-      } catch {
-        // Best effort: still clear local state below.
-      }
+    try {
+      // No body: the server reads and clears the refresh cookie.
+      await fetch(`${VITE_API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {
+      // Best effort: still clear local state below.
     }
 
     clearSession();

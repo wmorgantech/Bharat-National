@@ -1,11 +1,13 @@
-import { apiFetch, clearSession, getRefreshToken } from "./http";
+import { apiFetch, clearSession } from "./http";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export async function loginAdmin(email, password) {
   try {
+    // credentials are required for the server to set the HttpOnly refresh cookie
     const response = await fetch(`${API_URL}/admin/login`, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -17,7 +19,7 @@ export async function loginAdmin(email, password) {
       try {
         const errorData = await response.json();
         if (errorData?.message) {
-          message = errorData.message; 
+          message = errorData.message;
         }
       } catch {
         // ignore parse error
@@ -33,20 +35,16 @@ export async function loginAdmin(email, password) {
   }
 }
 
-/** Per-device logout: revokes this device's refresh token, then clears storage. */
+/** Per-device logout: the server reads and clears the refresh cookie. */
 export async function logoutSession() {
-  const refreshToken = getRefreshToken();
-
-  if (refreshToken) {
-    try {
-      await fetch(`${API_URL}/admin/logout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-    } catch {
-      // Best effort: still clear local state below.
-    }
+  try {
+    await fetch(`${API_URL}/admin/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch {
+    // Best effort: still clear local state below.
   }
 
   clearSession();
@@ -55,7 +53,11 @@ export async function logoutSession() {
 /** Revokes every admin session, on all devices. */
 export async function logoutAllSessions() {
   try {
-    await apiFetch(`${API_URL}/admin/logout-all`, { method: "POST" });
+    // credentials so the server can clear the refresh cookie on this device too
+    await apiFetch(`${API_URL}/admin/logout-all`, {
+      method: "POST",
+      credentials: "include",
+    });
   } catch {
     // Best effort: still clear local state below.
   }

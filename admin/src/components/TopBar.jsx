@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Menu, LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { logoutSession } from '../api/admin';
 
 const AdminTopbar = ({ setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -26,15 +27,13 @@ const AdminTopbar = ({ setSidebarOpen }) => {
     getAdminData();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('admin');
-    localStorage.removeItem('isAdminLoggedIn');
-    
+  const handleLogout = async () => {
+    // Revoke the refresh token server-side before clearing local state, so the
+    // session cannot be resumed with a token left behind on this device.
+    await logoutSession();
+
     toast.success('Logged out successfully');
     navigate('login');
-    
- 
   };
 
   // Click outside to close dropdown

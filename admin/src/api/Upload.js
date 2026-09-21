@@ -1,4 +1,4 @@
-import { authHeaders } from "./http";
+import { apiFetch } from "./http";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -8,9 +8,8 @@ export async function uploadImage(file) {
   const formData = new FormData();
   formData.append("image", file);
 
-  const res = await fetch(`${BASE_URL}/upload/image`, {
+  const res = await apiFetch(`${BASE_URL}/upload/image`, {
     method: "POST",
-    headers: authHeaders(),
     body: formData,
   });
 

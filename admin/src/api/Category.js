@@ -1,5 +1,5 @@
 
-import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+import { apiFetch, handleUnauthorized } from "./http";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,9 +28,8 @@ async function handleResponse(response) {
  * GET /category
  */
 export async function getCategories() {
-  const res = await fetch(`${API_URL}/category`, {
+  const res = await apiFetch(`${API_URL}/category`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -40,9 +39,8 @@ export async function getCategories() {
  * GET /category/active
  */
 export async function getActiveCategories() {
-  const res = await fetch(`${API_URL}/category/active`, {
+  const res = await apiFetch(`${API_URL}/category/active`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -52,9 +50,8 @@ export async function getActiveCategories() {
  * GET /category/:id
  */
 export async function getCategoryById(id) {
-  const res = await fetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${API_URL}/category/${id}`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -65,9 +62,8 @@ export async function getCategoryById(id) {
  * body: { name, imageUrl, description?, isActive? }
  */
 export async function createCategory({ name, imageUrl, description = "", isActive = true }) {
-  const res = await fetch(`${API_URL}/category`, {
+  const res = await apiFetch(`${API_URL}/category`, {
     method: "POST",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       imageUrl,
@@ -84,9 +80,8 @@ export async function createCategory({ name, imageUrl, description = "", isActiv
  * PATCH /category/:id
  */
 export async function updateCategory(id, data) {
-  const res = await fetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${API_URL}/category/${id}`, {
     method: "PATCH",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify(data), // e.g. { name, description, isActive }
   });
 
@@ -98,9 +93,8 @@ export async function updateCategory(id, data) {
  * DELETE /category/:id
  */
 export async function deleteCategory(id) {
-  const res = await fetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${API_URL}/category/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);

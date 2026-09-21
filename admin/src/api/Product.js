@@ -1,5 +1,5 @@
 
-import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+import { apiFetch, handleUnauthorized } from "./http";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -23,9 +23,8 @@ async function handleResponse(response) {
 
 
 export async function getProducts() {
-  const res = await fetch(`${API_URL}/product`, {
+  const res = await apiFetch(`${API_URL}/product`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -33,17 +32,15 @@ export async function getProducts() {
 
 
 export async function getActiveProducts() {
-  const res = await fetch(`${API_URL}/product/active`, {
+  const res = await apiFetch(`${API_URL}/product/active`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
 
 export async function getProductById(id) {
-  const res = await fetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${API_URL}/product/${id}`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -59,9 +56,8 @@ export async function createProduct({
   brandId,
   isActive = true,
 }) {
-  const res = await fetch(`${API_URL}/product`, {
+  const res = await apiFetch(`${API_URL}/product`, {
     method: "POST",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       description,
@@ -80,9 +76,8 @@ export async function createProduct({
 
 
 export async function updateProduct(id, data) {
-  const res = await fetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${API_URL}/product/${id}`, {
     method: "PATCH",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -90,9 +85,8 @@ export async function updateProduct(id, data) {
 }
 
 export async function deleteProduct(id) {
-  const res = await fetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${API_URL}/product/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);

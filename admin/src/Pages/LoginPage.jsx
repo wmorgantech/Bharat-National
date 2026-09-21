@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Button from "../components/Button";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { loginAdmin } from "../api/admin";
+import { setTokens } from "../api/http";
 import Input from "../components/Input";
 
 export default function LoginPage() {
@@ -33,9 +34,9 @@ export default function LoginPage() {
 
       const data = await loginAdmin(email, password);
 
-      // Store token and admin data
+      // Store tokens and admin data
       if (data.access_token) {
-        localStorage.setItem("authToken", data.access_token);
+        setTokens(data.access_token, data.refresh_token);
       }
       localStorage.setItem("admin", JSON.stringify(data.admin));
       localStorage.setItem("isAdminLoggedIn", "true");

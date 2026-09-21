@@ -1,5 +1,5 @@
 // src/api/Brand.js
-import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+import { apiFetch, handleUnauthorized } from "./http";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,9 +28,8 @@ async function handleResponse(response) {
  * GET /brand
  */
 export async function getBrands() {
-  const res = await fetch(`${API_URL}/brand`, {
+  const res = await apiFetch(`${API_URL}/brand`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -40,9 +39,8 @@ export async function getBrands() {
  * GET /brand/active
  */
 export async function getActiveBrands() {
-  const res = await fetch(`${API_URL}/brand/active`, {
+  const res = await apiFetch(`${API_URL}/brand/active`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -52,9 +50,8 @@ export async function getActiveBrands() {
  * GET /brand/:id
  */
 export async function getBrandById(id) {
-  const res = await fetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${API_URL}/brand/${id}`, {
     method: "GET",
-    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -70,9 +67,8 @@ export async function createBrand({
   description = "",
   isActive = true,
 }) {
-  const res = await fetch(`${API_URL}/brand`, {
+  const res = await apiFetch(`${API_URL}/brand`, {
     method: "POST",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       imageUrl,
@@ -89,9 +85,8 @@ export async function createBrand({
  * PATCH /brand/:id
  */
 export async function updateBrand(id, data) {
-  const res = await fetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${API_URL}/brand/${id}`, {
     method: "PATCH",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify(data), // e.g. { name, description, imageUrl, isActive }
   });
 
@@ -103,9 +98,8 @@ export async function updateBrand(id, data) {
  * DELETE /brand/:id
  */
 export async function deleteBrand(id) {
-  const res = await fetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${API_URL}/brand/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);

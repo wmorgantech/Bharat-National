@@ -1,4 +1,6 @@
 
+import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Common response handler
@@ -12,6 +14,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -22,13 +25,12 @@ async function handleResponse(response) {
 /**
  * ✅ Create Order
  * POST /order
+ * The server takes ownership from the auth token; any userId in the payload is ignored.
  */
 export async function createOrder(payload) {
   const res = await fetch(`${API_URL}/order`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -36,12 +38,13 @@ export async function createOrder(payload) {
 }
 
 /**
- * ✅ Get All Orders (Admin)
+ * ✅ Get the signed-in user's orders
  * GET /order
  */
 export async function getOrders() {
   const res = await fetch(`${API_URL}/order`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -50,22 +53,25 @@ export async function getOrders() {
 /**
  * ✅ Get Orders by User
  * GET /order?userId=1
+ * Server-side this is always scoped to the authenticated user.
  */
 export async function getOrdersByUser(userId) {
   const res = await fetch(`${API_URL}/order?userId=${userId}`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
 }
 
 /**
- * ✅ Get Active Orders
+ * ✅ Get Active Orders (admin-only server-side)
  * GET /order/active
  */
 export async function getActiveOrders() {
   const res = await fetch(`${API_URL}/order/active`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -78,21 +84,20 @@ export async function getActiveOrders() {
 export async function getOrderById(id) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
 }
 
 /**
- * ✅ Update Order
+ * ✅ Update Order (admin-only server-side)
  * PATCH /order/:id
  */
 export async function updateOrder(id, updates) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(updates),
   });
 
@@ -100,12 +105,13 @@ export async function updateOrder(id, updates) {
 }
 
 /**
- * ✅ Delete (Soft Delete)
+ * ✅ Delete (Soft Delete) — admin-only server-side
  * DELETE /order/:id
  */
 export async function deleteOrder(id) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -114,7 +120,7 @@ export async function deleteOrder(id) {
 export const getLastOrderForUser = async (userId) => {
   const res = await fetch(`${API_URL}/order/last?userId=${userId}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonAuthHeaders(),
   });
   return handleResponse(res);
 };

@@ -12,12 +12,22 @@ import * as bcrypt from 'bcryptjs';
 import { CreateAdminDto, LoginAdminDto } from './dto/create-admin.dto';
 
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { RefreshTokenService } from '../auth/refresh-token.service';
+import { ACCESS_TOKEN_TTL } from '../config/env';
 
 @Injectable()
 export class AdminService {
   private prisma = new PrismaClient();
 
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private refreshTokens: RefreshTokenService,
+  ) {}
+
+  /** Access tokens carry only the subject and principal type. */
+  private signAccessToken(adminId: number): string {
+    return this.jwtService.sign({ sub: adminId, type: 'ADMIN' });
+  }
 
   // ✅ REGISTER NEW ADMIN
   async register(createAdminDto: CreateAdminDto) {
@@ -44,20 +54,19 @@ export class AdminService {
       },
     });
 
-    // Generate JWT token
-    const payload = {
-      sub: newAdmin.id,
-      email: newAdmin.email,
+    const access_token = this.signAccessToken(newAdmin.id);
+    const refresh = await this.refreshTokens.issue({
       type: 'ADMIN',
-    };
-
-    const access_token = this.jwtService.sign(payload);
+      id: newAdmin.id,
+    });
 
     // Return response without password
     return {
       success: true,
       message: 'Admin registered successfully',
       access_token,
+      refresh_token: refresh.token,
+      expires_in: ACCESS_TOKEN_TTL,
       admin: {
         id: newAdmin.id,
         email: newAdmin.email,
@@ -91,20 +100,21 @@ export class AdminService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Generate JWT token
-    const payload = {
-      sub: admin.id,
-      email: admin.email,
+    const access_token = this.signAccessToken(admin.id);
+    const refresh = await this.refreshTokens.issue({
       type: 'ADMIN',
-    };
+      id: admin.id,
+    });
 
-    const access_token = this.jwtService.sign(payload);
+    this.refreshTokens.maybeCleanup();
 
     // Return response without password
     return {
       success: true,
       message: 'Login successful',
       access_token,
+      refresh_token: refresh.token,
+      expires_in: ACCESS_TOKEN_TTL,
       admin: {
         id: admin.id,
         email: admin.email,
@@ -114,6 +124,54 @@ export class AdminService {
       },
       // redirectTo: '/admin/dashboard',
     };
+  }
+
+  /** Single-use rotation for an admin session. */
+  async refresh(refreshToken: string) {
+    const { principal, refresh } = await this.refreshTokens.rotate(
+      refreshToken,
+      'ADMIN',
+    );
+
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: principal.id },
+      select: { id: true, email: true, isActive: true },
+    });
+
+    if (!admin || !admin.isActive) {
+      // A deactivated admin must not be able to refresh their way back in.
+      await this.refreshTokens.revokeAllForPrincipal({
+        type: 'ADMIN',
+        id: principal.id,
+      });
+      throw new UnauthorizedException('Admin not found or inactive');
+    }
+
+    this.refreshTokens.maybeCleanup();
+
+    return {
+      success: true,
+      access_token: this.signAccessToken(admin.id),
+      refresh_token: refresh.token,
+      expires_in: ACCESS_TOKEN_TTL,
+      admin,
+    };
+  }
+
+  /** Per-device logout. */
+  async logout(refreshToken: string) {
+    await this.refreshTokens.revoke(refreshToken);
+    return { success: true, message: 'Logged out' };
+  }
+
+  /** Logout everywhere for the authenticated admin. */
+  async logoutAll(adminId: number) {
+    const revoked = await this.refreshTokens.revokeAllForPrincipal({
+      type: 'ADMIN',
+      id: adminId,
+    });
+
+    return { success: true, message: 'Logged out of all sessions', revoked };
   }
 
  

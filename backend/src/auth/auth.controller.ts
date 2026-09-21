@@ -6,7 +6,12 @@ import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './public.decorator';
-import { LOGIN_THROTTLE, SIGNUP_THROTTLE } from '../common/throttle.config';
+import { RefreshTokenDto } from './dto/refresh.dto';
+import {
+  LOGIN_THROTTLE,
+  REFRESH_THROTTLE,
+  SIGNUP_THROTTLE,
+} from '../common/throttle.config';
 
 
 @ApiTags('Auth')
@@ -30,6 +35,37 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   login(@Body() body: LoginDto) {
     return this.authService.login(body);
+  }
+
+  /**
+   * Exchanges a refresh token for a new token pair. Public because the access
+   * token it replaces has, by definition, usually expired.
+   */
+  @Public()
+  @Throttle(REFRESH_THROTTLE)
+  @Post('refresh')
+  @ApiOperation({ summary: 'Rotate refresh token and issue a new access token' })
+  @ApiBody({ type: RefreshTokenDto })
+  refresh(@Body() body: RefreshTokenDto) {
+    return this.authService.refresh(body.refresh_token);
+  }
+
+  /** Per-device logout: revokes the supplied refresh token. */
+  @Public()
+  @Throttle(REFRESH_THROTTLE)
+  @Post('logout')
+  @ApiOperation({ summary: 'Revoke a single refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
+  logout(@Body() body: RefreshTokenDto) {
+    return this.authService.logout(body.refresh_token);
+  }
+
+  /** Revokes every session for the authenticated user. */
+  @Post('logout-all')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Revoke all refresh tokens for the current user' })
+  logoutAll(@Request() req) {
+    return this.authService.logoutAll(req.user.userId);
   }
 
   @Get('me')

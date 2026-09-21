@@ -17,6 +17,34 @@ model Admin {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+/// Opaque refresh tokens, stored as SHA-256 hashes so a database leak yields
+/// no usable tokens. Rotation chains share a familyId: presenting an already
+/// revoked token is treated as theft and revokes the whole family.
+model RefreshToken {
+  id                Int       @id @default(autoincrement())
+  tokenHash         String    @unique
+  familyId          String
+  userId            Int?
+  adminId           Int?
+  /// Sliding expiry of this individual token.
+  expiresAt         DateTime
+  /// Hard ceiling for the whole rotation chain; rotation never extends it.
+  absoluteExpiresAt DateTime
+  revokedAt         DateTime?
+  replacedById      Int?
+  createdAt         DateTime  @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([userId])
+  @@index([adminId])
+  @@index([expiresAt])
 }
 
 model User{
@@ -36,7 +64,8 @@ model User{
   updatedAt   DateTime @updatedAt
 
   orders        Order[]
- 
+  refreshTokens RefreshToken[]
+
 }
 
 model Category{

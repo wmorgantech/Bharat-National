@@ -64,6 +64,16 @@ export const CONTACT_THROTTLE = {
   [THROTTLE_LONG]: { limit: 3, ttl: HOUR },
 };
 
+/**
+ * Refresh and logout. More permissive than login because a legitimate client
+ * refreshes on a schedule, but still bounded so the endpoint cannot be used as
+ * an unmetered oracle for guessing refresh tokens.
+ */
+export const REFRESH_THROTTLE = {
+  [THROTTLE_SHORT]: { limit: 20, ttl: MINUTE },
+  [THROTTLE_LONG]: { limit: 120, ttl: FIFTEEN_MINUTES },
+};
+
 /** Admin provisioning: already role-gated; this is defence in depth. */
 export const ADMIN_REGISTER_THROTTLE = {
   [THROTTLE_SHORT]: { limit: 3, ttl: MINUTE },

@@ -1,3 +1,5 @@
+import { clearSession, getRefreshToken, setTokens } from "./http";
+
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 // helper
@@ -33,17 +35,30 @@ export const auth = {
 
     const data = await handleResponse(response);
 
-    // ✅ store token & user
-    localStorage.setItem("authToken", data.access_token);
+    // ✅ store tokens & user
+    setTokens(data.access_token, data.refresh_token);
     localStorage.setItem("user", JSON.stringify(data.user));
 
     return data;
   },
 
-  // ✅ LOGOUT
-  logout() {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
+  // ✅ LOGOUT (revokes the refresh token server-side, then clears local state)
+  async logout() {
+    const refreshToken = getRefreshToken();
+
+    if (refreshToken) {
+      try {
+        await fetch(`${VITE_API_URL}/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      } catch {
+        // Best effort: still clear local state below.
+      }
+    }
+
+    clearSession();
     localStorage.removeItem("pendingCartItem");
     window.dispatchEvent(new Event("auth:logout"));
   },

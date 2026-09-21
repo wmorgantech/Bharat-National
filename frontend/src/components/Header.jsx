@@ -10,6 +10,7 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 import { getActiveCategories } from "../api/Category";
+import { auth } from "../api/auth";
 import { loadCart } from "../utils/CartStorage";
 
 
@@ -24,8 +25,8 @@ const getStoredUser = () => {
 };
 const isLoggedIn = () => !!localStorage.getItem("authToken");
 const logoutUser = () => {
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("user");
+  // Revokes the refresh token server-side, then clears local state.
+  void auth.logout();
 };
 
 export default function Header() {

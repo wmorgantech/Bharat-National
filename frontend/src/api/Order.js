@@ -1,5 +1,5 @@
 
-import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+import { apiFetch, handleUnauthorized } from "./http";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,9 +28,8 @@ async function handleResponse(response) {
  * The server takes ownership from the auth token; any userId in the payload is ignored.
  */
 export async function createOrder(payload) {
-  const res = await fetch(`${API_URL}/order`, {
+  const res = await apiFetch(`${API_URL}/order`, {
     method: "POST",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -42,9 +41,8 @@ export async function createOrder(payload) {
  * GET /order
  */
 export async function getOrders() {
-  const res = await fetch(`${API_URL}/order`, {
+  const res = await apiFetch(`${API_URL}/order`, {
     method: "GET",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -56,9 +54,8 @@ export async function getOrders() {
  * Server-side this is always scoped to the authenticated user.
  */
 export async function getOrdersByUser(userId) {
-  const res = await fetch(`${API_URL}/order?userId=${userId}`, {
+  const res = await apiFetch(`${API_URL}/order?userId=${userId}`, {
     method: "GET",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -69,9 +66,8 @@ export async function getOrdersByUser(userId) {
  * GET /order/active
  */
 export async function getActiveOrders() {
-  const res = await fetch(`${API_URL}/order/active`, {
+  const res = await apiFetch(`${API_URL}/order/active`, {
     method: "GET",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -82,9 +78,8 @@ export async function getActiveOrders() {
  * GET /order/:id
  */
 export async function getOrderById(id) {
-  const res = await fetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${API_URL}/order/${id}`, {
     method: "GET",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -95,9 +90,8 @@ export async function getOrderById(id) {
  * PATCH /order/:id
  */
 export async function updateOrder(id, updates) {
-  const res = await fetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${API_URL}/order/${id}`, {
     method: "PATCH",
-    headers: jsonAuthHeaders(),
     body: JSON.stringify(updates),
   });
 
@@ -109,18 +103,16 @@ export async function updateOrder(id, updates) {
  * DELETE /order/:id
  */
 export async function deleteOrder(id) {
-  const res = await fetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${API_URL}/order/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
 
   return handleResponse(res);
 }
 
 export const getLastOrderForUser = async (userId) => {
-  const res = await fetch(`${API_URL}/order/last?userId=${userId}`, {
+  const res = await apiFetch(`${API_URL}/order/last?userId=${userId}`, {
     method: 'GET',
-    headers: jsonAuthHeaders(),
   });
   return handleResponse(res);
 };

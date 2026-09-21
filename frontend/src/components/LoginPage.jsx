@@ -22,8 +22,8 @@ const LoginPage = () => {
   const handleClose = () => navigate(location.state?.redirectTo || -1);
 
   const afterSuccessfulLogin = async (token, userData) => {
-    // store token & user (API helper already does this, but in case you still want this logic)
-    localStorage.setItem('authToken', token);
+    // The auth helper already stored both tokens; this keeps the user object in
+    // sync for screens that read it directly.
     localStorage.setItem('user', JSON.stringify(userData));
     window.dispatchEvent(new StorageEvent('storage'));
     toast.success('Login successful!');

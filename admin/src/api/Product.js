@@ -1,4 +1,6 @@
 
+import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -11,6 +13,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -18,10 +21,11 @@ async function handleResponse(response) {
   return data;
 }
 
- 
+
 export async function getProducts() {
   const res = await fetch(`${API_URL}/product`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -31,6 +35,7 @@ export async function getProducts() {
 export async function getActiveProducts() {
   const res = await fetch(`${API_URL}/product/active`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -38,6 +43,7 @@ export async function getActiveProducts() {
 export async function getProductById(id) {
   const res = await fetch(`${API_URL}/product/${id}`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -55,9 +61,7 @@ export async function createProduct({
 }) {
   const res = await fetch(`${API_URL}/product`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       description,
@@ -78,9 +82,7 @@ export async function createProduct({
 export async function updateProduct(id, data) {
   const res = await fetch(`${API_URL}/product/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -90,6 +92,7 @@ export async function updateProduct(id, data) {
 export async function deleteProduct(id) {
   const res = await fetch(`${API_URL}/product/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);

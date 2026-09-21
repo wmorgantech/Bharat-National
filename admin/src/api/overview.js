@@ -1,4 +1,6 @@
 // src/api/overview.js
+import { handleUnauthorized, jsonAuthHeaders } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 async function handleResponse(response) {
@@ -10,6 +12,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -24,9 +27,7 @@ async function handleResponse(response) {
 export async function getOverviewData() {
   const res = await fetch(`${API_URL}/overview/all`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;
@@ -39,9 +40,7 @@ export async function getOverviewData() {
 export async function getOverviewStats() {
   const res = await fetch(`${API_URL}/overview/stats`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;
@@ -54,9 +53,7 @@ export async function getOverviewStats() {
 export async function getRecentActivity() {
   const res = await fetch(`${API_URL}/overview/activity`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;
@@ -69,9 +66,7 @@ export async function getRecentActivity() {
 export async function getTopPerformers() {
   const res = await fetch(`${API_URL}/overview/top-performers`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;
@@ -84,9 +79,7 @@ export async function getTopPerformers() {
 export async function getTotalRevenue() {
   const res = await fetch(`${API_URL}/overview/revenue`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;
@@ -99,9 +92,7 @@ export async function getTotalRevenue() {
 export async function getChartData() {
   const res = await fetch(`${API_URL}/overview/chart`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
   });
   const result = await handleResponse(res);
   return result.data || result;

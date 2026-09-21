@@ -1,4 +1,6 @@
 // src/api/Order.js
+import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 /**
@@ -13,6 +15,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -27,6 +30,7 @@ async function handleResponse(response) {
 export async function getOrders() {
   const res = await fetch(`${API_URL}/order`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -38,6 +42,7 @@ export async function getOrders() {
 export async function getOrderById(id) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -50,9 +55,7 @@ export async function getOrderById(id) {
 export async function updateOrder(id, updates) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(updates),
   });
 
@@ -66,6 +69,7 @@ export async function updateOrder(id, updates) {
 export async function deleteOrder(id) {
   const res = await fetch(`${API_URL}/order/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -75,6 +79,7 @@ export async function deleteOrder(id) {
 export async function getUserStats() {
   const res = await fetch(`${API_URL}/user/stats`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -83,6 +88,7 @@ export async function getUserStats() {
 export async function getValidOrders() {
   const res = await fetch(`${API_URL}/order/valid`, {
     method: "GET",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);
@@ -91,6 +97,7 @@ export async function getValidOrders() {
 export async function getAllUsersWithOrderStats() {
   const res = await fetch(`${API_URL}/order/users/all`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }

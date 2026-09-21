@@ -1,4 +1,6 @@
 // src/api/Brand.js
+import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 /**
@@ -13,6 +15,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -27,6 +30,7 @@ async function handleResponse(response) {
 export async function getBrands() {
   const res = await fetch(`${API_URL}/brand`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -38,6 +42,7 @@ export async function getBrands() {
 export async function getActiveBrands() {
   const res = await fetch(`${API_URL}/brand/active`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -49,6 +54,7 @@ export async function getActiveBrands() {
 export async function getBrandById(id) {
   const res = await fetch(`${API_URL}/brand/${id}`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -66,9 +72,7 @@ export async function createBrand({
 }) {
   const res = await fetch(`${API_URL}/brand`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       imageUrl,
@@ -87,9 +91,7 @@ export async function createBrand({
 export async function updateBrand(id, data) {
   const res = await fetch(`${API_URL}/brand/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data), // e.g. { name, description, imageUrl, isActive }
   });
 
@@ -103,6 +105,7 @@ export async function updateBrand(id, data) {
 export async function deleteBrand(id) {
   const res = await fetch(`${API_URL}/brand/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);

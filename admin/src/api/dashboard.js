@@ -1,4 +1,6 @@
 // src/api/dashboard.js
+import { authHeaders, handleUnauthorized } from "./http";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 async function handleResponse(response) {
@@ -10,6 +12,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -20,6 +23,7 @@ async function handleResponse(response) {
 export async function getDashboardStats() {
   const res = await fetch(`${API_URL}/dashboard/stats`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -27,6 +31,7 @@ export async function getDashboardStats() {
 export async function getLast3DaysRevenue() {
   const res = await fetch(`${API_URL}/dashboard/revenue/last-3-days`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -34,6 +39,7 @@ export async function getLast3DaysRevenue() {
 export async function getLast30DaysStats() {
   const res = await fetch(`${API_URL}/dashboard/stats/last-30-days`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -41,6 +47,7 @@ export async function getLast30DaysStats() {
 export async function getLatestOrders() {
   const res = await fetch(`${API_URL}/dashboard/orders/latest`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -48,6 +55,7 @@ export async function getLatestOrders() {
 export async function getTopSellingProducts() {
   const res = await fetch(`${API_URL}/dashboard/products/top-selling`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }

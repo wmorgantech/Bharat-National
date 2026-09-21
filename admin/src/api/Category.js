@@ -1,5 +1,7 @@
 
-const API_URL = import.meta.env.VITE_API_URL; 
+import { authHeaders, handleUnauthorized, jsonAuthHeaders } from "./http";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Handle fetch responses in one place
@@ -13,6 +15,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
+    handleUnauthorized(response);
     const message = data?.message || data?.error || "Request failed";
     throw new Error(message);
   }
@@ -27,6 +30,7 @@ async function handleResponse(response) {
 export async function getCategories() {
   const res = await fetch(`${API_URL}/category`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -38,6 +42,7 @@ export async function getCategories() {
 export async function getActiveCategories() {
   const res = await fetch(`${API_URL}/category/active`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -49,6 +54,7 @@ export async function getActiveCategories() {
 export async function getCategoryById(id) {
   const res = await fetch(`${API_URL}/category/${id}`, {
     method: "GET",
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }
@@ -61,9 +67,7 @@ export async function getCategoryById(id) {
 export async function createCategory({ name, imageUrl, description = "", isActive = true }) {
   const res = await fetch(`${API_URL}/category`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify({
       name,
       imageUrl,
@@ -82,9 +86,7 @@ export async function createCategory({ name, imageUrl, description = "", isActiv
 export async function updateCategory(id, data) {
   const res = await fetch(`${API_URL}/category/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data), // e.g. { name, description, isActive }
   });
 
@@ -98,6 +100,7 @@ export async function updateCategory(id, data) {
 export async function deleteCategory(id) {
   const res = await fetch(`${API_URL}/category/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
 
   return handleResponse(res);

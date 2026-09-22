@@ -10,6 +10,7 @@ import ProductModal from "./Pages/ProductModel";
 import CustomerList from "./Pages/CustomerList";
 import OrderList from "./Pages/OrderedList";
 import BrandList from "./Pages/BrandList";
+import ContactList from "./Pages/ContactList";
 
 export default function App() {
   const isLoggedIn = localStorage.getItem("authToken");
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="product" element={<ProductList />} />
           <Route path="customers" element={<CustomerList />} />
           <Route path="orders" element={<OrderList />} />
+          <Route path="contacts" element={<ContactList />} />
         </Route>
 
         {/* Fallback */}

@@ -165,6 +165,14 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </NavLink>
           </div>
 
+          {/* Contact Enquiries Section */}
+          <div className="mb-2">
+            <NavLink to="/contacts" className={linkClass}>
+              <FileText size={16} />
+              <span className="text-xs sm:text-sm">Contact Enquiries</span>
+            </NavLink>
+          </div>
+
           {/* Customers Section */}
           <div className="mb-2">
             <div

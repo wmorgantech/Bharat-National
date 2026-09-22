@@ -1,5 +1,4 @@
-/* Tailwind CDN */
-@import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css");
+/* Tailwind is compiled at build time - see tailwind.config.js and src/index.css */
 
 /* Inter Font (Premium clean UI font) */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");

@@ -25,10 +25,12 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if mobile
+  // "Mobile" here means "sidebar is a drawer", which is everything below lg
+  // (1024px) - matching lg:hidden on the toggles and lg:translate-x-0 on the
+  // panel. This keeps the backdrop and close-on-navigate active on tablets.
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);

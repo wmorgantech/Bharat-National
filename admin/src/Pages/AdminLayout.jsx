@@ -7,10 +7,13 @@ import { useState, useEffect } from "react";
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Close sidebar on mobile when route changes
+  // The sidebar is only persistent from `lg` (1024px) up, which is the
+  // breakpoint the sidebar's own classes use (lg:translate-x-0 / lg:w-64) and
+  // that both toggle buttons use (lg:hidden). Below that it behaves as a
+  // drawer, so it must start closed - otherwise it sits over the content.
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setSidebarOpen(true);
       } else {
         setSidebarOpen(false);
@@ -26,8 +29,11 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       
-      {/* Main Content - Responsive margin */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+      {/* Main content. The offset is purely responsive: from lg up the sidebar
+          is always on screen (lg:translate-x-0), so the margin must always be
+          applied there rather than tracking open/closed state. Below lg the
+          sidebar is an overlaying drawer and the content stays full width. */}
+      <div className="transition-all duration-300 lg:ml-64">
         <AdminTopbar setSidebarOpen={setSidebarOpen} />
         
         <div className="p-3 sm:p-4 md:p-6">

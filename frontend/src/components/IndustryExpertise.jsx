@@ -21,31 +21,30 @@ const sectors = [
 
 export default function IndustryExpertise() {
   return (
-    <section className="bg-gradient-to-b from-slate-50 via-white to-slate-50 py-10 md:py-14">
-      <div className="max-w-6xl mx-auto px-4 md:px-8">
-        {/* Premium Heading */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <span className="hidden sm:block h-px w-12 md:w-16 bg-slate-200" />
-            <h1 className="text-3xl font-bold">Multi-Sector Expertise</h1>
-            <span className="hidden sm:block h-px w-12 md:w-16 bg-slate-200" />
-          </div>
+    // Dark band: gives the homepage a rhythm break between the white product
+    // and service sections instead of one continuous light scroll.
+    <section className="relative section overflow-hidden">
 
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
+      <div className="relative section-shell">
+        <div className="max-w-2xl mb-10 md:mb-14"data-aos="fade-up">
+          <span className="eyebrow text-primary-light">Who we serve</span>
+          <h2 className="section-title mt-3 text-ink-900">
+            Multi-sector expertise
+          </h2>
+          <p className="section-sub text-ink-500">
             Delivering reliable technology solutions tailored for diverse
             industries.
           </p>
         </div>
 
-        {/* Premium marquee container */}
-        <div className="relative">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_18px_45px_rgba(15,23,42,0.08)] px-4 md:px-10 py-6 md:py-8 overflow-hidden">
-            {/* Fade edges for premium feel */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent" />
+        {/* Marquee. The reveal stays on this wrapper - the row inside is a
+            duplicated, continuously scrolling track. */}
+        <div className="relative"data-aos="fade-up"data-aos-delay="100">
+          <div className="relative overflow-hidden">
+            {/* Fade edges */}
 
             <div
-              className="flex gap-8 animate-marquee"
+              className="flex gap-4 md:gap-5 animate-marquee"
               style={{ width: "max-content" }}
             >
               {[...sectors, ...sectors].map((sector, idx) => {
@@ -53,17 +52,21 @@ export default function IndustryExpertise() {
                 return (
                   <div
                     key={idx}
-                    className="flex flex-col items-center text-center gap-3 min-w-[120px]"
+                    className="group flex items-center gap-3.5 shrink-0
+ rounded-2xl border border-ink-200 bg-white 
+ px-5 py-4 min-w-[190px]
+ transition-all duration-300
+ hover:border-primary/50 hover:bg-primary/10"
                   >
-                    <div
-                      className="inline-flex items-center justify-center h-14 w-14 rounded-full
-                                 border border-[var(--primary)]/25 bg-[var(--primary)]/5
-                                 text-[var(--primary)] shadow-sm
-                                 transition-transform duration-200 hover:-translate-y-1 hover:shadow-md"
+                    <span
+                      className="grid place-items-center h-11 w-11 shrink-0 rounded-xl
+ bg-primary/15 text-primary-light
+ transition-colors duration-300
+ group-hover:bg-primary group-hover:text-ink-900"
                     >
-                      <Icon className="w-7 h-7" />
-                    </div>
-                    <p className="text-sm font-semibold text-slate-800">
+                      <Icon className="w-5 h-5" />
+                    </span>
+                    <p className="text-sm font-semibold text-ink-800 whitespace-nowrap">
                       {sector.label}
                     </p>
                   </div>
@@ -83,7 +86,10 @@ export default function IndustryExpertise() {
           }
           .animate-marquee {
             display: flex;
-            animation: marquee 25s linear infinite;
+            animation: marquee 32s linear infinite;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .animate-marquee { animation: none; }
           }
         `}
       </style>

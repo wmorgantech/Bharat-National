@@ -1,22 +1,31 @@
 // ProductCard.jsx
 import React, { useState } from "react";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import { addToCart } from "../utils/CartStorage";
-import { PrimaryButton } from "./FormControl";
+import placeholderImg from "../assets/products/placeholder.svg";
 
+/**
+ * Compact, image-led product card.
+ *
+ * Only fields the API actually returns are rendered - name, image, price,
+ * brand and category. There is no rating, discount or stock field on the
+ * Product model, so none are shown.
+ */
 const ProductCard = ({ product }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const navigate = useNavigate();
 
   const mainImage = Array.isArray(product.imageUrl)
     ? product.imageUrl[0]
-    : product.imageUrl || product.image || "/placeholder-product.png";
+    : product.imageUrl || product.image || placeholderImg;
 
   const categoryLabel =
     product.category?.name || product.categoryName || product.category || "";
+
+  const brandLabel =
+    product.brand?.name || product.brandName || product.brand || "";
 
   const priceNumber = Number(product.price) || 0;
 
@@ -44,15 +53,15 @@ const ProductCard = ({ product }) => {
       // Store product to add after login
       const pendingItem = { product, quantity: 1 };
       localStorage.setItem('pendingCartItem', JSON.stringify(pendingItem));
-      
+
       toast.error('Please login to add items to cart', {
         duration: 3000,
         position: "top-right",
       });
-      
+
       // Navigate to signup page
       navigate('/signup', {
-        state: { 
+        state: {
           redirectTo: '/',
           pendingCartItem: pendingItem
         }
@@ -65,7 +74,7 @@ const ProductCard = ({ product }) => {
     window.dispatchEvent(new Event("cart:open"));
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1200);
-    
+
     toast.success('Added to cart!', {
       duration: 1500,
       position: "top-right",
@@ -73,88 +82,83 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div
-      className="
-        group relative bg-white
-        rounded-2xl border border-gray-100
-        shadow-sm hover:shadow-xl transition-all duration-300
-        overflow-hidden cursor-pointer
-        flex flex-col
-      "
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
-    >
-      <div className="relative w-full aspect-[4/3] md:aspect-square bg-white overflow-hidden flex items-center justify-center">
+    <article className="card-product group h-full cursor-pointer" onClick={handleCardClick}>
+      {/* ---- Media -------------------------------------------------------- */}
+      <div className="card-product-media">
+        {categoryLabel && (
+          <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-full border border-ink-200 bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink-600">
+            {categoryLabel}
+          </span>
+        )}
+
+        {/* Quick view. Hover-to-reveal is gated on (hover:hover) so touch
+            devices - tablets included - keep the action permanently visible
+            rather than hiding it behind a hover that never fires. */}
         <button
           type="button"
-          onClick={handleCartClick}
-          className="
-            absolute top-2 right-2 md:top-3 md:right-3
-            flex items-center justify-center
-            h-9 w-9 rounded-full
-            bg-white/90 text-[var(--primary)]
-            shadow-sm hover:shadow-lg hover:scale-110
-            transition-all duration-200 z-10
-            opacity-100 scale-100
-            md:opacity-0 md:scale-75 md:pointer-events-none
-            md:group-hover:opacity-100 md:group-hover:scale-100 md:group-hover:pointer-events-auto
-          "
-          aria-label="Add to cart"
+          onClick={handleViewMoreClick}
+          aria-label={`View details for ${product.name}`}
+          className="absolute right-2.5 top-2.5 z-10 grid h-8 w-8 place-items-center rounded-full border border-ink-200 bg-white text-ink-700 transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-white
+ [@media(hover:hover)]:lg:opacity-0 [@media(hover:hover)]:lg:pointer-events-none
+ [@media(hover:hover)]:lg:group-hover:opacity-100 [@media(hover:hover)]:lg:group-hover:pointer-events-auto"
         >
-          {justAdded ? <Check size={16} /> : <ShoppingCart size={16} />}
+          <ArrowUpRight size={15} />
         </button>
 
         <img
           src={mainImage}
           alt={product.name}
-          className="
-            w-full h-full object-contain
-            transition-transform duration-500
-            group-hover:scale-110
-          "
+          className="card-product-img"
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = placeholderImg;
+          }}
         />
       </div>
 
-      <div className="p-3 md:p-5 flex flex-col gap-2">
-        {categoryLabel && (
-          <div className="text-[11px] md:text-xs text-gray-500 font-medium uppercase tracking-wide">
-            {categoryLabel}
-          </div>
+      {/* ---- Body --------------------------------------------------------- */}
+      <div className="card-product-body">
+        {brandLabel && (
+          <p className="mb-1 truncate text-[10.5px] font-semibold uppercase tracking-[0.14em] text-primary">
+            {brandLabel}
+          </p>
         )}
 
-        <h3
-          className="font-semibold text-sm md:text-base leading-snug line-clamp-2 transition-colors"
-          style={{ color: isHovered ? "var(--primary)" : "#1A1A1A" }}
-        >
+        <h3 className="h-card line-clamp-2 leading-snug transition-colors duration-200 group-hover:text-primary">
           {product.name}
         </h3>
 
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-lg md:text-xl font-bold text-[#1A1A1A] whitespace-nowrap">
+        {/* Pushes the price/action block to the bottom so cards in a row
+            stay aligned regardless of title length. */}
+        <div className="mt-auto pt-3">
+          <span className="text-price block whitespace-nowrap">
             {priceNumber.toLocaleString("en-IN", {
               style: "currency",
               currency: "INR",
+              maximumFractionDigits: 0,
             })}
           </span>
-        </div>
 
-        <div
-          className="
-            pt-1
-            transition-all duration-300
-            opacity-100 translate-y-0
-            md:opacity-0 md:translate-y-6
-            md:group-hover:opacity-100 md:group-hover:translate-y-0
-          "
-        >
-          <PrimaryButton onClick={handleViewMoreClick} className="w-full">
-            View More
-          </PrimaryButton>
+          <button
+            type="button"
+            onClick={handleCartClick}
+            className="btn-primary btn-sm mt-2.5 w-full"
+          >
+            {justAdded ? (
+              <>
+                <Check size={15} />
+                Added
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={15} />
+                Add to Cart
+              </>
+            )}
+          </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

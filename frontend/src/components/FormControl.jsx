@@ -1,17 +1,27 @@
-
 import React from "react";
+
+// Shared field chrome. Kept in one place so every input, textarea and select
+// across the cart, checkout and contact forms share the same shape and focus
+// treatment.
+const FIELD_BASE =
+"w-full rounded-2xl border border-ink-200 bg-white  px-4 py-3.5 text-sm text-ink-900 " +
+"placeholder:text-ink-500/60 outline-none transition-all duration-200 " +
+"hover:border-ink-200 " +
+"focus:border-primary focus:ring-4 focus:ring-primary/10 focus:bg-white " +
+"disabled:bg-white disabled:text-ink-500 disabled:cursor-not-allowed";
+
+const LABEL_BASE =
+"flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500 mb-2.5";
 
 // Text input with label + optional icon
 export function TextInput({ label, icon: Icon, className, ...inputProps }) {
-  const base =
-    "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm outline-none focus:border-[var(--primary)] focus:bg-white focus:ring-1 focus:ring-[var(--primary)]";
-  const finalClass = className ? `${base} ${className}` : base;
+  const finalClass = className ? `${FIELD_BASE} ${className}` : FIELD_BASE;
 
   return (
     <div>
       {label && (
-        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1.5">
-          {Icon && <Icon className="w-3.5 h-3.5 text-slate-400" />}
+        <label className={LABEL_BASE}>
+          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
           {label}
         </label>
       )}
@@ -22,15 +32,14 @@ export function TextInput({ label, icon: Icon, className, ...inputProps }) {
 
 // Textarea with label + optional icon
 export function TextArea({ label, icon: Icon, className, ...textareaProps }) {
-  const base =
-    "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm outline-none focus:border-[var(--primary)] focus:bg-white focus:ring-1 focus:ring-[var(--primary)] resize-none";
+  const base = `${FIELD_BASE} resize-none leading-relaxed`;
   const finalClass = className ? `${base} ${className}` : base;
 
   return (
     <div>
       {label && (
-        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1.5">
-          {Icon && <Icon className="w-3.5 h-3.5 text-slate-400" />}
+        <label className={LABEL_BASE}>
+          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
           {label}
         </label>
       )}
@@ -47,15 +56,14 @@ export function SelectInput({
   children,
   ...selectProps
 }) {
-  const base =
-    "w-full rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm outline-none focus:border-[var(--primary)] focus:bg-white focus:ring-1 focus:ring-[var(--primary)]";
+  const base = `${FIELD_BASE} cursor-pointer`;
   const finalClass = className ? `${base} ${className}` : base;
 
   return (
     <div>
       {label && (
-        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1.5">
-          {Icon && <Icon className="w-3.5 h-3.5 text-slate-400" />}
+        <label className={LABEL_BASE}>
+          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
           {label}
         </label>
       )}
@@ -73,8 +81,7 @@ export function PrimaryButton({
   className,
   ...buttonProps
 }) {
-  const base =
-    "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--primary)] transition";
+  const base = "btn-primary btn-md w-full";
   const finalClass = className ? `${base} ${className}` : base;
 
   return (

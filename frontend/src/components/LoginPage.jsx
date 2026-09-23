@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { X, Lock, ArrowRight, ArrowUpRight, CheckCircle2, EyeOff, Eye } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, EyeOff, Eye, ShieldCheck, Truck, Headset } from 'lucide-react';
 import { auth } from '../api/auth';
+import Logo from '../assets/logo.jpeg';
+
+const PERKS = [
+  { Icon: ShieldCheck, label: 'Genuine products, brand warranty' },
+  { Icon: Truck, label: 'Fast delivery across major cities' },
+  { Icon: Headset, label: 'Lifetime service support' },
+];
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -80,144 +87,176 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="relative w-full max-w-[440px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[95vh] overflow-y-auto">
-        {/* Close Button */}
+    /* An ordinary page, not a fixed overlay. The previous version was pinned
+       with `fixed inset-0 z-[9000]`, which floated the whole card over the
+       header and footer - that is what read as overlapping components. */
+    <div className="bg-ink-50 py-10 md:py-16">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
         <button
+          type="button"
           onClick={handleClose}
-          className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm hover:bg-gray-100 text-gray-500 hover:text-gray-900 hover:rotate-90 transition-all duration-300 shadow-sm"
-          aria-label="Close"
+          className="mb-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-500 transition-colors hover:text-primary"
         >
-          <X size={18} />
+          <ArrowLeft size={15} />
+          Back
         </button>
 
-        <div className="px-6 sm:px-10 py-8 sm:py-10">
-          {/* Lock Icon */}
-          <div className="flex justify-center mb-5">
-            <div className="relative">
-              <div
-                className="absolute inset-0 rounded-2xl blur-xl opacity-40"
-                style={{ backgroundColor: 'var(--primary, #00897B)' }}
-              ></div>
-              <div
-                className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: 'linear-gradient(135deg, var(--primary, #00897B), #00695C)',
-                }}
-              >
-                <Lock size={24} className="text-white" />
-              </div>
-            </div>
-          </div>
-
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 tracking-tight">
-              Welcome Back
-            </h2>
-            <p className="text-sm text-gray-500">
-              Sign in with your mobile number and password to continue
-            </p>
-          </div>
-
-          {/* Step Indicator (optional, now single step) */}
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div
-              className="h-1.5 rounded-full w-10"
-              style={{ backgroundColor: 'var(--primary, #00897B)' }}
-            ></div>
-          </div>
-
-          {/* Mobile Input */}
-          <form onSubmit={handleLogin}>
-            <div className="mb-5">
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
-                Mobile Number
-              </label>
-              <div className="relative group">
-                <div className="absolute left-0 top-0 bottom-0 flex items-center pl-4 pointer-events-none border-r border-gray-200">
-                  <span className="text-gray-700 font-semibold pr-3">+91</span>
-                </div>
-                <input
-                  type="tel"
-                  value={mobileNumber}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.replace(/\D/g, '');
-                    if (cleaned.length <= 10) setMobileNumber(cleaned);
-                  }}
-                  className="w-full pl-16 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[var(--primary,#00897B)] focus:bg-white focus:ring-1 focus:ring-[var(--primary,#00897B)]/30 transition-all text-base font-medium placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="98765 43210"
-                  maxLength={10}
-                  disabled={loading}
+        <div className="grid overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card lg:grid-cols-[0.9fr,1fr]">
+          {/* ---- Brand panel (desktop) ---- */}
+          <aside className="anim-aside relative hidden flex-col justify-between border-r border-ink-200 bg-ink-50 p-10 lg:flex">
+            <div>
+              <span className="anim-logo grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-200 bg-white">
+                <img
+                  src={Logo}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-[85%] w-[85%] object-contain"
                 />
-                {mobileNumber.length === 10 && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <CheckCircle2 size={20} style={{ color: 'var(--primary, #00897B)' }} />
-                  </div>
-                )}
+              </span>
+
+              <div className="anim-brand">
+                <h2 className="mt-7 font-display text-[24px] font-bold leading-tight tracking-[-0.02em] text-ink-900">
+                  Welcome back to Bharat National Computers
+                </h2>
+                <p className="mt-3 text-[14.5px] leading-relaxed text-ink-600">
+                  Sign in to track orders, reorder quickly and manage your
+                  service requests.
+                </p>
               </div>
             </div>
 
-          {/* Password Input */}
-<div className="mb-6">
-  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
-    Password
-  </label>
-  <div className="relative">
-    <input
-      type={showPassword ? 'text' : 'password'}
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[var(--primary,#00897B)] focus:bg-white focus:ring-1 focus:ring-[var(--primary,#00897B)]/30 transition-all text-base font-medium placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed pr-11"
-      placeholder="Enter your password"
-      disabled={loading}
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword((prev) => !prev)}
-      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-      tabIndex={-1}
-    >
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-    </button>
-  </div>
-</div>
+            <ul className="anim-brand mt-10 space-y-4">
+              {PERKS.map((perk) => (
+                <li key={perk.label} className="flex items-center gap-3 text-[13.5px] text-ink-700">
+                  <span className="icon-chip-sm">
+                    <perk.Icon size={15} />
+                  </span>
+                  {perk.label}
+                </li>
+              ))}
+            </ul>
+          </aside>
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={loading || mobileNumber.length !== 10 || !password}
-              className="group relative w-full flex items-center justify-center gap-2 text-white font-semibold py-3.5 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, var(--primary, #00897B), #00695C)',
-                boxShadow: '0 10px 30px -10px rgba(0, 137, 123, 0.5)',
-              }}
-            >
-              <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
-              <span className="relative flex items-center gap-2">
+          {/* ---- Form panel ---- */}
+          <div className="anim-panel px-6 py-9 sm:px-10 sm:py-12">
+            {/* Mobile-only brand mark */}
+            <div className="mb-6 flex justify-center lg:hidden">
+              <span className="anim-logo grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-200 bg-white">
+                <img
+                  src={Logo}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-[85%] w-[85%] object-contain"
+                />
+              </span>
+            </div>
+
+            <div className="mb-8 text-center lg:text-left">
+              <span className="eyebrow">Sign in</span>
+              <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.02em] text-ink-900 sm:text-[30px]">
+                Welcome back
+              </h1>
+              <p className="mt-2 text-[14.5px] text-ink-500">
+                Sign in with your mobile number and password to continue
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin}>
+              {/* Mobile Number */}
+              <div className="mb-5">
+                <label className="field-label">Mobile Number</label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute bottom-0 left-0 top-0 flex items-center pl-3.5">
+                    <span className="border-r border-ink-200 pr-3 text-sm font-semibold text-ink-700">
+                      +91
+                    </span>
+                  </div>
+                  <input
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, '');
+                      if (cleaned.length <= 10) setMobileNumber(cleaned);
+                    }}
+                    className="field py-3 pl-[64px] pr-11 text-[15px]"
+                    placeholder="98765 43210"
+                    maxLength={10}
+                    disabled={loading}
+                  />
+                  {mobileNumber.length === 10 && (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                      <CheckCircle2 size={18} className="text-primary" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="mb-7">
+                <label className="field-label">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="field py-3 pr-11 text-[15px]"
+                    placeholder="Enter your password"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-ink-400 transition-colors hover:text-primary"
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || mobileNumber.length !== 10 || !password}
+                className="btn-primary btn-lg w-full"
+              >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                     Logging in...
                   </>
                 ) : (
                   <>
                     Login
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight size={17} />
                   </>
                 )}
-              </span>
-            </button>
-          </form>
+              </button>
+            </form>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 leading-relaxed">
-              By continuing, you agree to our{' '}
-              <span className="underline cursor-pointer hover:text-gray-700">Terms</span>
-              {' '} & {' '}
-              <span className="underline cursor-pointer hover:text-gray-700">Privacy Policy</span>
+            <p className="mt-6 text-center text-[13.5px] text-ink-500 lg:text-left">
+              New to BNC?{' '}
+              <button
+                type="button"
+                onClick={() =>
+                  navigate('/signup', {
+                    state: { redirectTo: location.state?.redirectTo || '/' },
+                  })
+                }
+                className="font-semibold text-primary hover:underline"
+              >
+                Create an account
+              </button>
             </p>
+
+            <div className="mt-6 border-t border-ink-200 pt-5 text-center lg:text-left">
+              <p className="text-[11.5px] leading-relaxed text-ink-400">
+                By continuing, you agree to our{' '}
+                <span className="cursor-pointer underline transition-colors hover:text-ink-700">Terms</span>
+                {' '}&amp;{' '}
+                <span className="cursor-pointer underline transition-colors hover:text-ink-700">Privacy Policy</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>

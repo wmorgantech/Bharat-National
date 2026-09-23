@@ -1,67 +1,69 @@
-import React, { useEffect } from "react";
-import AOS from "aos";
-import "aos/dist/aos.css";
+import React from "react";
 import { RotateCcw, Truck, Headphones, BadgeCheck } from "lucide-react";
 
 const features = [
   {
-    icon: <RotateCcw size={32} />,
+    Icon: RotateCcw,
     title: "14-Day Returns",
     desc: "Risk-free shopping with easy returns.",
   },
   {
-    icon: <Truck size={32} />,
+    Icon: Truck,
     title: "Free Shipping",
     desc: "No extra costs, just the price you see.",
   },
   {
-    icon: <Headphones size={32} />,
+    Icon: Headphones,
     title: "24/7 Support",
     desc: "24/7 support, always here just for you.",
   },
   {
-    icon: <BadgeCheck size={32} />,
+    Icon: BadgeCheck,
     title: "Member Discounts",
     desc: "Special prices for our loyal customers.",
   },
 ];
 
+// AOS is initialised once at app level in App.jsx.
 export default function FeatureSection() {
-  useEffect(() => {
-    AOS.init({
-      duration: 700,
-      easing: "ease-in-out",
-      once: false, 
-      mirror: true, 
-    });
-
-    // Refresh AOS on resize or scroll for safety
-    const handleRefresh = () => AOS.refresh();
-    window.addEventListener("resize", handleRefresh);
-
-    return () => {
-      window.removeEventListener("resize", handleRefresh);
-    };
-  }, []);
-
   return (
-    <section className="py-14 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((item, index) => (
+    <section className="bg-white">
+      <div className="section-shell py-10 md:py-14">
+        {/* One continuous band with hairline dividers, rather than four
+            detached cards floating on grey. */}
+        <div
+          className="rounded-3xl border border-ink-200 bg-white shadow-card
+ grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+ divide-y sm:divide-y-0 divide-ink-200
+ lg:divide-x lg:divide-ink-200 overflow-hidden"
+        >
+          {features.map((feature, index) => (
             <div
-              key={index}
+              key={feature.title}
               data-aos="fade-up"
-              data-aos-delay={index * 150}
-              className="bg-white rounded-xl shadow-md p-8 text-center hover:shadow-lg transition-all duration-300"
+              data-aos-delay={Math.min(index, 5) * 120}
+              className="group relative p-6 md:p-7 flex items-start gap-4 transition-colors duration-300 hover:bg-white
+ sm:[&:nth-child(2)]:border-l sm:[&:nth-child(2)]:border-ink-200
+ sm:[&:nth-child(4)]:border-l sm:[&:nth-child(4)]:border-ink-200
+ lg:[&:nth-child(2)]:border-l-0 lg:[&:nth-child(4)]:border-l-0"
             >
-              <div className="flex justify-center mb-4 text-gray-700">
-                {item.icon}
+              <span
+                className="shrink-0 grid place-items-center h-12 w-12 rounded-2xl
+ bg-primary/10 text-primary
+ transition-all duration-300
+ group-hover:bg-primary group-hover:text-ink-900 group-hover:scale-105"
+              >
+                <feature.Icon size={22} />
+              </span>
+
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold tracking-tight text-ink-900">
+                  {feature.title}
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
+                  {feature.desc}
+                </p>
               </div>
-
-              <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-
-              <p className="text-gray-500 text-sm">{item.desc}</p>
             </div>
           ))}
         </div>

@@ -1,12 +1,12 @@
 // src/brand/brand.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class BrandService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createBrandDto: CreateBrandDto) {
     const brand = await this.prisma.brand.create({

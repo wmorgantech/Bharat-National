@@ -7,21 +7,20 @@ import {
   UnauthorizedException 
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { CreateAdminDto, LoginAdminDto } from './dto/create-admin.dto';
 
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { RefreshTokenService } from '../auth/refresh-token.service';
 import { ACCESS_TOKEN_TTL } from '../config/env';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AdminService {
-  private prisma = new PrismaClient();
-
   constructor(
     private jwtService: JwtService,
     private refreshTokens: RefreshTokenService,
+    private prisma: PrismaService,
   ) {}
 
   /** Access tokens carry only the subject and principal type. */

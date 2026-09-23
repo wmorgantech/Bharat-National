@@ -18,10 +18,12 @@ import { OverviewModule } from './overview/overview.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { THROTTLER_CONFIG } from './common/throttle.config';
+import { PrismaModule } from './prisma/prisma.module';
+import { PaymentModule } from './payment/payment.module';
 
 
 @Module({
-  imports: [ThrottlerModule.forRoot(THROTTLER_CONFIG), AdminModule, CategoryModule, UploadModule, BrandModule, ProductModule, OrderModule, OrderitemModule, ContactModule, UserModule, AuthModule, DashboardModule, OverviewModule],
+  imports: [PrismaModule, PaymentModule, ThrottlerModule.forRoot(THROTTLER_CONFIG), AdminModule, CategoryModule, UploadModule, BrandModule, ProductModule, OrderModule, OrderitemModule, ContactModule, UserModule, AuthModule, DashboardModule, OverviewModule],
   controllers: [AppController],
   providers: [
     AppService,

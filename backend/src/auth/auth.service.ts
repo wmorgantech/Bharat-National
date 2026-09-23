@@ -7,19 +7,18 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenService } from './refresh-token.service';
 import { ACCESS_TOKEN_TTL } from '../config/env';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
-  private prisma = new PrismaClient();
-
   constructor(
     private jwtService: JwtService,
     private refreshTokens: RefreshTokenService,
+    private prisma: PrismaService,
   ) {}
 
   /**

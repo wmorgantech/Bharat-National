@@ -1,10 +1,11 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { PrismaClient, RefreshToken } from '@prisma/client';
+import { RefreshToken } from '@prisma/client';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import {
   getRefreshAbsoluteTtlDays,
   getRefreshTokenTtlDays,
 } from '../config/env';
+import { PrismaService } from '../prisma/prisma.service';
 
 export type PrincipalType = 'USER' | 'ADMIN';
 
@@ -28,8 +29,9 @@ const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 @Injectable()
 export class RefreshTokenService {
   private readonly logger = new Logger(RefreshTokenService.name);
-  private prisma = new PrismaClient();
   private lastCleanupAt = 0;
+
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * SHA-256 rather than bcrypt: the token is already 256 bits of entropy, so

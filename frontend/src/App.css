@@ -1,7 +1,6 @@
 /* Tailwind is compiled at build time - see tailwind.config.js and src/index.css */
 
-/* Inter Font (Premium clean UI font) */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 :root {
   /* PRIMARY BRAND COLORS */
@@ -28,14 +27,166 @@
   --danger: #E74C3C;
 
   /* SPACING (OPTIONAL) */
-  --radius: 8px;
-  --shadow: 0 2px 6px rgba(0,0,0,0.1);
+  --radius: 16px;
+  --shadow: 0 14px 40px rgba(16,24,40,0.10);
 }
 
-/* Optional Global Body Style */
-body {
+html {
   background: var(--grey-100);
-  color: var(--text-dark);
-  font-family: 'Inter', sans-serif;
+  scroll-behavior: smooth;
+}
+
+body {
+  /* Substrate now lives in index.css @layer base so it composes with the
+     glass system. Only typography rendering is set here. */
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  color: #fff;
+  background: rgba(34, 211, 238, 0.35);
+}
+
+button, a, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(0,137,123,0.24);
+  outline-offset: 3px;
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 4px rgba(0,137,123,0.14);
+}
+
+/* Toastify is the single notification surface for the storefront.
+   Dark glass, matching the panel system. */
+.Toastify__toast-container {
+  width: auto;
+  min-width: 300px;
+  max-width: 380px;
+  padding: 0;
+}
+
+.Toastify__toast {
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+  font-family: "DM Sans", "Inter", system-ui, sans-serif;
+  color: #0F172A;
+  padding: 12px 14px;
+  min-height: auto;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.Toastify__toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #0F172A;
+}
+
+.Toastify__toast-body small,
+.Toastify__toast-body .toast-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748B;
+}
+
+.Toastify__toast-icon {
+  width: 18px;
+  margin-inline-end: 0;
+  flex-shrink: 0;
+}
+
+.Toastify__progress-bar {
+  height: 2px;
+  opacity: 0.9;
+}
+
+/* Semantic edges. Success/info lean on the brand teal and cyan; error and
+   warning keep their own semantic colours. */
+.Toastify__toast--success { border-color: rgba(0, 137, 123, 0.35); }
+.Toastify__toast--error   { border-color: rgba(231, 76, 60, 0.45); }
+.Toastify__toast--warning { border-color: rgba(241, 196, 15, 0.45); }
+.Toastify__toast--info    { border-color: rgba(0, 137, 123, 0.25); }
+
+.Toastify__progress-bar--success { background: #00897B; }
+.Toastify__progress-bar--error   { background: #e74c3c; }
+.Toastify__progress-bar--warning { background: #f1c40f; }
+.Toastify__progress-bar--info    { background: #26A69A; }
+
+.bnc-toast {
+  display: flex;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .Toastify__toast { animation-duration: 0.01ms !important; }
+}
+
+.site-header {
+  position: relative;
+  z-index: 40;
+  box-shadow: 0 1px 0 rgba(16,24,40,0.06);
+}
+
+.site-header > div:first-child {
+  letter-spacing: 0.01em;
+}
+
+.site-header nav {
+  border-top: 1px solid rgba(208,213,221,0.65);
+  border-bottom: 1px solid rgba(208,213,221,0.65);
+  background: #ffffff;
+}
+
+.site-footer {
+  background: #F8FAFC;
+}
+
+@media (max-width: 640px) {
+  /* Matches the admin panel so both apps notify in the same place. Toasts
+     stay top-aligned, consistent with position="top-right". */
+  .Toastify__toast-container {
+    width: calc(100vw - 24px);
+    min-width: 0;
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    bottom: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 

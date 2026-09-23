@@ -26,7 +26,7 @@ export default function AdminLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ink-50">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       
       {/* Main content. The offset is purely responsive: from lg up the sidebar
@@ -36,7 +36,7 @@ export default function AdminLayout() {
       <div className="transition-all duration-300 lg:ml-64">
         <AdminTopbar setSidebarOpen={setSidebarOpen} />
         
-        <div className="p-3 sm:p-4 md:p-6">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
           <Outlet />
         </div>
       </div>

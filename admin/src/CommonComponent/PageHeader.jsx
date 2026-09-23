@@ -6,23 +6,26 @@ export default function PageHeader({
   actionLabel,
   onAction,
   actionIcon: Icon,
+  eyebrow,
+  children,
 }) {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="min-w-0">
+        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+        <h1 className={`page-title ${eyebrow ? "mt-2" : ""}`}>{title}</h1>
+        {subtitle && <p className="page-sub">{subtitle}</p>}
       </div>
 
-      {actionLabel && (
-        <button
-          onClick={onAction}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
-        >
-          {Icon && <Icon className="w-4 h-4" />}
-          {actionLabel}
-        </button>
-      )}
+      <div className="flex items-center gap-2.5 shrink-0">
+        {children}
+        {actionLabel && (
+          <button onClick={onAction} className="btn-primary btn-md">
+            {Icon && <Icon className="w-4 h-4" aria-hidden="true" />}
+            {actionLabel}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

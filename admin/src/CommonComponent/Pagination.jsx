@@ -4,12 +4,23 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function Pagination({ page, totalPages, onChange }) {
   if (totalPages <= 1) return null;
 
+  const arrow =
+    "grid place-items-center h-9 w-9 rounded-lg border transition-all duration-200";
+
   return (
-    <div className="flex justify-center items-center gap-2 mt-4">
+    <nav
+      aria-label="Pagination"
+      className="flex justify-center items-center gap-1.5 mt-6"
+    >
       <button
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
-        className="p-2 border rounded disabled:opacity-50"
+        aria-label="Previous page"
+        className={`${arrow} ${
+          page === 1
+            ? "border-ink-100 text-ink-200 cursor-not-allowed"
+            : "border-ink-200 text-ink-900 hover:bg-primary hover:text-white hover:border-primary"
+        }`}
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -18,8 +29,11 @@ export default function Pagination({ page, totalPages, onChange }) {
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`px-3 py-1 border rounded ${
-            page === p ? "bg-black text-white" : "bg-white hover:bg-gray-200"
+          aria-current={page === p ? "page" : undefined}
+          className={`h-9 min-w-[2.25rem] px-2.5 rounded-lg border text-[13px] font-semibold tabular-nums transition-all duration-200 ${
+            page === p
+              ? "bg-primary text-white border-primary shadow-glow"
+              : "bg-white text-ink-600 border-ink-200 hover:border-primary hover:text-primary"
           }`}
         >
           {p}
@@ -29,10 +43,15 @@ export default function Pagination({ page, totalPages, onChange }) {
       <button
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
-        className="p-2 border rounded disabled:opacity-50"
+        aria-label="Next page"
+        className={`${arrow} ${
+          page === totalPages
+            ? "border-ink-100 text-ink-200 cursor-not-allowed"
+            : "border-ink-200 text-ink-900 hover:bg-primary hover:text-white hover:border-primary"
+        }`}
       >
         <ChevronRight className="w-4 h-4" />
       </button>
-    </div>
+    </nav>
   );
 }

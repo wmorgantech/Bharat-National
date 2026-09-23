@@ -3,7 +3,8 @@ import AdminLayout from "./Pages/AdminLayout";
 import AdminOverview from "./components/AdminOverview";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginPage from "./Pages/LoginPage";
-import { ToastContainer } from "react-toastify";
+import AppToaster from "./components/AppToaster";
+import "react-toastify/dist/ReactToastify.css";
 import CategoryList from "./Pages/CategoryList";
 import ProductList from "./Pages/ProductList";
 import ProductModal from "./Pages/ProductModel";
@@ -17,7 +18,7 @@ export default function App() {
 
   return (
     <BrowserRouter basename="/admin">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <AppToaster />
 
       <Routes>
         {/* Public */}

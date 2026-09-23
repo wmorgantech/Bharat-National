@@ -78,7 +78,7 @@ const CategoryList = () => {
           className={`px-2 py-1 text-xs rounded-full ${
             c.isActive
               ? "bg-green-50 text-green-700"
-              : "bg-slate-50 text-slate-600"
+              : "bg-ink-50 text-ink-500"
           }`}
         >
           {c.isActive ? "Active" : "Inactive"}
@@ -92,7 +92,7 @@ const CategoryList = () => {
       render: (c) => (
         <div className="flex justify-end gap-3">
           <button
-            className="text-blue-600"
+            className="text-primary"
             title="View"
             onClick={() => {
               setViewData(c);
@@ -126,7 +126,7 @@ const CategoryList = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex justify-center px-4 py-6">
+    <div className="min-h-screen bg-ink-50 flex justify-center px-4 py-6">
       <div className="w-full max-w-6xl">
         <PageHeader
           title="Categories"
@@ -180,18 +180,18 @@ const CategoryList = () => {
               />
 
               <div>
-                <p className="text-xs text-slate-500">Name</p>
+                <p className="text-xs text-ink-500">Name</p>
                 <p className="font-medium">{viewData.name}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Description</p>
-                <p className="bg-slate-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-ink-500">Description</p>
+                <p className="bg-ink-50 rounded-lg px-3 py-2">
                   {viewData.description || "—"}
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-1">
+              <div className="pt-2 border-t border-ink-100">
+                <p className="text-xs font-medium text-ink-500 mb-1">
                   Status
                 </p>
                 <span

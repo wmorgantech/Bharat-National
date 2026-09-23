@@ -20,6 +20,8 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
       subtitleEdit="Update brand details"
       addBtnText="Create Brand"
       editBtnText="Update Brand"
+      successAddText="Brand created"
+      successEditText="Brand updated"
       initialForm={{
         name: "",
         description: "",
@@ -62,7 +64,7 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
       }}
       renderLeft={({ form, setForm }) => (
         <>
-          <h3 className="text-base font-semibold mb-4 text-slate-900">
+          <h3 className="text-base font-semibold mb-4 text-ink-900">
             Brand Information
           </h3>
 
@@ -94,10 +96,10 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, isActive: e.target.checked }))
                 }
-                className="rounded border-slate-300"
+                className="rounded border-ink-200"
                 id="brandIsActive"
               />
-              <label htmlFor="brandIsActive" className="text-sm text-slate-700">
+              <label htmlFor="brandIsActive" className="text-sm text-ink-600">
                 Active
               </label>
             </div>
@@ -106,11 +108,11 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
       )}
       renderRight={({ form, setForm, isEditMode }) => (
         <>
-          <h3 className="text-base font-semibold mb-4 text-slate-900">
+          <h3 className="text-base font-semibold mb-4 text-ink-900">
             Brand Logo / Image
           </h3>
 
-          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-ink-200 rounded-xl bg-ink-50 hover:bg-ink-100 cursor-pointer transition">
             {form.imagePreview ? (
               <img
                 src={form.imagePreview}
@@ -119,11 +121,11 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
               />
             ) : (
               <>
-                <UploadCloud className="w-10 h-10 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-700">
+                <UploadCloud className="w-10 h-10 text-ink-500 mb-2" />
+                <span className="text-sm text-ink-600">
                   Click to upload image
                 </span>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-ink-500">
                   PNG, JPG up to 5MB
                 </span>
               </>
@@ -145,7 +147,7 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
           </label>
 
           {isEditMode && form.imageUrl && !form.imageFile && (
-            <p className="mt-2 text-[11px] text-slate-400">
+            <p className="mt-2 text-[11px] text-ink-500">
               Current image is kept. Choose a file above only if you want to
               replace it.
             </p>

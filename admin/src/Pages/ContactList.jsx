@@ -102,7 +102,7 @@ const ContactList = () => {
         <div className="flex justify-end">
           <button
             type="button"
-            className="text-blue-600"
+            className="text-primary"
             title="View enquiry"
             onClick={() => {
               setViewData(contact);
@@ -117,7 +117,7 @@ const ContactList = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex justify-center px-4 py-6">
+    <div className="min-h-screen bg-ink-50 flex justify-center px-4 py-6">
       <div className="w-full max-w-6xl">
         <PageHeader
           title="Contact Enquiries"
@@ -138,16 +138,16 @@ const ContactList = () => {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
 
-            <p className="text-sm font-medium text-slate-800">
+            <p className="text-sm font-medium text-ink-900">
               Could not load contact enquiries
             </p>
-            <p className="text-xs text-slate-500 mt-1">{error}</p>
+            <p className="text-xs text-ink-500 mt-1">{error}</p>
 
             <button
               type="button"
               onClick={fetchContacts}
               disabled={loading}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Retrying..." : "Retry"}
@@ -182,36 +182,36 @@ const ContactList = () => {
           {viewData && (
             <div className="space-y-4 text-sm">
               <div>
-                <p className="text-xs text-slate-500">Name</p>
+                <p className="text-xs text-ink-500">Name</p>
                 <p className="font-medium break-words">{viewData.name}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Email</p>
+                <p className="text-xs text-ink-500">Email</p>
                 <p className="font-medium break-words">{viewData.email}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Phone</p>
+                <p className="text-xs text-ink-500">Phone</p>
                 <p className="font-medium break-words">{viewData.phone}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Interested In</p>
+                <p className="text-xs text-ink-500">Interested In</p>
                 <p className="font-medium break-words">{viewData.interestedIn || "—"}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Message</p>
+                <p className="text-xs text-ink-500">Message</p>
                 {/* Messages can be up to 1000 characters, so the block scrolls
                     internally instead of pushing the modal past the viewport. */}
-                <p className="bg-slate-50 rounded-lg px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+                <p className="bg-ink-50 rounded-lg px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
                   {viewData.message || "—"}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Received</p>
+                <p className="text-xs text-ink-500">Received</p>
                 <p className="font-medium">{formatReceived(viewData.createdAt)}</p>
               </div>
             </div>

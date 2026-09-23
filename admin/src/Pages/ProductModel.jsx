@@ -9,6 +9,7 @@ import { uploadImage } from "../api/Upload";
 import { getActiveCategories } from "../api/Category";
 import { getActiveBrands } from "../api/Brand";
 import { createProduct, updateProduct, getProductById } from "../api/Product";
+import { toast } from "react-toastify";
 
 const MAX_IMAGES = 3;
 
@@ -72,6 +73,8 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
       subtitleEdit="Update product details"
       addBtnText="Create Product"
       editBtnText="Update Product"
+      successAddText="Product created"
+      successEditText="Product updated"
       initialForm={{
         name: "",
         description: "",
@@ -141,7 +144,7 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
       }}
       renderLeft={({ form, setForm }) => (
         <>
-          <h3 className="text-base font-semibold mb-4 text-slate-900">
+          <h3 className="text-base font-semibold mb-4 text-ink-900">
             Product Information
           </h3>
 
@@ -170,13 +173,13 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
 
             {/* Category */}
             <div>
-              <p className="text-xs mb-1 block text-slate-600">Category</p>
+              <p className="text-xs mb-1 block text-ink-500">Category</p>
               <select
                 value={form.categoryId}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, categoryId: e.target.value }))
                 }
-                className="w-full border rounded-lg px-3 py-2 text-sm border-slate-300 outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                className="w-full border rounded-lg px-3 py-2 text-sm border-ink-200 outline-none focus:ring-1 focus:ring-[var(--primary)]"
               >
                 <option value="">Select category</option>
                 {categories.map((c) => (
@@ -189,13 +192,13 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
 
             {/* Brand */}
             <div>
-              <p className="text-xs mb-1 block text-slate-600">Brand</p>
+              <p className="text-xs mb-1 block text-ink-500">Brand</p>
               <select
                 value={form.brandId}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, brandId: e.target.value }))
                 }
-                className="w-full border rounded-lg px-3 py-2 text-sm border-slate-300 outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                className="w-full border rounded-lg px-3 py-2 text-sm border-ink-200 outline-none focus:ring-1 focus:ring-[var(--primary)]"
               >
                 <option value="">Select brand</option>
                 {brands.map((b) => (
@@ -214,10 +217,10 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, isActive: e.target.checked }))
                 }
-                className="rounded border-slate-300"
+                className="rounded border-ink-200"
                 id="productIsActive"
               />
-              <label htmlFor="productIsActive" className="text-sm text-slate-700">
+              <label htmlFor="productIsActive" className="text-sm text-ink-600">
                 Active
               </label>
             </div>
@@ -233,14 +236,14 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
           const remaining = MAX_IMAGES - currentCount;
 
           if (remaining <= 0) {
-            alert(`Only ${MAX_IMAGES} images are allowed.`);
+            toast.warning(`Only ${MAX_IMAGES} images are allowed.`);
             e.target.value = "";
             return;
           }
 
           const allowed = files.slice(0, remaining);
           if (files.length > remaining) {
-            alert(`Only ${MAX_IMAGES} images are allowed. Extra images ignored.`);
+            toast.warning(`Only ${MAX_IMAGES} images are allowed. Extra images ignored.`);
           }
 
           const previews = allowed.map((f) => URL.createObjectURL(f));
@@ -282,28 +285,28 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
 
         return (
           <>
-            <h3 className="text-base font-semibold mb-2 text-slate-900">
+            <h3 className="text-base font-semibold mb-2 text-ink-900">
               Product Images
             </h3>
 
-            <p className="text-xs text-slate-500 mb-3">
+            <p className="text-xs text-ink-500 mb-3">
               {form.imagePreviews.length}/{MAX_IMAGES} images
             </p>
 
             <label
               className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl transition ${
                 form.imagePreviews.length >= MAX_IMAGES
-                  ? "bg-slate-100 border-slate-200 cursor-not-allowed opacity-70"
-                  : "bg-slate-50 border-slate-300 hover:bg-slate-100 cursor-pointer"
+                  ? "bg-ink-100 border-ink-200 cursor-not-allowed opacity-70"
+                  : "bg-ink-50 border-ink-200 hover:bg-ink-100 cursor-pointer"
               }`}
             >
-              <UploadCloud className="w-10 h-10 text-slate-400 mb-2" />
-              <span className="text-sm text-slate-700">
+              <UploadCloud className="w-10 h-10 text-ink-500 mb-2" />
+              <span className="text-sm text-ink-600">
                 {form.imagePreviews.length >= MAX_IMAGES
                   ? "Maximum images reached"
                   : "Click to upload images"}
               </span>
-              <span className="text-[11px] text-slate-400 mt-1">
+              <span className="text-[11px] text-ink-500 mt-1">
                 Max {MAX_IMAGES} images (PNG/JPG)
               </span>
 
@@ -318,10 +321,10 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
 
             {/* previews */}
             <div className="mt-4">
-              <p className="text-xs font-medium text-slate-500 mb-2">Preview</p>
+              <p className="text-xs font-medium text-ink-500 mb-2">Preview</p>
 
               {form.imagePreviews.length === 0 ? (
-                <div className="h-24 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                <div className="h-24 rounded-lg border border-dashed border-ink-200 flex items-center justify-center text-xs text-ink-500">
                   No images selected yet.
                 </div>
               ) : (
@@ -329,7 +332,7 @@ export default function ProductModal({ open, onClose, onSuccess, editData }) {
                   {form.imagePreviews.map((src, idx) => (
                     <div
                       key={idx}
-                      className="relative w-full aspect-square rounded-lg overflow-hidden border border-slate-200 bg-white"
+                      className="relative w-full aspect-square rounded-lg overflow-hidden border border-ink-200 bg-white"
                     >
                       <img
                         src={src}

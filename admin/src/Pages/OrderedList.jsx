@@ -46,9 +46,9 @@ const statusConfig = {
   },
   ACCEPTED: {
     label: "Accepted",
-    pill: "bg-blue-100 text-blue-700 border-blue-100",
-    cardColor: "text-blue-600",
-    cardBg: "bg-blue-50",
+    pill: "bg-primary/10 text-primary border-primary/25",
+    cardColor: "text-primary",
+    cardBg: "bg-primary/10",
   },
   SHIPPED: {
     label: "Shipped",
@@ -58,9 +58,9 @@ const statusConfig = {
   },
   DELIVERED: {
     label: "Delivered",
-    pill: "bg-emerald-100 text-emerald-700 border-emerald-100",
-    cardColor: "text-emerald-600",
-    cardBg: "bg-emerald-50",
+    pill: "bg-primary/15 text-primary-dark border-primary/20",
+    cardColor: "text-primary",
+    cardBg: "bg-primary/10",
   },
   CANCELLED: {
     label: "Cancelled",
@@ -687,16 +687,16 @@ const OrderList = () => {
 };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-3 sm:px-4 py-4 sm:py-6">
+    <div className="min-h-screen bg-ink-50 px-3 sm:px-4 py-4 sm:py-6">
       <div className="w-full max-w-7xl mx-auto space-y-4">
         <PageHeader title="Orders" subtitle="Manage your customer orders" />
 
         {/* Status Summary Card - Responsive */}
-        <div ref={statusCardRef} className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-4 md:p-5 shadow-sm">
+        <div ref={statusCardRef} className="bg-white rounded-2xl border border-ink-200 p-3 sm:p-4 md:p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
-              <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Order Status Summary</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Count updates with search and date filters</p>
+              <h3 className="font-semibold text-ink-900 text-sm sm:text-base">Order Status Summary</h3>
+              <p className="text-xs text-ink-500 mt-0.5">Count updates with search and date filters</p>
             </div>
             <button
               onClick={handleStatusCardScreenshot}
@@ -723,16 +723,16 @@ const OrderList = () => {
                   onClick={() => setActiveStatus(status)}
                   className={`flex items-center gap-2 sm:gap-3 border rounded-xl p-2 sm:p-3 text-left transition ${
                     activeStatus === status
-                      ? "border-[var(--primary,#00897B)] bg-[var(--primary-lighthead,#E0F2F1)]/40"
-                      : "border-slate-100 bg-slate-50/50 hover:bg-slate-100/70"
+                      ? "border-[var(--primary)] bg-[var(--primary-light)]/40"
+                      : "border-ink-100 bg-ink-50 hover:bg-ink-100"
                   }`}
                 >
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${cfg.cardBg} flex items-center justify-center`}>
                     <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${cfg.cardColor}`} />
                   </div>
                   <div>
-                    <p className="text-[10px] sm:text-xs text-slate-500">{cfg.label}</p>
-                    <p className="text-base sm:text-lg font-bold text-slate-900">{currentStatusCounts?.[status] || 0}</p>
+                    <p className="text-[11px] sm:text-xs text-ink-500">{cfg.label}</p>
+                    <p className="text-base sm:text-lg font-bold text-ink-900">{currentStatusCounts?.[status] || 0}</p>
                   </div>
                 </button>
               );
@@ -741,9 +741,9 @@ const OrderList = () => {
         </div>
 
         {/* Sales Summary Card - Responsive */}
-        <div ref={salesCardRef} className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-4 md:p-5 shadow-sm">
+        <div ref={salesCardRef} className="bg-white rounded-2xl border border-ink-200 p-3 sm:p-4 md:p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Sales Summary</h3>
+            <h3 className="font-semibold text-ink-900 text-sm sm:text-base">Sales Summary</h3>
             <button
               onClick={handleSalesCardScreenshot}
               disabled={screenshotLoading.salesCard}
@@ -760,18 +760,18 @@ const OrderList = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {[
-              { label: "Total Orders", val: stats.totalSales, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Total Customers", val: stats.uniqueCustomers, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { label: "Total Orders", val: stats.totalSales, icon: Package, color: "text-primary", bg: "bg-primary/10" },
+              { label: "Total Customers", val: stats.uniqueCustomers, icon: Users, color: "text-primary", bg: "bg-primary/10" },
               { label: "Total Quantity", val: stats.totalQuantity, icon: Layers, color: "text-amber-600", bg: "bg-amber-50" },
               { label: "Total Value", val: formatCurrency(stats.totalValue), icon: Receipt, color: "text-indigo-600", bg: "bg-indigo-50" },
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 sm:gap-3 border border-slate-100 bg-slate-50/50 rounded-xl p-2 sm:p-3">
+              <div key={idx} className="flex items-center gap-2 sm:gap-3 border border-ink-100 bg-ink-50 rounded-xl p-2 sm:p-3">
                 <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
                   <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${item.color}`} />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs text-slate-500">{item.label}</p>
-                  <p className="text-sm sm:text-lg font-bold text-slate-900">{item.val}</p>
+                  <p className="text-[11px] sm:text-xs text-ink-500">{item.label}</p>
+                  <p className="text-sm sm:text-lg font-bold text-ink-900">{item.val}</p>
                 </div>
               </div>
             ))}
@@ -779,10 +779,10 @@ const OrderList = () => {
         </div>
 
         {/* Orders Table Section - Responsive */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-ink-200 shadow-sm overflow-hidden">
           {/* Tabs - Responsive */}
           <div className="px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto">
-            <div className="flex items-center gap-4 sm:gap-8 min-w-max border-b border-slate-200">
+            <div className="flex items-center gap-4 sm:gap-8 min-w-max border-b border-ink-200">
               {[
                 { key: "ALL", label: "All", count: searchDateFiltered.length },
                 ...ORDER_STATUSES.map((status) => ({
@@ -797,18 +797,18 @@ const OrderList = () => {
                   onClick={() => setActiveStatus(tab.key)}
                   className={`relative pb-2 sm:pb-3 text-xs sm:text-sm transition whitespace-nowrap ${
                     activeStatus === tab.key
-                      ? "text-blue-600 font-semibold"
-                      : "text-slate-700 hover:text-slate-950"
+                      ? "text-primary font-semibold"
+                      : "text-ink-600 hover:text-ink-900"
                   }`}
                 >
                   {tab.label}
                   {tab.key !== "ALL" && (
-                    <span className="ml-1 text-[10px] sm:text-xs text-slate-500">
+                    <span className="ml-1 text-[11px] sm:text-xs text-ink-500">
                       ({tab.count})
                     </span>
                   )}
                   {activeStatus === tab.key && (
-                    <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-blue-600 rounded-full" />
+                    <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-primary rounded-full" />
                   )}
                 </button>
               ))}
@@ -819,20 +819,20 @@ const OrderList = () => {
           <div className="p-3 sm:p-4 space-y-3">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div className="relative w-full lg:max-w-[320px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-500" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search orders..."
-                  className="w-full pl-9 pr-3 py-2 sm:py-2.5 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-[var(--primary,#00897B)]"
+                  className="w-full pl-9 pr-3 py-2 sm:py-2.5 text-sm border border-ink-200 rounded-lg bg-white outline-none focus:border-[var(--primary)]"
                 />
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 bg-white">
-                  <span className="text-xs sm:text-sm text-slate-600">From:</span>
+                <div className="flex items-center gap-2 border border-ink-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 bg-white">
+                  <span className="text-xs sm:text-sm text-ink-500">From:</span>
                   <input
                     type="date"
                     value={fromDate}
@@ -840,8 +840,8 @@ const OrderList = () => {
                     className="text-xs sm:text-sm outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 bg-white">
-                  <span className="text-xs sm:text-sm text-slate-600">To:</span>
+                <div className="flex items-center gap-2 border border-ink-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 bg-white">
+                  <span className="text-xs sm:text-sm text-ink-500">To:</span>
                   <input
                     type="date"
                     value={toDate}
@@ -851,7 +851,7 @@ const OrderList = () => {
                 </div>
                 <button
                   onClick={resetFilters}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 text-slate-700 hover:bg-blue-200 flex items-center justify-center"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 text-ink-600 hover:bg-primary/20 flex items-center justify-center"
                   title="Reset filters"
                 >
                   <X className="w-4 h-4" />
@@ -859,7 +859,7 @@ const OrderList = () => {
               </div>
               <button
                 onClick={handleBulkDownload}
-                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-700 w-full md:w-auto"
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-primary text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary-dark w-full md:w-auto"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 Download Excel
@@ -870,8 +870,8 @@ const OrderList = () => {
           {/* Table - Horizontal Scroll on Mobile */}
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[800px]">
-              <thead className="bg-slate-50 border-y border-slate-200">
-                <tr className="text-left text-slate-700">
+              <thead className="bg-ink-50 border-y border-ink-200">
+                <tr className="text-left text-ink-600">
                   <th className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Order ID</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Customer</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 font-semibold hidden sm:table-cell">Products</th>
@@ -887,13 +887,13 @@ const OrderList = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="px-3 sm:px-4 py-8 sm:py-10 text-center text-slate-500">
+                    <td colSpan={9} className="px-3 sm:px-4 py-8 sm:py-10 text-center text-ink-500">
                       Loading orders...
                     </td>
                   </tr>
                 ) : paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-3 sm:px-4 py-8 sm:py-10 text-center text-slate-500">
+                    <td colSpan={9} className="px-3 sm:px-4 py-8 sm:py-10 text-center text-ink-500">
                       No orders found
                     </td>
                   </tr>
@@ -903,24 +903,24 @@ const OrderList = () => {
                     const productCount = o.orderItem?.length || 0;
                     const quantity = (o.orderItem || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
                     return (
-                      <tr key={o.id} className="border-b border-slate-200 hover:bg-slate-50/70 transition">
+                      <tr key={o.id} className="border-b border-ink-200 hover:bg-ink-50 transition">
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
-                          <span className="font-medium text-slate-900 text-xs sm:text-sm">#{o.id}</span>
+                          <span className="font-medium text-ink-900 text-xs sm:text-sm">#{o.id}</span>
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          <div className="font-semibold text-slate-900 leading-tight text-xs sm:text-sm">{o.fullName || "Unknown"}</div>
-                          <div className="text-[10px] sm:text-xs text-slate-500 leading-tight">{o.place || o.city || "-"}</div>
-                          <div className="text-[10px] sm:text-xs text-slate-900 leading-tight">{o.phone || "-"}</div>
+                          <div className="font-semibold text-ink-900 leading-tight text-xs sm:text-sm">{o.fullName || "Unknown"}</div>
+                          <div className="text-[11px] sm:text-xs text-ink-500 leading-tight">{o.place || o.city || "-"}</div>
+                          <div className="text-[11px] sm:text-xs text-ink-900 leading-tight">{o.phone || "-"}</div>
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap hidden sm:table-cell">
                           {productCount} {productCount === 1 ? "item" : "items"}
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{quantity}</td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap font-semibold text-slate-900 text-xs sm:text-sm">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap font-semibold text-ink-900 text-xs sm:text-sm">
                           {formatCurrency(o.totalAmount)}
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
-                          <span className={`inline-flex rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${cfg.pill}`}>
+                          <span className={`inline-flex rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold ${cfg.pill}`}>
                             {cfg.label}
                           </span>
                         </td>
@@ -937,7 +937,7 @@ const OrderList = () => {
   {/* View Button */}
   <button
     onClick={() => openViewModal(o)}
-    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white flex items-center justify-center transition"
+    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition"
     title="View Order"
   >
     <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -955,7 +955,7 @@ const OrderList = () => {
   ) : (
     <button
       disabled
-      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed flex items-center justify-center"
+      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-ink-100 text-ink-500 cursor-not-allowed flex items-center justify-center"
       title="Cannot edit cancelled orders"
     >
       <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -982,7 +982,7 @@ const OrderList = () => {
             </table>
           </div>
 
-          <div className="p-3 sm:p-4 border-t border-slate-200">
+          <div className="p-3 sm:p-4 border-t border-ink-200">
             <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>
@@ -993,20 +993,20 @@ const OrderList = () => {
     <div ref={modalRef} className="bg-white w-full max-w-5xl rounded-xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col relative">
       <div className="flex justify-between items-center p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
         <div>
-          <h2 className="font-bold text-base sm:text-lg text-slate-800">Order Details - #{viewData.id}</h2>
-          <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">Customer, shipping and item details</p>
+          <h2 className="font-bold text-base sm:text-lg text-ink-900">Order Details - #{viewData.id}</h2>
+          <p className="text-[11px] sm:text-xs text-ink-500 mt-0.5">Customer, shipping and item details</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleViewModalScreenshot}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition"
             title="Screenshot"
           >
             <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             onClick={() => { setViewModalOpen(false); setViewData(null); }}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-ink-50 text-ink-500 hover:bg-ink-200 hover:text-ink-900 flex items-center justify-center transition"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -1030,51 +1030,51 @@ const OrderList = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[350px_1fr] gap-4 sm:gap-6 bg-slate-50">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[350px_1fr] gap-4 sm:gap-6 bg-ink-50">
         {/* Left Column - Order Info & Shipping */}
         <div className="space-y-4 sm:space-y-6">
           {/* Order Information */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Order Information</h3>
+          <div className="bg-white border border-ink-200 rounded-xl p-4 sm:p-5 shadow-sm">
+            <h3 className="font-bold text-ink-900 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Order Information</h3>
             <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-              <p><span className="font-semibold text-slate-600">Customer:</span> {viewData.fullName || "-"}</p>
-              <p><span className="font-semibold text-slate-600">Email:</span> {viewData.email || "-"}</p>
+              <p><span className="font-semibold text-ink-500">Customer:</span> {viewData.fullName || "-"}</p>
+              <p><span className="font-semibold text-ink-500">Email:</span> {viewData.email || "-"}</p>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-600">Status:</span>
-                <span className={`inline-flex rounded-full border px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-bold ${getStatusConfig(viewData.status || "PLACED").pill}`}>
+                <span className="font-semibold text-ink-500">Status:</span>
+                <span className={`inline-flex rounded-full border px-2 sm:px-2.5 py-1 text-[11px] sm:text-[11px] font-bold ${getStatusConfig(viewData.status || "PLACED").pill}`}>
                   {getStatusConfig(viewData.status || "PLACED").label}
                 </span>
               </div>
-              <p><span className="font-semibold text-slate-600">Payment:</span> {viewData.paymentMethod?.toLowerCase() || "online"}</p>
-              <p><span className="font-semibold text-slate-600">State:</span> {viewData.state || "—"}</p>
+              <p><span className="font-semibold text-ink-500">Payment:</span> {viewData.paymentMethod?.toLowerCase() || "online"}</p>
+              <p><span className="font-semibold text-ink-500">State:</span> {viewData.state || "—"}</p>
               <div className="border-t pt-2 sm:pt-3 mt-2">
-                <p className="font-bold text-base sm:text-lg pt-1"><span className="text-slate-700">Total:</span> {formatCurrency(viewData.totalAmount)}</p>
+                <p className="font-bold text-base sm:text-lg pt-1"><span className="text-ink-600">Total:</span> {formatCurrency(viewData.totalAmount)}</p>
               </div>
             </div>
           </div>
           
           {/* Shipping Address */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
-            <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Shipping Address</h3>
+          <div className="bg-white border border-ink-200 rounded-xl p-4 sm:p-5 shadow-sm">
+            <h3 className="font-bold text-ink-900 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Shipping Address</h3>
             <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-              <p><span className="font-semibold text-slate-600">Address:</span> {viewData.address || "N/A"}</p>
-              <p><span className="font-semibold text-slate-600">City:</span> {viewData.city || viewData.place || "N/A"}</p>
-              <p><span className="font-semibold text-slate-600">State:</span> {viewData.state || "N/A"}</p>
-              <p><span className="font-semibold text-slate-600">Pincode:</span> {viewData.pincode || "N/A"}</p>
-              <p><span className="font-semibold text-slate-600">Phone:</span> {viewData.phone || "N/A"}</p>
+              <p><span className="font-semibold text-ink-500">Address:</span> {viewData.address || "N/A"}</p>
+              <p><span className="font-semibold text-ink-500">City:</span> {viewData.city || viewData.place || "N/A"}</p>
+              <p><span className="font-semibold text-ink-500">State:</span> {viewData.state || "N/A"}</p>
+              <p><span className="font-semibold text-ink-500">Pincode:</span> {viewData.pincode || "N/A"}</p>
+              <p><span className="font-semibold text-ink-500">Phone:</span> {viewData.phone || "N/A"}</p>
             </div>
           </div>
         </div>
         
         {/* Right Column - Order Items */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Order Items</h3>
+        <div className="bg-white border border-ink-200 rounded-xl p-4 sm:p-5 shadow-sm">
+          <h3 className="font-bold text-ink-900 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Order Items</h3>
           <div className="space-y-3 sm:space-y-4">
             {viewData.orderItem?.map((it, idx) => {
               const imageUrl = getProductImageUrl(it);
               return (
-                <div key={idx} className="flex gap-3 sm:gap-4 p-2 sm:p-3 border border-slate-100 rounded-xl bg-slate-50/50">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
+                <div key={idx} className="flex gap-3 sm:gap-4 p-2 sm:p-3 border border-ink-100 rounded-xl bg-ink-50">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-ink-100 flex items-center justify-center border border-ink-200">
                     {imageUrl ? (
                       <img 
                         src={imageUrl} 
@@ -1086,19 +1086,19 @@ const OrderList = () => {
                         }}
                       />
                     ) : (
-                      <Package className="w-5 h-5 sm:w-6 sm:h-6 text-slate-300" />
+                      <Package className="w-5 h-5 sm:w-6 sm:h-6 text-ink-200" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-xs sm:text-sm text-slate-900 leading-snug mb-1 sm:mb-2">{it.productName || "Product"}</p>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-700">Qty: {it.quantity} x {formatCurrency(it.unitPrice)}</p>
-                    <p className="text-xs sm:text-sm font-bold text-slate-900 mt-1">Total: {formatCurrency(Number(it.quantity || 0) * Number(it.unitPrice || 0))}</p>
+                    <p className="font-bold text-xs sm:text-sm text-ink-900 leading-snug mb-1 sm:mb-2">{it.productName || "Product"}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-ink-600">Qty: {it.quantity} x {formatCurrency(it.unitPrice)}</p>
+                    <p className="text-xs sm:text-sm font-bold text-ink-900 mt-1">Total: {formatCurrency(Number(it.quantity || 0) * Number(it.unitPrice || 0))}</p>
                   </div>
                 </div>
               );
             })}
             {!viewData.orderItem?.length && (
-              <div className="text-sm text-slate-500 text-center py-6 sm:py-8">No items found for this order.</div>
+              <div className="text-sm text-ink-500 text-center py-6 sm:py-8">No items found for this order.</div>
             )}
           </div>
         </div>
@@ -1113,8 +1113,8 @@ const OrderList = () => {
             <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden mx-3">
               <div className="flex items-center justify-between p-4 sm:p-5 border-b">
                 <div>
-                  <h3 className="font-bold text-base sm:text-lg text-slate-900">Update Order Status</h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Order #{editStatusOrder.id}</p>
+                  <h3 className="font-bold text-base sm:text-lg text-ink-900">Update Order Status</h3>
+                  <p className="text-xs sm:text-sm text-ink-500 mt-0.5">Order #{editStatusOrder.id}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -1124,21 +1124,21 @@ const OrderList = () => {
                     setCancelRemarks("");
                     setIsCancelling(false);
                   }}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-ink-100 hover:bg-ink-200 text-ink-500 flex items-center justify-center transition"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="p-4 sm:p-5">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Select Status</label>
+                <label className="block text-sm font-semibold text-ink-600 mb-2">Select Status</label>
                 <select
                   value={selectedNewStatus}
                   onChange={(e) => {
                     setSelectedNewStatus(e.target.value);
                     setIsCancelling(e.target.value === 'CANCELLED');
                   }}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-[var(--primary,#00897B)] focus:ring-1 focus:ring-[var(--primary,#00897B)] text-sm"
+                  className="w-full px-4 py-2.5 border border-ink-200 rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
                 >
                   {ORDER_STATUSES.filter(status => {
                     if (editStatusOrder.status === "CANCELLED" || editStatusOrder.status === "DELIVERED") {
@@ -1183,14 +1183,14 @@ const OrderList = () => {
                       setCancelRemarks("");
                       setIsCancelling(false);
                     }}
-                    className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition"
+                    className="flex-1 px-4 py-2.5 border border-ink-200 text-ink-600 rounded-lg text-sm font-semibold hover:bg-ink-50 transition"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleStatusChange(editStatusOrder.id, selectedNewStatus, cancelRemarks)}
                     disabled={statusUpdatingId === editStatusOrder.id || (isCancelling && !cancelRemarks)}
-                    className="flex-1 px-4 py-2.5 bg-[var(--primary,#00897B)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--primary-dark,#00695C)] transition disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--primary-dark)] transition disabled:opacity-50"
                   >
                     {statusUpdatingId === editStatusOrder.id ? (
                       <div className="flex items-center justify-center gap-2">

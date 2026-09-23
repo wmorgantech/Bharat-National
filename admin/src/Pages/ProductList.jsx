@@ -14,6 +14,7 @@ import Pagination from "../CommonComponent/Pagination";
 
 import ProductModal from "./ProductModel";
 import ViewModal from "../CommonComponent/ViewModel";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const ProductList = () => {
   const [search, setSearch] = useState("");
@@ -27,6 +28,10 @@ const ProductList = () => {
 
   // ✅ view state
   const [viewOpen, setViewOpen] = useState(false);
+
+  // Replaces window.confirm() for the deactivate action.
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [viewData, setViewData] = useState(null);
 
   const [page, setPage] = useState(1);
@@ -69,23 +74,37 @@ const ProductList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
 
-    if (!window.confirm("Mark this product as inactive?")) return;
-    if (!product.isActive)
+    setConfirmTarget(product);
+  };
+
+  // Runs only after the dialog is confirmed. The isActive guard stays after
+  // confirmation, exactly as it was behind window.confirm().
+  const performDelete = async () => {
+    const product = confirmTarget;
+    if (!product) return;
+
+    if (!product.isActive) {
+      setConfirmTarget(null);
       return toast.info("This product is already inactive.");
+    }
 
     try {
-      await deleteProduct(id);
+      setConfirmLoading(true);
+      await deleteProduct(product.id);
       setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, isActive: false } : p))
+        prev.map((p) => (p.id === product.id ? { ...p, isActive: false } : p))
       );
       toast.success("Product marked as inactive");
+      setConfirmTarget(null);
     } catch (err) {
       console.error(err);
       toast.error(err?.message || "Failed to update product status");
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -110,7 +129,7 @@ const ProductList = () => {
       key: "image",
       label: "Image",
       render: (p) => (
-        <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-md overflow-hidden bg-ink-100 flex items-center justify-center">
           {getFirstImage(p) ? (
             <img
               src={getFirstImage(p)}
@@ -118,7 +137,7 @@ const ProductList = () => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-[10px] text-slate-400">No image</span>
+            <span className="text-[11px] text-ink-500">No image</span>
           )}
         </div>
       ),
@@ -128,9 +147,9 @@ const ProductList = () => {
       label: "Product",
       render: (p) => (
         <div>
-          <div className="font-medium text-slate-900">{p.name}</div>
+          <div className="font-medium text-ink-900">{p.name}</div>
           {p.description && (
-            <div className="text-[11px] text-slate-500 truncate max-w-[220px]">
+            <div className="text-[11px] text-ink-500 truncate max-w-[220px]">
               {p.description}
             </div>
           )}
@@ -161,12 +180,12 @@ const ProductList = () => {
           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
             p.isActive
               ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-slate-50 text-slate-600 border-slate-200"
+              : "bg-ink-50 text-ink-500 border-ink-200"
           }`}
         >
           <span
             className={`mr-1 inline-block h-2 w-2 rounded-full ${
-              p.isActive ? "bg-green-500" : "bg-slate-400"
+              p.isActive ? "bg-green-500" : "bg-ink-500"
             }`}
           />
           {p.isActive ? "Active" : "Inactive"}
@@ -181,7 +200,7 @@ const ProductList = () => {
         <div className="flex justify-end gap-3">
           {/* ✅ VIEW */}
           <button
-            className="text-blue-600 hover:text-blue-800"
+            className="text-primary hover:text-primary"
             title="View"
             type="button"
             onClick={() => {
@@ -220,7 +239,7 @@ const ProductList = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex justify-center px-4 py-6">
+    <div className="min-h-screen bg-ink-50 flex justify-center px-4 py-6">
       <div className="w-full max-w-6xl">
         <PageHeader
           title="Products"
@@ -265,6 +284,17 @@ const ProductList = () => {
         )}
 
         {/* ✅ View modal */}
+        <ConfirmDialog
+          open={Boolean(confirmTarget)}
+          title="Mark product as inactive?"
+          message={confirmTarget ? `"${confirmTarget.name}" will be hidden from the storefront. You can reactivate it later.` : ""}
+          confirmLabel="Mark inactive"
+          tone="danger"
+          loading={confirmLoading}
+          onConfirm={performDelete}
+          onCancel={() => setConfirmTarget(null)}
+        />
+
         <ViewModal
           open={viewOpen}
           onClose={() => setViewOpen(false)}
@@ -274,7 +304,7 @@ const ProductList = () => {
           {viewData && (
             <div className="space-y-4 text-sm text-left">
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">
+                <p className="text-xs font-medium text-ink-500 mb-1">
                   Images
                 </p>
                 {Array.isArray(viewData.imageUrl) &&
@@ -283,7 +313,7 @@ const ProductList = () => {
                     {viewData.imageUrl.slice(0, 3).map((src, idx) => (
                       <div
                         key={idx}
-                        className="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 border"
+                        className="w-full aspect-square rounded-lg overflow-hidden bg-ink-100 border"
                       >
                         <img
                           src={src}
@@ -294,54 +324,54 @@ const ProductList = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="h-24 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                  <div className="h-24 rounded-lg border border-dashed border-ink-200 flex items-center justify-center text-xs text-ink-500">
                     No images
                   </div>
                 )}
               </div>
 
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">Name</p>
-                <p className="text-slate-900 font-medium">{viewData.name}</p>
+                <p className="text-xs font-medium text-ink-500 mb-1">Name</p>
+                <p className="text-ink-900 font-medium">{viewData.name}</p>
               </div>
 
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">
+                <p className="text-xs font-medium text-ink-500 mb-1">
                   Description
                 </p>
-                <p className="text-slate-700 bg-slate-50 rounded-lg px-3 py-2 min-h-[40px]">
+                <p className="text-ink-600 bg-ink-50 rounded-lg px-3 py-2 min-h-[40px]">
                   {viewData.description || "No description provided."}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs font-medium text-slate-500 mb-1">
+                  <p className="text-xs font-medium text-ink-500 mb-1">
                     Category
                   </p>
-                  <p className="text-slate-800">
+                  <p className="text-ink-900">
                     {viewData.category?.name || "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 mb-1">
+                  <p className="text-xs font-medium text-ink-500 mb-1">
                     Brand
                   </p>
-                  <p className="text-slate-800">
+                  <p className="text-ink-900">
                     {viewData.brand?.name || "-"}
                   </p>
                 </div>
               </div>
 
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">Price</p>
-                <p className="text-slate-900 font-semibold">
+                <p className="text-xs font-medium text-ink-500 mb-1">Price</p>
+                <p className="text-ink-900 font-semibold">
                   ₹ {Number(viewData.price || 0).toLocaleString("en-IN")}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-1">
+              <div className="pt-2 border-t border-ink-100">
+                <p className="text-xs font-medium text-ink-500 mb-1">
                   Status
                 </p>
                 <span

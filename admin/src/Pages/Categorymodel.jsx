@@ -18,6 +18,8 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
       subtitleEdit="Update category details"
       addBtnText="Create Category"
       editBtnText="Update Category"
+      successAddText="Category created"
+      successEditText="Category updated"
       initialForm={{
         name: "",
         description: "",
@@ -63,7 +65,7 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
       }}
       renderLeft={({ form, setForm }) => (
         <>
-          <h3 className="text-base font-semibold mb-4 text-slate-900">
+          <h3 className="text-base font-semibold mb-4 text-ink-900">
             Category Information
           </h3>
 
@@ -83,14 +85,14 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
               }
             />
 
-            <label className="flex items-center gap-2 text-sm text-slate-700">
+            <label className="flex items-center gap-2 text-sm text-ink-600">
               <input
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, isActive: e.target.checked }))
                 }
-                className="rounded border-slate-300"
+                className="rounded border-ink-200"
               />
               Active
             </label>
@@ -99,11 +101,11 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
       )}
       renderRight={({ form, setForm, isEditMode }) => (
         <>
-          <h3 className="text-base font-semibold mb-4 text-slate-900">
+          <h3 className="text-base font-semibold mb-4 text-ink-900">
             Category Image
           </h3>
 
-          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl bg-ink-50 hover:bg-ink-100 cursor-pointer transition">
             {form.imagePreview ? (
               <img
                 src={form.imagePreview}
@@ -112,11 +114,11 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
               />
             ) : (
               <>
-                <UploadCloud className="w-10 h-10 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-700">
+                <UploadCloud className="w-10 h-10 text-ink-500 mb-2" />
+                <span className="text-sm text-ink-600">
                   Click to upload image
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-ink-500">
                   PNG, JPG up to 5MB
                 </span>
               </>
@@ -138,7 +140,7 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
           </label>
 
           {isEditMode && form.imageUrl && !form.imageFile && (
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-ink-500">
               Current image will be kept unless replaced.
             </p>
           )}

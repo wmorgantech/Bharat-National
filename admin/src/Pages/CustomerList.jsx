@@ -167,7 +167,7 @@ const CustomerList = () => {
 
   const getCustomerStatus = (customer) => {
     if (customer.hasOrdered) {
-      return { label: "Active", className: "bg-emerald-50 text-emerald-700 border-emerald-100" };
+      return { label: "Active", className: "bg-primary/10 text-primary-dark border-primary/20" };
     }
     if (customer.hasCancelled) {
       return { label: "Cancelled", className: "bg-red-50 text-red-700 border-red-100" };
@@ -175,7 +175,7 @@ const CustomerList = () => {
     if (customer.hasAbandoned) {
       return { label: "Abandoned", className: "bg-rose-50 text-rose-700 border-rose-100" };
     }
-    return { label: "Non Order", className: "bg-slate-50 text-slate-600 border-slate-100" };
+    return { label: "Non Order", className: "bg-ink-50 text-ink-500 border-ink-100" };
   };
 
   // Take screenshot of the summary card
@@ -253,8 +253,8 @@ const handleDownloadCSV = () => {
 };
  
   const summaryCards = [
-    { label: "Total Customers", value: userStats.totalUsers, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Non Order Customers", value: userStats.nonOrderCustomers, icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Total Customers", value: userStats.totalUsers, icon: Users, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Non Order Customers", value: userStats.nonOrderCustomers, icon: UserCheck, color: "text-primary", bg: "bg-primary/10" },
     { label: "Ordered Customers", value: userStats.orderedCustomers, icon: ShoppingBag, color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Cancelled Customers", value: userStats.cancelledCustomers, icon: UserX, color: "text-red-600", bg: "bg-red-50" },
     { label: "Abandoned Customers", value: userStats.abandonedCustomers, icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
@@ -269,20 +269,20 @@ const handleDownloadCSV = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6">
+    <div className="min-h-screen bg-ink-50 px-4 py-6">
       <div className="w-full max-w-7xl mx-auto space-y-5">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-950">Customers</h1>
-          <p className="mt-1 text-sm text-slate-600">Manage your customer database</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink-900">Customers</h1>
+          <p className="mt-1 text-sm text-ink-500">Manage your customer database</p>
         </div>
 
         {/* Summary Card with Screenshot Button */}
         <div className="relative">
-          <div ref={summaryCardRef} className="bg-white rounded-2xl border border-slate-200 p-4 md:p-5 shadow-sm">
+          <div ref={summaryCardRef} className="bg-white rounded-2xl border border-ink-200 p-4 md:p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-slate-900">Customers Summary</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Customer statistics overview</p>
+                <h3 className="font-semibold text-ink-900">Customers Summary</h3>
+                <p className="text-xs text-ink-500 mt-0.5">Customer statistics overview</p>
               </div>
               <button
                 onClick={handleSummaryCardScreenshot}
@@ -300,13 +300,13 @@ const handleDownloadCSV = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {summaryCards.map((item) => (
-                <div key={item.label} className="flex items-center gap-3 border border-slate-100 bg-slate-50/50 rounded-xl p-4 shadow-sm">
+                <div key={item.label} className="flex items-center gap-3 border border-ink-100 bg-ink-50 rounded-xl p-4 shadow-sm">
                   <div className={`w-11 h-11 rounded-xl ${item.bg} flex items-center justify-center`}>
                     <item.icon className={`w-5 h-5 ${item.color}`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-extrabold text-slate-950 leading-none">{item.value}</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-tight">{item.label}</p>
+                    <p className="text-2xl font-extrabold text-ink-900 leading-none">{item.value}</p>
+                    <p className="mt-1 text-xs text-ink-500 leading-tight">{item.label}</p>
                   </div>
                 </div>
               ))}
@@ -314,9 +314,9 @@ const handleDownloadCSV = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-ink-200 shadow-sm overflow-hidden">
           <div className="px-4 pt-4 overflow-x-auto">
-            <div className="flex items-center gap-8 min-w-max border-b border-slate-200">
+            <div className="flex items-center gap-8 min-w-max border-b border-ink-200">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
@@ -326,14 +326,14 @@ const handleDownloadCSV = () => {
                   }}
                   className={`relative pb-3 text-sm transition ${
                     activeTab === tab.key
-                      ? "text-blue-600 font-semibold"
-                      : "text-slate-700 hover:text-slate-950"
+                      ? "text-primary font-semibold"
+                      : "text-ink-600 hover:text-ink-900"
                   }`}
                 >
                   {tab.label}
-                  <span className="ml-1 text-xs text-slate-500">({tab.count})</span>
+                  <span className="ml-1 text-xs text-ink-500">({tab.count})</span>
                   {activeTab === tab.key && (
-                    <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-blue-600 rounded-full" />
+                    <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-primary rounded-full" />
                   )}
                 </button>
               ))}
@@ -343,30 +343,30 @@ const handleDownloadCSV = () => {
           <div className="p-4 space-y-3">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div className="relative w-full lg:max-w-[420px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-500" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search customers..."
-                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-[var(--primary,#00897B)]"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-ink-200 rounded-lg bg-white outline-none focus:border-[var(--primary)]"
                 />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-white">
-                  <span className="text-sm text-slate-600">From:</span>
+                <div className="flex items-center gap-2 border border-ink-200 rounded-lg px-3 py-2 bg-white">
+                  <span className="text-sm text-ink-500">From:</span>
                   <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="text-sm outline-none" />
                 </div>
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-white">
-                  <span className="text-sm text-slate-600">To:</span>
+                <div className="flex items-center gap-2 border border-ink-200 rounded-lg px-3 py-2 bg-white">
+                  <span className="text-sm text-ink-500">To:</span>
                   <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="text-sm outline-none" />
                 </div>
-                <button onClick={resetFilters} className="w-10 h-10 rounded-lg bg-blue-100 text-slate-700 hover:bg-blue-200 flex items-center justify-center">
+                <button onClick={resetFilters} className="w-10 h-10 rounded-lg bg-primary/10 text-ink-600 hover:bg-primary/20 flex items-center justify-center">
                   <X className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleDownloadCSV}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark transition"
                 >
                   <Download className="w-4 h-4" />
                   Download List
@@ -377,8 +377,8 @@ const handleDownloadCSV = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-y border-slate-200">
-                <tr className="text-left text-slate-700">
+              <thead className="bg-ink-50 border-y border-ink-200">
+                <tr className="text-left text-ink-600">
                   <th className="px-4 py-3 font-semibold">Customer</th>
                   <th className="px-4 py-3 font-semibold">Contact</th>
                   <th className="px-4 py-3 font-semibold">Orders</th>
@@ -390,35 +390,35 @@ const handleDownloadCSV = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="7" className="px-4 py-10 text-center text-slate-500">Loading customers...</td></tr>
+                  <tr><td colSpan="7" className="px-4 py-10 text-center text-ink-500">Loading customers...</td></tr>
                 ) : paginated.length === 0 ? (
-                  <tr><td colSpan="7" className="px-4 py-10 text-center text-slate-500">No customers found</td></tr>
+                  <tr><td colSpan="7" className="px-4 py-10 text-center text-ink-500">No customers found</td></tr>
                 ) : (
                   paginated.map((customer) => {
                     const status = getCustomerStatus(customer);
                     return (
-                      <tr key={customer.id} className="border-b border-slate-200 hover:bg-slate-50/70 transition">
+                      <tr key={customer.id} className="border-b border-ink-200 hover:bg-ink-50 transition">
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
                               {getInitial(customer.fullName)}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-900 leading-tight">{customer.fullName || "Unknown"}</p>
-                              <p className="text-xs text-slate-500 leading-tight">{customer.email || "N/A"}</p>
+                              <p className="font-semibold text-ink-900 leading-tight">{customer.fullName || "Unknown"}</p>
+                              <p className="text-xs text-ink-500 leading-tight">{customer.email || "N/A"}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 text-slate-700">
-                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          <div className="flex items-center gap-1.5 text-ink-600">
+                            <Phone className="w-3.5 h-3.5 text-ink-500" />
                             {customer.phone || "-"}
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           {customer.ordersCount || 0} {customer.ordersCount === 1 ? "order" : "orders"}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap font-semibold text-slate-900">
+                        <td className="px-4 py-4 whitespace-nowrap font-semibold text-ink-900">
                           {formatCurrency(customer.totalSpent)}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
@@ -436,7 +436,7 @@ const handleDownloadCSV = () => {
             </table>
           </div>
 
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-ink-200">
             <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>

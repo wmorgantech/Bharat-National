@@ -1,7 +1,14 @@
 // src/components/ProductGrid.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import AOS from "aos";
 import ProductCard from "./ProductCard";
+
+// Reveal delay per card, capped so a long grid never leaves the last cards
+// waiting several seconds before they appear.
+const STAGGER_STEP_MS = 120;
+const MAX_STAGGER_STEPS = 5;
 
 const getCols = (w) => {
   // Must match your Tailwind grid cols:
@@ -29,6 +36,13 @@ const ProductGrid = ({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Paging swaps the rendered cards for brand new DOM nodes. AOS only knows
+  // about elements collected at init, so without this the next page of
+  // products would mount at opacity 0 and stay invisible until a scroll.
+  useEffect(() => {
+    AOS.refreshHard();
+  }, [products]);
+
   const placeholders = useMemo(() => {
     if (!products?.length) return [];
     const remainder = products.length % cols;
@@ -37,44 +51,40 @@ const ProductGrid = ({
   }, [products, cols]);
 
   return (
-    <section className={`py-8 md:py-12 bg-gray-50 ${sectionClassName}`}>
-      <div className={`container mx-auto px-4 ${containerClassName}`}>
+    <section className={`section ${sectionClassName}`}>
+      <div className={`section-shell ${containerClassName}`}>
         {showTitle && (
-          <div className="mb-6 md:mb-8 text-center relative">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-4">
-              {title}
-            </h2>
+          <div
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 md:mb-12"
+            data-aos="fade-up"
+          >
+            <div>
+              <span className="eyebrow">Catalogue</span>
+              <h2 className="section-title mt-3">{title}</h2>
+            </div>
 
             {showViewAll && products.length > 0 && (
-              <>
-                {/* Desktop */}
-                <span
-                  onClick={() => navigate("/products")}
-                  className="hidden md:inline-block absolute right-0 top-1/2 -translate-y-1/2
-                    text-sm font-medium text-black cursor-pointer
-                    hover:text-[var(--primary)] hover:underline"
-                >
-                  See all products
-                </span>
-
-                {/* Mobile */}
-                <div className="mt-1 md:hidden">
-                  <span
-                    onClick={() => navigate("/products")}
-                    className="text-sm font-medium text-[var(--primary)] cursor-pointer hover:underline"
-                  >
-                    See all products
-                  </span>
-                </div>
-              </>
+              <button
+                type="button"
+                onClick={() => navigate("/products")}
+                className="btn-secondary btn-md self-start sm:self-auto shrink-0"
+              >
+                See all products
+                <ArrowRight size={16} />
+              </button>
             )}
           </div>
         )}
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6 xl:gap-8 items-stretch">
-          {products.map((p) => (
-            <div key={p.id} className="h-full">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 xl:gap-6 items-stretch">
+          {products.map((p, i) => (
+            <div
+              key={p.id}
+              data-aos="fade-up"
+              data-aos-delay={Math.min(i, MAX_STAGGER_STEPS) * STAGGER_STEP_MS}
+              className="h-full"
+            >
               <ProductCard product={p} />
             </div>
           ))}

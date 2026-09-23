@@ -1,3 +1,375 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===========================================================================
+   BNC DESIGN SYSTEM — clean, light, professional e-commerce
+   ---------------------------------------------------------------------------
+   White surfaces, a neutral slate text ramp and BNC teal as the single accent.
+   No glassmorphism, no glow, no dark page backgrounds.
+
+   The legacy `glass-*` / `edge-*` / `aura-*` names from the previous direction
+   are kept here purely as aliases or no-ops, so every page inherits the clean
+   styling without needing its markup rewritten.
+=========================================================================== */
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-white text-ink-700 antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-[-0.02em] text-ink-900;
+  }
+
+  ::selection {
+    background: rgba(0, 137, 123, 0.16);
+    color: #0F172A;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #F1F5F9; }
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 999px;
+    border: 2px solid #F1F5F9;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+}
+
+@layer components {
+  /* ---- CARDS ------------------------------------------------------------ */
+  .card {
+    @apply relative rounded-xl border border-ink-200 bg-white shadow-card;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200
+           hover:shadow-card-hover hover:border-ink-300;
+  }
+
+  /* Legacy aliases so existing markup renders as clean cards. */
+  .glass-1 { @apply relative rounded-2xl border border-ink-200 bg-white shadow-card; }
+  .glass-2 { @apply relative rounded-xl border border-ink-200 bg-white shadow-card; }
+  .glass-3 { @apply relative rounded-lg border border-ink-200 bg-ink-50; }
+  .glass   { @apply glass-2; }
+  .glass-dark { @apply glass-2; }
+  .surface { @apply glass-2; }
+  .surface-hover { @apply glass-2 transition-all duration-200 hover:shadow-card-hover hover:border-ink-300; }
+  .float-card { @apply glass-2 transition-all duration-200 hover:shadow-card-hover hover:border-ink-300; }
+  .float-card-dark { @apply float-card; }
+  .glass-interactive { @apply transition-all duration-200 hover:shadow-card-hover hover:border-ink-300; }
+  .panel-dark { @apply relative; }
+
+  .float-chip {
+    @apply inline-flex items-center gap-2 rounded-full
+           border border-ink-200 bg-white px-3.5 py-2
+           text-[12px] font-medium text-ink-700 shadow-card
+           transition-colors duration-200 hover:border-primary/40;
+  }
+
+  /* ---- BUTTONS ---------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           text-sm font-semibold
+           transition-colors duration-200
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-primary focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-sm { @apply px-4 py-2 text-[13px]; }
+  .btn-md { @apply px-5 py-2.5; }
+  .btn-lg { @apply px-6 py-3 text-[15px]; }
+
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-card
+           hover:bg-primary-dark;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-ink-800 border border-ink-300
+           hover:bg-ink-50 hover:border-ink-400;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-600
+           hover:bg-ink-100 hover:text-ink-900;
+  }
+
+  .btn-outline {
+    @apply btn bg-white text-primary border border-primary
+           hover:bg-primary-50;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-on-dark { @apply btn-secondary; }
+
+  /* ---- SECTION RHYTHM --------------------------------------------------- */
+  .section { @apply py-14 md:py-20; }
+
+  .section-shell { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[12px] font-semibold
+           uppercase tracking-[0.12em] text-primary;
+  }
+
+  .section-title {
+    @apply text-[26px] leading-[1.2] md:text-[34px]
+           font-display font-bold tracking-[-0.02em] text-ink-900;
+  }
+
+  .section-sub {
+    @apply mt-3 text-[15px] leading-relaxed text-ink-500;
+  }
+
+  /* ---- FORM FIELDS ------------------------------------------------------ */
+  .field {
+    @apply w-full rounded-lg border border-ink-300 bg-white
+           px-3.5 py-2.5 text-sm text-ink-900
+           placeholder:text-ink-400 outline-none
+           transition-colors duration-200
+           hover:border-ink-400
+           focus:border-primary focus:ring-2 focus:ring-primary/20
+           disabled:bg-ink-100 disabled:text-ink-400 disabled:cursor-not-allowed;
+  }
+
+  .field-label {
+    @apply block text-[13px] font-medium text-ink-700 mb-1.5;
+  }
+
+  /* ---- BADGES ----------------------------------------------------------- */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border
+           px-2.5 py-1 text-[12px] font-medium;
+  }
+  .badge-neutral { @apply badge bg-ink-100 text-ink-600 border-ink-200; }
+  .badge-success { @apply badge bg-primary-50 text-primary-dark border-primary/25; }
+  .badge-warning { @apply badge bg-amber-50 text-amber-700 border-amber-200; }
+  .badge-info    { @apply badge bg-sky-50 text-sky-700 border-sky-200; }
+  .badge-danger  { @apply badge bg-red-50 text-red-700 border-red-200; }
+
+  /* ---- STATES ----------------------------------------------------------- */
+  .state-panel {
+    @apply rounded-xl border border-ink-200 bg-white p-10 text-center shadow-card;
+  }
+
+  .skeleton { @apply animate-pulse rounded-lg bg-ink-100; }
+
+  /* ---- TYPOGRAPHY SCALE -------------------------------------------------
+     One ramp for the whole storefront. Weight is used sparingly: headings,
+     product names, prices and primary CTAs carry it; everything supporting
+     stays regular so the hierarchy actually reads.                        */
+  .h-display {
+    @apply font-display font-bold tracking-[-0.03em] text-ink-900
+           text-[32px] leading-[1.08] sm:text-[40px] lg:text-[48px];
+  }
+
+  .h-page {
+    @apply font-display font-bold tracking-[-0.025em] text-ink-900
+           text-[28px] leading-[1.12] md:text-[36px];
+  }
+
+  .h-card {
+    @apply font-display text-[15px] font-semibold tracking-[-0.01em] text-ink-900;
+  }
+
+  .text-price {
+    @apply font-display text-[17px] font-bold tracking-[-0.01em]
+           text-ink-900 tabular-nums;
+  }
+
+  /* Supporting copy - deliberately regular weight. */
+  .text-body { @apply text-[15px] leading-relaxed text-ink-600; }
+  .text-muted { @apply text-[13.5px] leading-relaxed text-ink-500; }
+  .text-meta {
+    @apply text-[11px] font-medium uppercase tracking-[0.14em] text-ink-500;
+  }
+
+  /* ---- ICON CHIPS -------------------------------------------------------
+     The single teal accent used across service, feature and contact cards. */
+  .icon-chip { @apply grid place-items-center shrink-0 rounded-xl bg-primary-50 text-primary; }
+  .icon-chip-sm { @apply icon-chip h-9 w-9; }
+  .icon-chip-md { @apply icon-chip h-10 w-10; }
+  .icon-chip-lg { @apply icon-chip h-12 w-12; }
+
+  /* ---- CARD SYSTEM ------------------------------------------------------
+     Deliberately NOT one card repeated. Each variant is shaped by what it
+     holds: product cards are image-led and compact, service cards are
+     icon-led and roomy, feature cards are quiet and dense, order cards are
+     wide rows. All share the same border/radius language so the site still
+     reads as one product.                                                 */
+  .card-base { @apply relative rounded-xl border border-ink-200 bg-white; }
+
+  /* Product - image-led, compact, vertical. */
+  .card-product {
+    @apply card-base flex flex-col overflow-hidden shadow-card
+           transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-card-hover hover:border-primary/30;
+  }
+  .card-product-media { @apply relative aspect-square overflow-hidden bg-ink-50; }
+  .card-product-img {
+    @apply h-full w-full object-contain p-3 transition-transform duration-300;
+  }
+  .card-product:hover .card-product-img { @apply scale-105; }
+  .card-product-body { @apply flex flex-1 flex-col p-3.5; }
+
+  /* Service - icon-led, roomy, left aligned. */
+  .card-service {
+    @apply card-base p-6 shadow-card transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-card-hover hover:border-primary/30;
+  }
+
+  /* Category - image tile with an overlaid label. */
+  .card-category {
+    @apply card-base overflow-hidden shadow-card transition-all duration-200
+           hover:shadow-card-hover;
+  }
+
+  /* Feature - quiet and dense; no shadow, tinted rather than white. */
+  .card-feature {
+    @apply rounded-xl border border-ink-200 bg-ink-50 p-5
+           transition-colors duration-200 hover:border-ink-300 hover:bg-white;
+  }
+
+  /* Contact - icon chip above a stacked detail block. */
+  .card-contact {
+    @apply card-base p-6 shadow-card
+           transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  /* Statistic - numeric first, label second. */
+  .card-stat { @apply rounded-xl border border-ink-200 bg-white p-5; }
+  .card-stat-value {
+    @apply font-display text-[26px] md:text-[30px] font-bold
+           tracking-[-0.02em] text-ink-900 tabular-nums;
+  }
+
+  /* Order - a wide row, not a tile. */
+  .card-order {
+    @apply card-base p-4 shadow-card sm:p-5
+           transition-all duration-200
+           hover:shadow-card-hover hover:border-primary/30;
+  }
+
+  /* CTA - a tinted band that closes a page. */
+  .card-cta {
+    @apply rounded-2xl border border-ink-200 bg-ink-50
+           px-6 py-12 text-center md:px-16 md:py-14;
+  }
+
+  /* ---- AUTH ENTRANCE ----------------------------------------------------
+     Short, elegant, two-beat: the mark settles, then the form arrives.    */
+  .anim-logo { animation: logoIn 400ms cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .anim-brand { animation: fadeUp 400ms ease-out both; animation-delay: 140ms; }
+  .anim-panel { animation: fadeUp 420ms ease-out both; animation-delay: 260ms; }
+  .anim-aside { animation: fadeIn 500ms ease-out both; animation-delay: 80ms; }
+
+  /* Hero slide change - short enough not to feel like a transition effect. */
+  .anim-panel-fast { animation: fadeUp 320ms ease-out both; }
+}
+
+@layer utilities {
+  /* ---- Legacy decorative utilities, neutralised -------------------------
+     These class names still appear throughout the pages. Rather than editing
+     every file, they are defined as no-ops so the glow, neon rims, floating
+     motion and dark washes simply stop rendering.                         */
+  .edge-cyan,
+  .edge-teal,
+  .edge-violet,
+  .edge-magenta { box-shadow: none; }
+
+  .lit-top::before,
+  .inner-sheen::after { content: none; display: none; }
+
+  .aura-cyan,
+  .aura-teal,
+  .aura-violet,
+  .spotlight,
+  .bg-brand-wash,
+  .grid-void,
+  .grid-light,
+  .bg-grid-fade { background-image: none; }
+
+  .mask-radial { -webkit-mask-image: none; mask-image: none; }
+
+  .animate-float,
+  .animate-float-slow,
+  .animate-float-delay,
+  .animate-aura,
+  .animate-glow-pulse,
+  .animate-grid-drift,
+  .animate-beam,
+  .animate-beam-v { animation: none; }
+
+  .text-balance { text-wrap: balance; }
+
+  /* Minimal, elegant page entrance. */
+  .page-enter { animation: pageIn 260ms ease-out both; }
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes logoIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Motion is decorative throughout, so it is all disabled together rather than
+   tuned per animation. Anything added above must be listed here too. */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .anim-logo,
+  .anim-brand,
+  .anim-panel,
+  .anim-panel-fast,
+  .anim-aside {
+    animation: none !important;
+  }
+
+  .card-product:hover,
+  .card-service:hover,
+  .card-order:hover {
+    transform: none !important;
+  }
+
+  .card-product:hover .card-product-img { transform: none !important; }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

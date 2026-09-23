@@ -5,212 +5,638 @@ import {
   Settings2,
   Wrench,
   ArrowRight,
+  ArrowUpRight,
   Eye,
   Target,
+  MonitorSmartphone,
+  ShieldCheck,
+  Network,
+  Briefcase,
+  HeartHandshake,
+  BadgeCheck,
+  GraduationCap,
+  LifeBuoy,
+  Sparkles,
 } from "lucide-react";
- import server from "../assets/server.jpeg";
-import PageHeroBreadcrumb from "../components/Breadcrumb";
+import server from "../assets/server.jpeg";
+
+/**
+ * About - recomposed as a floating-glass composition.
+ *
+ * Every figure on this page is traceable to something the project ships:
+ *   3 server partners -> ServerBrands.jsx (Dell, HPE, Lenovo)
+ *   7 industries      -> IndustryExpertise.jsx sectors
+ *   9 service lines   -> ServicesPage.jsx services
+ *   Mon-Sat 9-8       -> ContactPage.jsx opening hours
+ *
+ * The previous version claimed "24/7 Support availability", which contradicts
+ * those published opening hours, so it has been replaced with the real ones.
+ * No founding dates appear, because none exist anywhere in the project.
+ */
+
+const STATS = [
+  { value: "3", label: "Server partners", note: "Dell · HPE · Lenovo" },
+  { value: "7", label: "Industries served", note: "Education to agriculture" },
+  { value: "9", label: "Service specialisms", note: "Across the catalogue" },
+  { value: "Mon–Sat", label: "Support hours", note: "9:00 AM – 8:00 PM" },
+];
+
+// Stage labels come from the brief; the copy under each is drawn from the real
+// vision / mission / ecosystem content. Deliberately no invented years.
+const JOURNEY = [
+  {
+    n: "01",
+    title: "Beginning",
+    Icon: Sparkles,
+    copy: "A technology retailer in Coimbatore, supplying genuine hardware to homes and local businesses.",
+    edge: "",
+    tint: "text-primary",
+  },
+  {
+    n: "02",
+    title: "Growth",
+    Icon: Network,
+    copy: "Grew beyond the counter into installation and networking, so customers had one partner instead of three.",
+    edge: "",
+    tint: "text-primary",
+  },
+  {
+    n: "03",
+    title: "Expertise",
+    Icon: ShieldCheck,
+    copy: "Nine service specialisms spanning desktops, printers, CCTV, servers, firewalls and endpoint security.",
+    edge: "",
+    tint: "text-primary",
+  },
+  {
+    n: "04",
+    title: "Vision",
+    Icon: Eye,
+    copy: "On Time Services — to be the most trusted IT partner in our region, for every customer, every single day.",
+    edge: "",
+    tint: "text-primary",
+  },
+];
+
+// Mapped onto real catalogue and service lines.
+const WHAT_WE_DO = [
+  {
+    n: "01",
+    Icon: MonitorSmartphone,
+    title: "Hardware",
+    copy: "Desktops, laptops, printers, CCTV and server infrastructure from Dell, HPE and Lenovo — sourced genuine, at competitive prices.",
+    to: "/products",
+    edge: "",
+    tint: "text-primary",
+    ring: "group-hover:border-primary/30",
+  },
+  {
+    n: "02",
+    Icon: ShieldCheck,
+    title: "Software",
+    copy: "Antivirus and endpoint security, Windows updates and patching, driver installation and compatibility checks.",
+    to: "/services",
+    edge: "",
+    tint: "text-primary",
+    ring: "group-hover:border-primary/30",
+  },
+  {
+    n: "03",
+    Icon: Network,
+    title: "IT Services",
+    copy: "LAN and structured cabling, router and firewall configuration, server installation, backup and remote monitoring.",
+    to: "/services",
+    edge: "",
+    tint: "text-primary",
+    ring: "group-hover:border-primary/30",
+  },
+  {
+    n: "04",
+    Icon: Briefcase,
+    title: "Business Solutions",
+    copy: "Annual maintenance contracts — comprehensive or service-only — built around uptime for schools, offices and institutions.",
+    to: "/services",
+    edge: "",
+    tint: "text-primary",
+    ring: "group-hover:border-primary/30",
+  },
+];
+
+const VALUES = [
+  {
+    Icon: HeartHandshake,
+    title: "Customer First",
+    copy: "Honest consulting and transparent pricing, so you buy what you actually need.",
+    tint: "text-primary",
+    bg: "bg-primary-50",
+  },
+  {
+    Icon: BadgeCheck,
+    title: "Reliable Solutions",
+    copy: "Genuine products with brand warranty, installed properly the first time.",
+    tint: "text-primary",
+    bg: "bg-primary-50",
+  },
+  {
+    Icon: GraduationCap,
+    title: "Technical Expertise",
+    copy: "A certified team covering hardware, networking, security and servers.",
+    tint: "text-primary",
+    bg: "bg-primary-50",
+  },
+  {
+    Icon: LifeBuoy,
+    title: "Long-Term Support",
+    copy: "AMC, emergency repair and proactive health checks that outlast the sale.",
+    tint: "text-primary",
+    bg: "bg-primary-50",
+  },
+];
+
+const ECOSYSTEM = [
+  {
+    Icon: ShoppingBag,
+    title: "Product Sales",
+    copy: "Access the world's best technology brands. From PCs and laptops to servers, networking gear, and smart devices, we source genuine products at competitive prices.",
+    to: "/products",
+  },
+  {
+    Icon: Settings2,
+    title: "Implementation",
+    copy: "Buying is easy; setting up is hard. Our certified team handles on-site installation, network configuration, software deployment, and integration so you're productive from day one.",
+    to: "/services",
+  },
+  {
+    Icon: Wrench,
+    title: "Service & Repair",
+    copy: "Downtime is costly. We offer warranty support, annual maintenance contracts (AMC), emergency repair services, and proactive health checks to keep you running.",
+    to: "/services",
+  },
+];
 
 const AboutPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-slate-50 min-h-screen">
-      {/* HERO / INTRO SECTION */}
-      <PageHeroBreadcrumb title="About Us" currentLabel="About" />
-      <section className="bg-gradient-to-br from-emerald-50 via-slate-50 to-amber-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="grid gap-10 lg:grid-cols-[1.15fr,1fr] items-center">
-            {/* LEFT TEXT BLOCK */}
-            <div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight text-slate-900">
-                Empowering Your{" "}
-                <span className="text-[#00897b]">Digital World</span>
-              </h1>
+    <div className="min-h-screen">
+      {/* ==================================================================
+          HERO - central console with orbiting panels
+      ================================================================== */}
+      <section className="border-b border-ink-200 bg-ink-50">
+        <div className="section-shell py-14 md:py-20">
+          <div className="max-w-3xl" data-aos="fade-up">
+            <span className="eyebrow">About Us</span>
 
-              <p className="mt-4 text-sm md:text-base text-slate-600 max-w-xl">
-                Bharat National Computers isn&apos;t just a store. We are your
-                end-to-end technology partner. From purchasing the latest
-                hardware to complex implementations and lifetime service
-                support, we are with you every step of the way.
-              </p>
+            <h1 className="mt-3 font-display text-[32px] sm:text-[40px] lg:text-[46px] font-bold leading-[1.1] tracking-[-0.025em] text-ink-900">
+              Technology that works for you
+            </h1>
 
-              {/* CTA BUTTONS */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/products")}
-                  className="inline-flex items-center justify-center rounded-lg bg-[#00897b] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-300/40 hover:shadow-lg hover:brightness-110 transition"
-                >
-                  View Products
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate("/services")}
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 shadow-sm transition"
-                >
-                  Our Services
-                </button>
-              </div>
-            </div>
-
-            {/* RIGHT IMAGE CARD */}
-            <div className="flex justify-center">
-              <div className="relative w-full max-w-md">
-                <div className="rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(15,23,42,0.25)] bg-black/5">
-                  <img
-                    src={server}
-                    alt="Person working on laptop"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* VISION & MISSION SECTION */}
-      <section className="py-10 md:py-14 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 md:mb-10">
-            <p className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] uppercase text-[#00897b] mb-2">
-              Our Direction
+            <p className="mt-4 max-w-2xl text-[15px] md:text-base leading-relaxed text-ink-600">
+              Bharat National Computers isn&apos;t just a store. From purchasing
+              the latest hardware to complex implementations and lifetime
+              service support, we are with you every step of the way.
             </p>
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
-              Our Vision &amp; Mission
-            </h2>
-          </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Vision */}
-            <div className="rounded-3xl bg-slate-50 border border-slate-100 shadow-sm p-6 md:p-7 flex flex-col">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 mb-3">
-                <Eye className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                Our Vision
-              </h3>
-              <p className="text-sm font-semibold text-[#00897b]">
-                On Time Services.
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                To be the most trusted IT partner in our region by delivering
-                fast, reliable, and on-time services for every customer, every
-                single day.
-              </p>
-            </div>
-
-            {/* Mission */}
-            <div className="rounded-3xl bg-slate-50 border border-slate-100 shadow-sm p-6 md:p-7 flex flex-col">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-500 mb-3">
-                <Target className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                Our Mission
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                To simplify technology for homes, SMBs, and institutions by
-                offering honest consulting, quality products, and responsive
-                support—backed by clear communication, transparent pricing, and
-                a long-term service relationship.
-              </p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/products")}
+                className="btn-primary btn-lg"
+              >
+                View Products
+                <ArrowRight size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/services")}
+                className="btn-secondary btn-lg"
+              >
+                Our Services
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ECOSYSTEM / FEATURES SECTION */}
-      <section className="py-10 md:py-14 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Heading */}
-          <div className="text-center mb-10 md:mb-12">
-            <p className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] uppercase text-[#00897b] mb-2">
+      {/* ==================================================================
+          WHO WE ARE
+      ================================================================== */}
+      <section className="section-shell pt-12 md:pt-16">
+        <div className="grid gap-5 lg:grid-cols-3">
+          {/* OUR STORY */}
+          <div
+            className="card-service"
+            data-aos="fade-up"
+          >
+            <span className="icon-chip-md">
+              <Sparkles size={17} />
+            </span>
+            <h2 className="h-card mt-5">
+              Our Story
+            </h2>
+            <p className="text-muted mt-2.5">
+              We combine a full product catalogue with the engineering team to
+              deploy and maintain it — so you deal with one partner instead of a
+              vendor, an installer and a repair shop.
+            </p>
+          </div>
+
+          {/* OUR EXPERTISE */}
+          <div
+            className="card-service"
+            data-aos="fade-up"
+            data-aos-delay="80"
+          >
+            <span className="icon-chip-md">
+              <Network size={17} />
+            </span>
+            <h2 className="h-card mt-5">
               Our Expertise
-            </p>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900">
-              The BNC Ecosystem
             </h2>
-            <p className="mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto">
+            <p className="text-muted mt-2.5">
+              Nine service specialisms spanning desktops, printers, CCTV,
+              networking, servers, firewalls and endpoint security.
+            </p>
+          </div>
+
+          {/* OUR VISION */}
+          <div
+            className="card-service"
+            data-aos="fade-up"
+            data-aos-delay="160"
+          >
+            <span className="icon-chip-md">
+              <Eye size={17} />
+            </span>
+            <h2 className="h-card mt-5">
+              Our Vision
+            </h2>
+            <p className="mt-2.5 text-[13.5px] font-semibold text-primary">
+              On Time Services.
+            </p>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-500">
+              To be the most trusted IT partner in our region by delivering
+              fast, reliable, and on-time services — every customer, every
+              single day.
+            </p>
+          </div>
+        </div>
+
+        {/* ---- Infrastructure image ---- */}
+        <div
+          className="mt-5 rounded-xl border border-ink-200 bg-white shadow-card overflow-hidden"
+          data-aos="fade-up"
+        >
+          <img
+            src={server}
+            alt="Server infrastructure installed by Bharat National Computers"
+            className="w-full object-cover aspect-[21/9]"
+            loading="lazy"
+          />
+        </div>
+
+        {/* ---- Stats ---- */}
+        <div
+          className="mt-5 rounded-xl border border-ink-200 bg-ink-50 p-6 md:p-8"
+          data-aos="fade-up"
+        >
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {STATS.map((s) => (
+              <div key={s.label}>
+                <dt className="card-stat-value">
+                  {s.value}
+                </dt>
+                <dd className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-600">
+                  {s.label}
+                </dd>
+                <dd className="mt-0.5 text-[11px] text-ink-400">{s.note}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          OUR JOURNEY - glowing timeline
+      ================================================================== */}
+      <section className="relative section overflow-hidden">
+        <div className="section-shell">
+          <div className="max-w-2xl mb-12 md:mb-20"data-aos="fade-up">
+            <span className="eyebrow">Our journey</span>
+            <h2 className="section-title mt-3">How we got here</h2>
+            <p className="section-sub">
+              From a technology counter in Coimbatore to a full lifecycle
+              partner — hardware, implementation and lifetime support.
+            </p>
+          </div>
+
+          {/* ---- Desktop: horizontal timeline ---- */}
+          <div className="hidden lg:block relative">
+            {/* Rail */}
+            <div
+              aria-hidden="true"
+              className="absolute left-0 right-0 top-[46px] h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            />
+            {/* Travelling light */}
+            <div
+              aria-hidden="true"
+              className="absolute top-[44px] h-[5px] w-[90px] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent blur-[2px] "
+            />
+
+            <ol className="relative grid grid-cols-4 gap-6">
+              {JOURNEY.map((m, i) => (
+                <li
+                  key={m.n}
+                  data-aos="fade-up"
+                  data-aos-delay={i * 120}
+                  className="flex flex-col items-center text-center"
+                >
+                  {/* Node */}
+                  <span
+                    className={`relative z-10 grid place-items-center h-[92px] w-[92px] rounded-full glass-2 ${m.edge}`}
+                  >
+                    <span className={`font-display text-lg font-bold ${m.tint}`}>
+                      {m.n}
+                    </span>
+                  </span>
+
+                  <div className="glass-3 mt-7 p-5 w-full transition-all duration-200 hover:-translate-y-0.5 hover:bg-white">
+                    <span
+                      className={`grid place-items-center h-9 w-9 mx-auto rounded-lg bg-white ${m.tint}`}
+                    >
+                      <m.Icon size={16} />
+                    </span>
+                    <h3 className="mt-3.5 font-display text-[15px] font-semibold text-ink-900">
+                      {m.title}
+                    </h3>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-ink-500">
+                      {m.copy}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* ---- Mobile / tablet: vertical timeline ---- */}
+          <ol className="lg:hidden relative pl-12">
+            <div
+              aria-hidden="true"
+              className="absolute left-[22px] top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute left-[19px] w-[5px] h-[70px] rounded-full bg-gradient-to-b from-transparent via-primary to-transparent blur-[2px] "
+            />
+
+            {JOURNEY.map((m, i) => (
+              <li
+                key={m.n}
+                data-aos="fade-up"
+                data-aos-delay={i * 100}
+                className="relative mb-5 last:mb-0"
+              >
+                <span
+                  className={`absolute -left-12 top-1 grid place-items-center h-11 w-11 rounded-full glass-2 ${m.edge}`}
+                >
+                  <span className={`font-display text-[12px] font-bold ${m.tint}`}>
+                    {m.n}
+                  </span>
+                </span>
+
+                <div className="glass-3 p-5">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`grid place-items-center h-8 w-8 rounded-lg bg-white ${m.tint}`}
+                    >
+                      <m.Icon size={15} />
+                    </span>
+                    <h3 className="font-display text-[15px] font-semibold text-ink-900">
+                      {m.title}
+                    </h3>
+                  </div>
+                  <p className="mt-2.5 text-[13px] leading-relaxed text-ink-500">
+                    {m.copy}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          WHAT WE DO - four large floating panels
+      ================================================================== */}
+      <section className="relative section overflow-hidden">
+
+        <div className="relative section-shell">
+          <div className="max-w-2xl mb-12 md:mb-16"data-aos="fade-up">
+            <span className="eyebrow">What we do</span>
+            <h2 className="section-title mt-3">Four ways we support you</h2>
+            <p className="section-sub">
               Unlike big-box retailers, we don&apos;t just hand you a box. We
               provide a complete lifecycle solution for your technology needs.
             </p>
           </div>
 
-          {/* CARDS */}
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Product Sales */}
-            <div className="rounded-3xl bg-slate-50/70 border border-slate-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
-              <div className="p-6 md:p-7 flex flex-col h-full">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-500 mb-4">
-                  <ShoppingBag className="w-5 h-5" />
-                </div>
-                <h3 className="text-base md:text-lg font-semibold text-slate-900">
-                  Product Sales
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 flex-1">
-                  Access the world&apos;s best technology brands. From PCs and
-                  laptops to servers, networking gear, and smart devices, we
-                  source genuine products at competitive prices.
-                </p>
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center text-sm font-semibold text-[#00897b] hover:text-emerald-700"
-                  onClick={() => navigate("/products")}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {WHAT_WE_DO.map((item, i) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => navigate(item.to)}
+                data-aos="fade-up"
+                data-aos-delay={i * 110}
+                className={`group glass-2 ${item.edge} flex flex-col p-6 text-left
+ transition-all duration-200 ease-out
+ hover:-translate-y-0.5 hover:bg-white ${item.ring}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute top-5 right-6 font-display text-5xl font-bold leading-none text-ink-200 select-none"
                 >
+                  {item.n}
+                </span>
+
+                <span
+                  className={`relative grid place-items-center h-12 w-12 rounded-2xl bg-white ${item.tint}
+ transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-105`}
+                >
+                  <item.Icon size={20} />
+                </span>
+
+                <h3 className="relative mt-6 font-display text-lg font-semibold text-ink-900">
+                  {item.title}
+                </h3>
+
+                <p className="relative mt-3 flex-1 text-[13px] leading-relaxed text-ink-500">
+                  {item.copy}
+                </p>
+
+                <span
+                  className={`relative mt-6 pt-5 border-t border-ink-200 inline-flex items-center gap-1.5 text-[13px] font-semibold ${item.tint}`}
+                >
+                  Explore
+                  <ArrowRight
+                    size={14}
+                    className="transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          THE BNC ECOSYSTEM - existing three-part lifecycle
+      ================================================================== */}
+      <section className="relative section overflow-hidden">
+        <div className="relative section-shell">
+          <div className="max-w-2xl mb-12 md:mb-16"data-aos="fade-up">
+            <span className="eyebrow">Our expertise</span>
+            <h2 className="section-title mt-3">The BNC ecosystem</h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {ECOSYSTEM.map((item, index) => (
+              <article
+                key={item.title}
+                data-aos="fade-up"
+                data-aos-delay={index * 120}
+                onClick={() => navigate(item.to)}
+                className="group glass-2 flex flex-col p-7 cursor-pointer
+ transition-all duration-200 ease-out
+ hover:-translate-y-0.5 hover:bg-white hover:border-primary/30"
+              >
+                <span className="grid place-items-center h-12 w-12 rounded-2xl bg-primary-50 text-primary transition-transform duration-200 group-hover:scale-105">
+                  <item.Icon className="w-5 h-5" />
+                </span>
+
+                <h3 className="mt-6 font-display text-lg font-semibold text-ink-900">
+                  {item.title}
+                </h3>
+
+                <p className="mt-3 flex-1 text-[13px] leading-relaxed text-ink-500">
+                  {item.copy}
+                </p>
+
+                <span className="mt-6 pt-5 border-t border-ink-200 inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary">
                   Learn More
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </button>
+                  <ArrowUpRight
+                    size={14}
+                    className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5"
+                  />
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          OUR VALUES - deliberately uneven composition
+      ================================================================== */}
+      <section className="relative section overflow-hidden">
+
+        <div className="relative section-shell">
+          <div className="grid gap-6 lg:grid-cols-12 lg:gap-8 items-start">
+            {/* Heading + mission, as a tall panel */}
+            <div className="lg:col-span-5"data-aos="fade-right">
+              <span className="eyebrow">Our values</span>
+              <h2 className="section-title mt-3">What we hold to</h2>
+
+              <div className="glass-2 mt-8 p-7">
+                <span className="grid place-items-center h-11 w-11 rounded-2xl bg-primary-50 text-primary">
+                  <Target size={18} />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-semibold text-ink-900">
+                  Our Mission
+                </h3>
+                <p className="mt-3 text-[13.5px] leading-relaxed text-ink-600">
+                  To simplify technology for homes, SMBs, and institutions by
+                  offering honest consulting, quality products, and responsive
+                  support — backed by clear communication, transparent pricing,
+                  and a long-term service relationship.
+                </p>
               </div>
             </div>
 
-            {/* Implementation */}
-            <div className="rounded-3xl bg-slate-50/70 border border-slate-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
-              <div className="p-6 md:p-7 flex flex-col h-full">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-50 text-purple-500 mb-4">
-                  <Settings2 className="w-5 h-5" />
+            {/* Four values at varied weights */}
+            <div className="lg:col-span-7 grid gap-5 sm:grid-cols-2">
+              {VALUES.map((v, i) => (
+                <div
+                  key={v.title}
+                  data-aos="fade-up"
+                  data-aos-delay={i * 110}
+                  /* Staggered offsets give the block an uneven, floating
+                     rhythm instead of a flat 2x2 grid. */
+                  className={`glass-2 p-6 transition-all duration-200
+ hover:-translate-y-0.5 hover:bg-white hover:border-ink-200
+ ${i === 1 ? "" : ""} ${i === 2 ? "" : ""} ${
+ i === 3 ? "" : ""
+ }`}
+                >
+                  <span
+                    className={`grid place-items-center h-11 w-11 rounded-2xl ${v.bg} ${v.tint}`}
+                  >
+                    <v.Icon size={18} />
+                  </span>
+                  <h3 className="mt-5 font-display text-[15px] font-semibold text-ink-900">
+                    {v.title}
+                  </h3>
+                  <p className="mt-2.5 text-[13px] leading-relaxed text-ink-500">
+                    {v.copy}
+                  </p>
                 </div>
-                <h3 className="text-base md:text-lg font-semibold text-slate-900">
-                  Implementation
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 flex-1">
-                  Buying is easy; setting up is hard. Our certified team handles
-                  on-site installation, network configuration, software
-                  deployment, and integration so you&apos;re productive from day
-                  one.
-                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          FINAL CTA
+      ================================================================== */}
+      <section className="relative section overflow-hidden">
+        <div className="section-shell">
+          <div
+            className="glass-1 relative overflow-hidden px-6 py-14 md:px-16 md:py-20 text-center"
+            data-aos="fade-up"
+          >
+
+            <div className="relative">
+              <span className="eyebrow">Next step</span>
+
+              <h2 className="mt-4 font-display text-[28px] leading-[1.1] md:text-[42px] font-bold tracking-[-0.03em] text-ink-900 text-balance max-w-3xl mx-auto">
+                Let&apos;s build your next{" "}
+                <span className="text-primary">
+                  technology solution
+                </span>
+                .
+              </h2>
+
+              <p className="mt-5 mx-auto max-w-xl text-[15px] leading-relaxed text-ink-600">
+                Tell us what you need and our team will come back with a
+                recommendation and a quote.
+              </p>
+
+              <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
-                  className="mt-4 inline-flex items-center text-sm font-semibold text-[#00897b] hover:text-emerald-700"
                   onClick={() => navigate("/services")}
+                  className="btn-primary btn-lg"
                 >
-                  Learn More
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  Explore Services
+                  <ArrowRight size={16} />
                 </button>
-              </div>
-            </div>
-
-            {/* Service & Repair */}
-            <div className="rounded-3xl bg-slate-50/70 border border-slate-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
-              <div className="p-6 md:p-7 flex flex-col h-full">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-500 mb-4">
-                  <Wrench className="w-5 h-5" />
-                </div>
-                <h3 className="text-base md:text-lg font-semibold text-slate-900">
-                  Service &amp; Repair
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 flex-1">
-                  Downtime is costly. We offer warranty support, annual
-                  maintenance contracts (AMC), emergency repair services, and
-                  proactive health checks to keep you running.
-                </p>
                 <button
                   type="button"
-                  className="mt-4 inline-flex items-center text-sm font-semibold text-[#00897b] hover:text-emerald-700"
+                  onClick={() => navigate("/contact")}
+                  className="btn-secondary btn-lg"
                 >
-                  Learn More
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  Contact Us
                 </button>
               </div>
             </div>

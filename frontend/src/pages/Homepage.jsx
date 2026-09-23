@@ -1,6 +1,9 @@
 // src/pages/Homepage.jsx
 import React, { useState, useEffect } from "react";
-import HomepageSlider from "../components/HomePageSlider";
+import { Link } from "react-router-dom";
+import { PackageOpen, ArrowRight } from "lucide-react";
+import HeroSection from "../components/HeroSection";
+import HomeCategoryStrip from "../components/HomeCategoryStrip";
 import CategorySlider from "../components/Categoriesslider";
 import ProductGrid from "../components/ProductGrid";
 import FeatureSection from "../components/FeatureSection";
@@ -10,7 +13,16 @@ import IndustryExpertise from "../components/IndustryExpertise";
 import ClientReviews from "../components/ClientReview";
 import ServerBrands from "../components/ServerBrands";
 
-
+/**
+ * Home page.
+ *
+ * Section order follows a standard electronics storefront: banner, trust
+ * strip, quick category rail, full categories, best sellers, then the
+ * supporting service / brand / review sections the site already had.
+ *
+ * Notifications are handled by the single global <AppToaster /> mounted in
+ * App.jsx - this page deliberately does not mount a ToastContainer.
+ */
 const Homepage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,22 +46,78 @@ const Homepage = () => {
 
   return (
     <div>
-      <HomepageSlider />
-      <CategorySlider />
-      <IndustryExpertise />
-      <HomeServicesStrip />
-     
+      {/* Banner + trust strip */}
+      <HeroSection />
 
+      {/* Quick shopping categories */}
+      <HomeCategoryStrip />
+
+      {/* Popular categories */}
+      <CategorySlider />
+
+      {/* Best sellers */}
       {loading ? (
-        <div className="py-12 bg-gray-50 text-center text-sm text-gray-500">
-          Loading products...
-        </div>
+        <section className="section">
+          <div className="section-shell">
+            <div className="mb-8 md:mb-12">
+              <span className="eyebrow">Catalogue</span>
+              <h2 className="section-title mt-3">Best Sellers</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5 xl:gap-6">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-xl border border-ink-200 bg-white p-3"
+                >
+                  <div className="skeleton aspect-square w-full" />
+                  <div className="skeleton mt-4 h-3 w-2/5" />
+                  <div className="skeleton mt-2 h-4 w-4/5" />
+                  <div className="skeleton mt-4 h-9 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : products.length === 0 ? (
+        /* The catalogue is genuinely empty rather than still loading. Show a
+           real empty state instead of a heading above a blank grid. */
+        <section className="section">
+          <div className="section-shell">
+            <div className="mb-8 md:mb-12" data-aos="fade-up">
+              <span className="eyebrow">Catalogue</span>
+              <h2 className="section-title mt-3">Best Sellers</h2>
+            </div>
+            <div className="state-panel" data-aos="fade-up">
+              <span className="icon-chip-lg mx-auto">
+                <PackageOpen className="h-6 w-6" />
+              </span>
+              <h3 className="mt-5 font-display text-lg font-semibold text-ink-900">
+                No products published yet
+              </h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-500">
+                Our catalogue is being updated. In the meantime, tell us what
+                you need and we will source it for you.
+              </p>
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                <Link to="/contact" className="btn-primary btn-md">
+                  Contact Us
+                  <ArrowRight size={16} />
+                </Link>
+                <Link to="/services" className="btn-secondary btn-md">
+                  Our Services
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       ) : (
-        <ProductGrid products={products} showViewAll />
+        <ProductGrid products={products} title="Best Sellers" showViewAll />
       )}
 
-      <ServerBrands/>
-
+      {/* Supporting sections */}
+      <IndustryExpertise />
+      <HomeServicesStrip />
+      <ServerBrands />
       <FeatureSection />
       <ClientReviews />
     </div>

@@ -62,8 +62,8 @@ const formatTimeAgo = (date) => {
 const activityConfig = {
   NEW_ORDER: {
     icon: ShoppingCart,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
+    iconBg: "bg-primary/10",
+    iconColor: "text-primary",
     label: "New Order",
   },
   NEW_CUSTOMER: {
@@ -88,20 +88,20 @@ const activityConfig = {
 
 // Stat Card Component
 const StatCard = ({ title, value, icon: Icon, iconBg, iconColor, trend }) => (
-  <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all duration-200">
+  <div className="bg-white rounded-xl border border-ink-100 p-5 shadow-sm hover:shadow-md transition-all duration-200">
     <div className="flex items-center justify-between">
       <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
         <Icon className={`w-6 h-6 ${iconColor}`} />
       </div>
       {trend && (
-        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center gap-1">
           <ArrowUpRight className="w-3 h-3" />
           {trend}
         </span>
       )}
     </div>
-    <p className="text-2xl font-bold text-gray-900 mt-3">{value}</p>
-    <p className="text-sm text-gray-600 mt-1">{title}</p>
+    <p className="text-2xl font-bold text-ink-900 mt-3">{value}</p>
+    <p className="text-sm text-ink-500 mt-1">{title}</p>
   </div>
 );
 
@@ -111,15 +111,15 @@ const ActivityItem = ({ activity, isLast }) => {
   const Icon = config.icon;
 
   return (
-    <div className={`flex items-start gap-3 py-3 ${!isLast ? "border-b border-gray-100" : ""}`}>
+    <div className={`flex items-start gap-3 py-3 ${!isLast ? "border-b border-ink-100" : ""}`}>
       <div className={`w-8 h-8 rounded-full ${config.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
         <Icon className={`w-4 h-4 ${config.iconColor}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 leading-snug">
+        <p className="text-sm font-medium text-ink-900 leading-snug">
           {activity.message}
         </p>
-        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+        <p className="text-xs text-ink-500 mt-1 flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {activity.time}
         </p>
@@ -130,11 +130,11 @@ const ActivityItem = ({ activity, isLast }) => {
 
 // Top Performer Item Component
 const TopPerformerItem = ({ product, rank, isLast }) => (
-  <div className={`flex items-center gap-3 py-3 ${!isLast ? "border-b border-gray-100" : ""}`}>
+  <div className={`flex items-center gap-3 py-3 ${!isLast ? "border-b border-ink-100" : ""}`}>
     <div className="w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
       {rank}
     </div>
-    <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden flex-shrink-0">
+    <div className="w-10 h-10 rounded-md bg-ink-100 overflow-hidden flex-shrink-0">
       {product.imageUrl ? (
         <img 
           src={product.imageUrl} 
@@ -147,15 +147,15 @@ const TopPerformerItem = ({ product, rank, isLast }) => (
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <Package className="w-5 h-5 text-gray-400" />
+          <Package className="w-5 h-5 text-ink-500" />
         </div>
       )}
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
-      <p className="text-xs text-gray-500">{product.sales} sales · {formatCurrency(product.revenue)}</p>
+      <p className="text-sm font-medium text-ink-900 truncate">{product.name}</p>
+      <p className="text-xs text-ink-500">{product.sales} sales · {formatCurrency(product.revenue)}</p>
     </div>
-    <ArrowUpRight className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+    <ArrowUpRight className="w-4 h-4 text-primary flex-shrink-0" />
   </div>
 );
 
@@ -201,24 +201,24 @@ const AdminOverview = () => {
       <div className="max-w-7xl mx-auto py-10 px-4">
         {/* Header Skeleton */}
         <div className="mb-6">
-          <div className="h-8 w-36 bg-gray-200 rounded-lg animate-pulse mb-2" />
-          <div className="h-4 w-72 bg-gray-100 rounded animate-pulse" />
+          <div className="h-8 w-36 bg-ink-200 rounded-lg animate-pulse mb-2" />
+          <div className="h-4 w-72 bg-ink-100 rounded animate-pulse" />
         </div>
         
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-28 animate-pulse" />
+            <div key={i} className="bg-white rounded-xl border border-ink-200 p-5 h-28 animate-pulse" />
           ))}
         </div>
         
         {/* Chart Skeleton */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 h-96 animate-pulse mb-6" />
+        <div className="bg-white rounded-xl border border-ink-200 p-5 h-96 animate-pulse mb-6" />
         
         {/* Bottom Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-96 animate-pulse" />
+            <div key={i} className="bg-white rounded-xl border border-ink-200 p-5 h-96 animate-pulse" />
           ))}
         </div>
       </div>
@@ -232,16 +232,16 @@ const AdminOverview = () => {
       title: "Total Revenue",
       value: formatCurrency(stats?.totalRevenue || 0),
       icon: IndianRupee,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
       trend: "+12.5%",
     },
     {
       title: "Total Orders",
       value: formatNumber(stats?.totalOrders || 0),
       icon: ShoppingCart,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
       trend: "+8.2%",
     },
     {
@@ -269,8 +269,8 @@ const AdminOverview = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-ink-900">Overview</h1>
+          <p className="text-sm text-ink-500 mt-1">
             Complete business performance snapshot
           </p>
         </div>
@@ -286,15 +286,15 @@ const AdminOverview = () => {
 
       {/* Revenue Chart - Last 12 Months */}
       {chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-ink-100 p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Revenue Trend</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Last 12 months performance</p>
+              <h2 className="text-base font-semibold text-ink-900">Revenue Trend</h2>
+              <p className="text-xs text-ink-500 mt-0.5">Last 12 months performance</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-xs text-gray-500">Monthly Revenue</span>
+              <span className="w-2 h-2 rounded-full bg-primary/100" />
+              <span className="text-xs text-ink-500">Monthly Revenue</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
@@ -340,14 +340,14 @@ const AdminOverview = () => {
       {/* Bottom Grid - Recent Activity & Top Performers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/30">
+        <div className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-ink-100 bg-ink-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <h2 className="text-base font-semibold text-gray-900">Recent Activity</h2>
+                <Clock className="w-4 h-4 text-ink-500" />
+                <h2 className="text-base font-semibold text-ink-900">Recent Activity</h2>
               </div>
-              <span className="text-[10px] text-gray-400">Last 10 activities</span>
+              <span className="text-[11px] text-ink-500">Last 10 activities</span>
             </div>
           </div>
           <div className="px-5 py-2 max-h-[400px] overflow-y-auto">
@@ -360,7 +360,7 @@ const AdminOverview = () => {
                 />
               ))
             ) : (
-              <div className="py-12 text-center text-gray-400">
+              <div className="py-12 text-center text-ink-500">
                 <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No recent activity</p>
               </div>
@@ -369,14 +369,14 @@ const AdminOverview = () => {
         </div>
 
         {/* Top Performers */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/30">
+        <div className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-ink-100 bg-ink-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-amber-500" />
-                <h2 className="text-base font-semibold text-gray-900">Top Performing Products</h2>
+                <h2 className="text-base font-semibold text-ink-900">Top Performing Products</h2>
               </div>
-              <span className="text-[10px] text-gray-400">By sales volume</span>
+              <span className="text-[11px] text-ink-500">By sales volume</span>
             </div>
           </div>
           <div className="px-5 py-2 max-h-[400px] overflow-y-auto">
@@ -390,7 +390,7 @@ const AdminOverview = () => {
                 />
               ))
             ) : (
-              <div className="py-12 text-center text-gray-400">
+              <div className="py-12 text-center text-ink-500">
                 <Package className="w-10 h-10 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No product data available</p>
               </div>

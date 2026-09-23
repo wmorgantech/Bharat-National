@@ -3,14 +3,12 @@ import React, { useState, useEffect } from "react";
 import {
   Home,
   FileText,
-  Box,
   ShoppingCart,
   Users,
   ChevronDown,
   ListOrdered,
   Tag,
   FolderTree,
-  Menu,
   X,
   LayoutDashboard,
   Package,
@@ -33,8 +31,8 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Close sidebar on mobile when route changes
@@ -44,165 +42,184 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     }
   }, [location, isMobile, setSidebarOpen]);
 
+  // Leaf link inside the rail.
   const linkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-200
-    ${isActive
-      ? "bg-blue-50 text-blue-600 font-semibold"
-      : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+    `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition-all duration-200 ${
+      isActive
+        ? "bg-primary/15 text-white font-semibold ring-1 ring-primary/30"
+        : "text-white/55 hover:bg-white/5 hover:text-white"
     }`;
 
-  const menuItemClass = "flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-blue-600";
+  // Collapsible group header.
+  const groupClass =
+    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer transition-colors duration-200 text-white/80 hover:bg-white/5 hover:text-white";
+
+  const sectionLabel =
+    "px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30";
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 lg:hidden"
-      >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile. The only toggle lives in the topbar, so no
+          floating button is rendered here (it used to overlap page content). */}
       {sidebarOpen && isMobile && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-ink-900/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 shadow-xl flex flex-col z-50 transition-all duration-300
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        w-72 lg:w-64 lg:translate-x-0`}
+      <aside
+        className={`fixed left-0 top-0 h-full bg-ink-900 flex flex-col z-50 transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } w-72 lg:w-64 lg:translate-x-0`}
       >
-        {/* Header */}
-        <div className="p-4 sm:p-5 flex items-center justify-between border-b border-gray-200">
-          <div>
-            <div className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400">
-              Admin Panel
-            </div>
-            <div className="font-bold text-base sm:text-lg text-gray-800">Control Panel</div>
+        {/* Brand */}
+        <div className="px-5 py-5 flex items-center justify-between border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="grid place-items-center h-10 w-10 shrink-0 rounded-xl bg-primary text-white font-bold shadow-glow">
+              B
+            </span>
+            <span className="leading-none min-w-0">
+              <span className="block font-bold text-[15px] text-white truncate">
+                Bharat National
+              </span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-light mt-1">
+                Admin Panel
+              </span>
+            </span>
           </div>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-md">
-            A
-          </div>
+
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+            className="lg:hidden grid place-items-center h-8 w-8 rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <X size={17} />
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-2">
-          {/* Dashboard Section */}
-          <div className="mb-2">
-            <div
+        <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+          {/* ---- Overview group ---- */}
+          <div>
+            <p className={sectionLabel}>Overview</p>
+
+            <button
+              type="button"
               onClick={() => setDashboardOpen(!dashboardOpen)}
-              className={menuItemClass}
+              aria-expanded={dashboardOpen}
+              className={groupClass}
             >
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg">
-                <LayoutDashboard size={16} className="text-blue-600" />
-              </div>
+              <LayoutDashboard size={17} className="text-primary-light shrink-0" />
               <span className="flex-1 text-left">Dashboard</span>
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 ${dashboardOpen ? "rotate-180" : ""
-                  }`}
+                className={`transition-transform duration-200 ${
+                  dashboardOpen ? "rotate-180" : ""
+                }`}
               />
-            </div>
+            </button>
 
             {dashboardOpen && (
-              <div className="ml-10 mt-1 space-y-1">
+              <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-0.5">
                 <NavLink to="/dashboard" end className={linkClass}>
-                  <Home size={14} />
-                  <span className="text-xs sm:text-sm">Dashboard </span>
+                  <Home size={14} className="shrink-0" />
+                  <span>Dashboard</span>
                 </NavLink>
                 <NavLink to="/overview" className={linkClass}>
-                  <TrendingUp size={14} />
-                  <span className="text-xs sm:text-sm">Analytics</span>
+                  <TrendingUp size={14} className="shrink-0" />
+                  <span>Analytics</span>
                 </NavLink>
               </div>
             )}
           </div>
 
-          {/* Master Section */}
-          <div className="mb-2">
-            <div
+          {/* ---- Catalogue group ---- */}
+          <div>
+            <p className={sectionLabel}>Catalogue</p>
+
+            <button
+              type="button"
               onClick={() => setMasterOpen(!masterOpen)}
-              className={menuItemClass}
+              aria-expanded={masterOpen}
+              className={groupClass}
             >
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg">
-                <Package size={16} className="text-blue-600" />
-              </div>
+              <Package size={17} className="text-primary-light shrink-0" />
               <span className="flex-1 text-left">Master</span>
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 ${masterOpen ? "rotate-180" : ""
-                  }`}
+                className={`transition-transform duration-200 ${
+                  masterOpen ? "rotate-180" : ""
+                }`}
               />
-            </div>
+            </button>
 
             {masterOpen && (
-              <div className="ml-10 mt-1 space-y-1">
+              <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-0.5">
                 <NavLink to="/product" className={linkClass}>
-                  <ListOrdered size={14} />
-                  <span className="text-xs sm:text-sm">Products</span>
+                  <ListOrdered size={14} className="shrink-0" />
+                  <span>Products</span>
                 </NavLink>
                 <NavLink to="/brand" className={linkClass}>
-                  <Tag size={14} />
-                  <span className="text-xs sm:text-sm">Brands</span>
+                  <Tag size={14} className="shrink-0" />
+                  <span>Brands</span>
                 </NavLink>
                 <NavLink to="/category" className={linkClass}>
-                  <FolderTree size={14} />
-                  <span className="text-xs sm:text-sm">Categories</span>
+                  <FolderTree size={14} className="shrink-0" />
+                  <span>Categories</span>
                 </NavLink>
               </div>
             )}
           </div>
 
-          {/* Orders Section */}
-          <div className="mb-2">
-            <NavLink to="/orders" className={linkClass}>
-              <ShoppingCart size={16} />
-              <span className="text-xs sm:text-sm">Orders List</span>
-            </NavLink>
-          </div>
+          {/* ---- Operations group ---- */}
+          <div>
+            <p className={sectionLabel}>Operations</p>
 
-          {/* Contact Enquiries Section */}
-          <div className="mb-2">
-            <NavLink to="/contacts" className={linkClass}>
-              <FileText size={16} />
-              <span className="text-xs sm:text-sm">Contact Enquiries</span>
-            </NavLink>
-          </div>
+            <div className="space-y-0.5">
+              <NavLink to="/orders" className={linkClass}>
+                <ShoppingCart size={16} className="shrink-0" />
+                <span>Orders List</span>
+              </NavLink>
 
-          {/* Customers Section */}
-          <div className="mb-2">
-            <div
+              <NavLink to="/contacts" className={linkClass}>
+                <FileText size={16} className="shrink-0" />
+                <span>Contact Enquiries</span>
+              </NavLink>
+            </div>
+
+            <button
+              type="button"
               onClick={() => setCustomerOpen(!customerOpen)}
-              className={menuItemClass}
+              aria-expanded={customerOpen}
+              className={`${groupClass} mt-1`}
             >
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg">
-                <Users size={16} className="text-blue-600" />
-              </div>
+              <Users size={17} className="text-primary-light shrink-0" />
               <span className="flex-1 text-left">Customers</span>
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 ${customerOpen ? "rotate-180" : ""
-                  }`}
+                className={`transition-transform duration-200 ${
+                  customerOpen ? "rotate-180" : ""
+                }`}
               />
-            </div>
+            </button>
 
             {customerOpen && (
-              <div className="ml-10 mt-1 space-y-1">
+              <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-0.5">
                 <NavLink to="/customers" className={linkClass}>
-                  <Users size={14} />
-                  <span className="text-xs sm:text-sm">Customer List</span>
+                  <Users size={14} className="shrink-0" />
+                  <span>Customer List</span>
                 </NavLink>
               </div>
             )}
           </div>
         </nav>
 
-
-      </div>
+        <div className="px-5 py-4 border-t border-white/10 shrink-0">
+          <p className="text-[10px] text-white/30">Bharat National Computers</p>
+        </div>
+      </aside>
     </>
   );
 };

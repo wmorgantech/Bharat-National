@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { toast } from "react-toastify";
 import Button from "./Button";
 
 export default function Modal({
@@ -23,6 +24,11 @@ export default function Modal({
 
   addBtnText = "Create",
   editBtnText = "Update",
+
+  // Success copy for the toast fired after a successful save. Parents only
+  // refetch in onSuccess, so this is the single notification for the action.
+  successAddText = "Created successfully",
+  successEditText = "Updated successfully",
 }) {
   const isEditMode = Boolean(editData?.id); // ✅
   const [loading, setLoading] = useState(false);
@@ -62,54 +68,74 @@ export default function Modal({
 
   const handleSubmit = async () => {
     const err = validate ? validate(form, isEditMode) : null;
-    if (err) return alert(err);
+    if (err) return toast.error(err);
 
     try {
       setLoading(true);
       await onSubmit(form, isEditMode, editData);
+      toast.success(isEditMode ? successEditText : successAddText);
       onSuccess && onSuccess();
       onClose && onClose();
     } catch (e) {
       console.error(e);
-      alert(e?.message || "Error saving");
+      toast.error(e?.message || "Error saving");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-lg border p-6 relative overflow-auto">
-        <button
-          className="absolute top-4 right-4 text-slate-500 hover:text-slate-700"
-          onClick={onClose}
-          type="button"
-        >
-          <X size={20} />
-        </button>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4
+                 bg-ink-900/60 backdrop-blur-sm
+                 motion-safe:animate-[fadeIn_180ms_ease-out_both]"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEditMode ? titleEdit : titleAdd}
+        className="relative bg-white w-full max-w-5xl max-h-[92vh] overflow-y-auto
+                   rounded-2xl shadow-lift border border-ink-100
+                   motion-safe:animate-[scaleIn_220ms_ease-out_both]"
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 px-6 py-5 border-b border-ink-100 bg-white/95 backdrop-blur-sm">
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold tracking-tight text-ink-900">
+              {isEditMode ? titleEdit : titleAdd}
+            </h1>
+            <p className="mt-0.5 text-sm text-ink-500">
+              {isEditMode ? subtitleEdit : subtitleAdd}
+            </p>
+          </div>
 
-        <h1 className="text-2xl font-semibold text-slate-900">
-          {isEditMode ? titleEdit : titleAdd}
-        </h1>
-        <p className="text-sm text-slate-500 mb-6">
-          {isEditMode ? subtitleEdit : subtitleAdd}
-        </p>
+          <button
+            className="btn-icon shrink-0"
+            onClick={onClose}
+            type="button"
+            aria-label="Close dialog"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border rounded-xl p-5 shadow-sm">
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="rounded-xl border border-ink-100 bg-ink-50/40 p-5">
             {renderLeft?.({ form, setForm, loading, isEditMode })}
           </div>
 
-          <div className="bg-white border rounded-xl p-5 shadow-sm">
+          <div className="rounded-xl border border-ink-100 bg-ink-50/40 p-5">
             {renderRight?.({ form, setForm, loading, isEditMode })}
           </div>
         </div>
 
-        <div className="flex justify-end gap-4 mt-6">
-          <Button variant="ghost" onClick={onClose} type="button">
+        <div className="sticky bottom-0 flex justify-end gap-3 px-6 py-4 border-t border-ink-100 bg-white/95 backdrop-blur-sm">
+          <Button variant="secondary" onClick={onClose} type="button">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading} type="button">
+          <Button onClick={handleSubmit} loading={loading} type="button">
             {loading
               ? isEditMode
                 ? "Updating..."

@@ -3,15 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { CreateOrderItemDto } from './dto/create-orderitem.dto';
 import { UpdateOrderitemDto } from './dto/update-orderitem.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 
 
 @Injectable()
 export class OrderItemService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createOrderItemDto: CreateOrderItemDto) {
     

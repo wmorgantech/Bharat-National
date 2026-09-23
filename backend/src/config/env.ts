@@ -26,6 +26,25 @@ export function isProduction(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
+export function validateRazorpayKeySafety(): void {
+  const keyId = process.env.RAZORPAY_KEY_ID?.trim();
+  const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+
+  if (!keyId && !keySecret) return;
+  if (!keyId || !keySecret) {
+    throw new Error(
+      'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set together.',
+    );
+  }
+
+  const expectedPrefix = isProduction() ? 'rzp_live_' : 'rzp_test_';
+  if (!keyId.startsWith(expectedPrefix)) {
+    throw new Error(
+      `RAZORPAY_KEY_ID must use a ${isProduction() ? 'live' : 'test'} Razorpay key in ${process.env.NODE_ENV ?? 'development'} environments.`,
+    );
+  }
+}
+
 /**
  * Access-token lifetime. Declared as a literal because @nestjs/jwt types
  * `expiresIn` as a template-literal union, which a plain `string` from the

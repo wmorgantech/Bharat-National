@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contact.dto';
-import { PrismaClient } from '@prisma/client';
 import { MailService } from 'src/mail/mail.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 
 @Injectable()
@@ -9,10 +9,9 @@ export class ContactService {
   private readonly logger = new Logger(ContactService.name);
 
   constructor(
-
     private readonly mailService: MailService,
+    private readonly prisma: PrismaService,
   ) {}
-  private prisma = new PrismaClient();
 
   async create(dto: CreateContactDto) {
     // 1) Save to DB. A persistence failure is a real failure and is left to

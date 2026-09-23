@@ -1,6 +1,6 @@
 // src/overview/overview.service.ts
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 // Export interfaces so they can be used in controller
 export interface Activity {
@@ -35,7 +35,7 @@ export interface OverviewData {
 
 @Injectable()
 export class OverviewService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   // Get all overview data (ALL TIME)
   async getOverviewData(): Promise<OverviewData> {

@@ -8,7 +8,7 @@ import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
-import { isProduction, requireEnv } from './config/env';
+import { isProduction, requireEnv, validateRazorpayKeySafety } from './config/env';
 
 const SWAGGER_PATH = 'api-docs';
 
@@ -25,10 +25,12 @@ const DEV_ORIGINS = [
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:5176',
+  'http://localhost:5180',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'http://127.0.0.1:5175',
   'http://127.0.0.1:5176',
+  'http://127.0.0.1:5180',
 ];
 
 function resolveAllowedOrigins(logger: Logger): string[] {
@@ -80,6 +82,7 @@ async function bootstrap() {
 
   // Fail fast rather than starting with an unsigned-in-practice token secret.
   requireEnv('JWT_SECRET');
+  validateRazorpayKeySafety();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 

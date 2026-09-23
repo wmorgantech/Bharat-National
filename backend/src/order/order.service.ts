@@ -4,10 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AuthUser } from '../auth/jwt.strategy';
+import { PrismaService } from '../prisma/prisma.service';
 
 /**
  * Customer fields safe to embed in an order response. Deliberately excludes
@@ -29,7 +29,7 @@ const SAFE_USER_SELECT = {
 
 @Injectable()
 export class OrderService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   private isAdmin(requester: AuthUser): boolean {
     return requester.type === 'ADMIN';

@@ -79,3 +79,15 @@ export const ADMIN_REGISTER_THROTTLE = {
   [THROTTLE_SHORT]: { limit: 3, ttl: MINUTE },
   [THROTTLE_LONG]: { limit: 5, ttl: HOUR },
 };
+
+/** Payment order creation is authenticated but can still trigger a provider call. */
+export const PAYMENT_CREATE_THROTTLE = {
+  [THROTTLE_SHORT]: { limit: 10, ttl: MINUTE },
+  [THROTTLE_LONG]: { limit: 30, ttl: FIFTEEN_MINUTES },
+};
+
+/** Verification is authenticated and idempotent, but still provider-sensitive. */
+export const PAYMENT_VERIFY_THROTTLE = {
+  [THROTTLE_SHORT]: { limit: 20, ttl: MINUTE },
+  [THROTTLE_LONG]: { limit: 60, ttl: FIFTEEN_MINUTES },
+};

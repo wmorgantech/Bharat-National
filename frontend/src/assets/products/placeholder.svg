@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img">
+  <defs>
+    <linearGradient id="phBox" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <radialGradient id="phShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="200" cy="238" rx="96" ry="12" fill="url(#phShadow)"/>
+  <g>
+    <path d="M200 74l82 40v72l-82 40-82-40v-72z" fill="url(#phBox)" stroke="#CBD5E1" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M200 74l82 40-82 40-82-40z" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M200 154v72" stroke="#CBD5E1" stroke-width="2"/>
+    <circle cx="200" cy="120" r="13" fill="none" stroke="#00897B" stroke-width="3" opacity="0.55"/>
+    <path d="M200 113v14M193 120h14" stroke="#00897B" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+  </g>
+</svg>

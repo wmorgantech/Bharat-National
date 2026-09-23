@@ -1,19 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  X,
-  Image as ImageIcon,
-  Package,
-  Loader2,
-  MapPin,
-  Phone,
-  Mail,
-  CreditCard,
-  User,
-  IndianRupee,
   AlertTriangle,
+  ArrowLeft,
   Building2,
+  CreditCard,
   FileText,
+  IndianRupee,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  User,
 } from "lucide-react";
 import { getOrderById } from "../api/Order";
 import { toast } from "react-toastify";
@@ -46,8 +44,8 @@ const statusConfig = {
   },
   ACCEPTED: {
     label: "Accepted",
-    className: "bg-slate-100 text-slate-700 border-slate-100",
-    dot: "bg-slate-500",
+    className: "bg-white text-ink-700 border-ink-200",
+    dot: "bg-white",
   },
   SHIPPED: {
     label: "Shipped",
@@ -56,8 +54,8 @@ const statusConfig = {
   },
   DELIVERED: {
     label: "Delivered",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-100",
-    dot: "bg-emerald-500",
+    className: "bg-primary-50 text-primary-dark border-primary/20",
+    dot: "bg-primary/100",
   },
   CANCELLED: {
     label: "Cancelled",
@@ -235,7 +233,7 @@ const generateInvoicePDF = async (order) => {
 
     doc.setFontSize(8);
     doc.text(
-      "Thank you for choosing Bharat National Computers!",
+"Thank you for choosing Bharat National Computers!",
       105,
       footerY,
       { align: "center" }
@@ -280,7 +278,10 @@ export default function OrderDetailsPage() {
         setOrder(data);
       } catch (err) {
         console.error(err);
-        toast.error(err?.message || "Failed to load order details");
+        // Keyed so StrictMode's double-invoked mount effect cannot double-toast.
+        toast.error(err?.message || "Failed to load order details", {
+          toastId: `order-load-failed-${id}`,
+        });
       } finally {
         setLoading(false);
       }
@@ -296,12 +297,41 @@ export default function OrderDetailsPage() {
 
   const status = getStatusConfig(order?.status || "PLACED");
 
+  // Fulfilment chain the backend actually moves an order through.
+  const TRACK = ["PLACED", "ACCEPTED", "SHIPPED", "DELIVERED"];
+  const TRACK_LABELS = {
+    PLACED: "Order placed",
+    ACCEPTED: "Processing",
+    SHIPPED: "Shipped",
+    DELIVERED: "Delivered",
+  };
+  const stageIndex = TRACK.indexOf(order?.status);
+  const isCancelled = order?.status === "CANCELLED";
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <Loader2 className="w-7 h-7 animate-spin text-[var(--primary,#00897B)]" />
-          <p className="text-sm font-medium">Loading order details...</p>
+      <div className="section-shell py-12 md:py-16">
+        <div className="skeleton h-4 w-32" />
+        <div className="skeleton h-10 w-72 mt-4" />
+        <div className="grid lg:grid-cols-[0.9fr_1.35fr] gap-6 mt-10">
+          <div className="space-y-6">
+            <div className="glass-2 p-6 space-y-3">
+              <div className="skeleton h-4 w-40" />
+              <div className="skeleton h-3 w-full" />
+              <div className="skeleton h-3 w-5/6" />
+              <div className="skeleton h-3 w-2/3" />
+            </div>
+            <div className="glass-2 p-6 space-y-3">
+              <div className="skeleton h-4 w-40" />
+              <div className="skeleton h-3 w-full" />
+              <div className="skeleton h-3 w-4/6" />
+            </div>
+          </div>
+          <div className="glass-2 p-6 space-y-3">
+            <div className="skeleton h-4 w-32" />
+            <div className="skeleton h-20 w-full" />
+            <div className="skeleton h-20 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -309,20 +339,21 @@ export default function OrderDetailsPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center max-w-sm w-full">
-          <Package className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm font-semibold text-slate-900">
+      <div className="min-h-[70vh] flex items-center justify-center px-4">
+        <div className="glass-1 p-10 md:p-14 text-center max-w-md w-full">
+          <span className="grid place-items-center h-16 w-16 mx-auto rounded-2xl bg-primary-50 text-primary">
+            <Package className="w-7 h-7" />
+          </span>
+          <h1 className="mt-6 font-display text-xl font-semibold text-ink-900">
             Order not found
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            This order may have been removed, or the link is out of date.
           </p>
           <button
             type="button"
             onClick={() => navigate("/orders")}
-            className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--primary,#00897B), #00695C)",
-            }}
+            className="btn-primary btn-lg mt-8"
           >
             Back to Orders
           </button>
@@ -332,217 +363,302 @@ export default function OrderDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Cancel Reason Banner for Cancelled Orders */}
-      {order.status === "CANCELLED" && order.cancelRemarks && (
-        <div className="bg-gradient-to-r from-rose-50 to-red-50 border-b border-rose-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-600" />
-              <div>
-                <p className="text-sm font-semibold text-rose-800">Cancellation Reason</p>
-                <p className="text-xs text-rose-700">{order.cancelRemarks}</p>
+    <div className="relative min-h-screen overflow-hidden">
+
+      {/* ================= HEADER CONSOLE ================= */}
+      <div className="relative section-shell pt-10 md:pt-14">
+        <button
+          type="button"
+          onClick={() => navigate("/orders")}
+          className="inline-flex items-center gap-2 text-sm font-medium text-ink-500 hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Orders
+        </button>
+
+        <div className="glass-1 mt-5 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+            <div className="min-w-0">
+              <span className="eyebrow">Order console</span>
+              <h1 className="mt-3 font-display text-[26px] md:text-[38px] font-bold tracking-[-0.03em] text-ink-900">
+                Order #{order.id}
+              </h1>
+
+              <div className="mt-4 flex items-center gap-3 flex-wrap">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${status.className}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                  {status.label}
+                </span>
+
+                {order.paymentStatus && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-ink-200 bg-white text-xs font-semibold text-ink-600">
+                    <CreditCard className="w-3.5 h-3.5" />
+                    {order.paymentStatus}
+                  </span>
+                )}
+
+                <span className="inline-flex items-center gap-1.5 text-xs text-ink-500">
+                  {totalItems} {totalItems === 1 ? "item" : "items"}
+                </span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg md:text-xl font-bold text-slate-950">
-              Order Details - #{order.id}
-            </h1>
+            <div className="flex items-center gap-2.5 shrink-0">
+              {/* Invoice Button - Show only for SHIPPED and DELIVERED orders */}
+              {(order.status === "SHIPPED" || order.status === "DELIVERED") && (
+                <button
+                  onClick={() => generateInvoicePDF(order)}
+                  className="btn-secondary btn-md"
+                  title="Download Invoice"
+                >
+                  <FileText className="w-4 h-4" />
+                  Invoice
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Invoice Button - Show only for SHIPPED and DELIVERED orders */}
-            {(order.status === "SHIPPED" || order.status === "DELIVERED") && (
-              <button
-                onClick={() => generateInvoicePDF(order)}
-                className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white flex items-center justify-center transition"
-                title="Download Invoice"
-              >
-                <FileText className="w-5 h-5" />
-              </button>
+          {/* ---- Timeline ---- */}
+          <div className="mt-8 pt-7 border-t border-ink-200">
+            {isCancelled ? (
+              <p className="flex items-start gap-2.5 text-sm text-red-700">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  This order was cancelled
+                  {order.cancelRemarks ? ` — ${order.cancelRemarks}` : "."}
+                </span>
+              </p>
+            ) : (
+              <ol className="flex items-center gap-2">
+                {TRACK.map((stage, sIdx) => {
+                  const reached = stageIndex >= sIdx;
+                  return (
+                    <li key={stage} className="flex-1 min-w-0">
+                      <span
+                        className={`block h-1 rounded-full transition-colors duration-200 ${
+ reached
+ ? "bg-primary"
+ : "bg-white"
+ }`}
+                      />
+                      <span
+                        className={`mt-2.5 block text-[10px] font-semibold uppercase tracking-wider truncate ${
+ reached ? "text-ink-700" : "text-ink-400"
+ }`}
+                      >
+                        {TRACK_LABELS[stage]}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="grid lg:grid-cols-[0.9fr_1.35fr] gap-6">
-          <div className="space-y-6">
-            <section className="bg-white rounded-xl border border-slate-200 p-5 md:p-6 shadow-sm">
-              <h2 className="text-base font-bold text-slate-950">
-                Order Information
+      {/* ================= DETAIL GRID ================= */}
+      <main className="relative section-shell py-8 md:py-12">
+        <div className="grid lg:grid-cols-[0.9fr_1.35fr] gap-5 lg:gap-6 items-start">
+          {/* ---- LEFT ---- */}
+          <div className="space-y-5"data-aos="fade-right">
+            <section className="glass-2 p-6">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+                Order information
               </h2>
-              <div className="h-px bg-slate-200 my-3" />
 
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+              <dl className="mt-5 space-y-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <User className="w-3.5 h-3.5" />
-                    Customer:
-                  </p>
-                  <p className="text-slate-700">{order.fullName || "—"}</p>
+                    Customer
+                  </dt>
+                  <dd className="text-ink-800 min-w-0">{order.fullName || "—"}</dd>
                 </div>
 
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <Mail className="w-3.5 h-3.5" />
-                    Email:
-                  </p>
-                  <p className="text-slate-700 break-all">
+                    Email
+                  </dt>
+                  <dd className="text-ink-800 break-all min-w-0">
                     {order.email || "—"}
-                  </p>
+                  </dd>
                 </div>
 
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950">Status:</p>
-                  <span
-                    className={`inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${status.className}`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                    {status.label}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <CreditCard className="w-3.5 h-3.5" />
-                    Payment:
-                  </p>
-                  <p className="text-slate-700 uppercase">
+                    Payment
+                  </dt>
+                  <dd className="text-ink-800 uppercase min-w-0">
                     {order.paymentMethod || "—"}
-                  </p>
+                  </dd>
                 </div>
 
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <IndianRupee className="w-3.5 h-3.5" />
-                    Total:
-                  </p>
-                  <p className="font-bold text-slate-900">
+                    Total
+                  </dt>
+                  <dd className="font-display font-bold text-ink-900 tabular-nums min-w-0">
                     {formatCurrency(order.totalAmount)}
-                  </p>
+                  </dd>
                 </div>
-
-                <div className="grid grid-cols-[90px_1fr] gap-2">
-                  <p className="font-bold text-slate-950">Items:</p>
-                  <p className="text-slate-700">
-                    {totalItems} {totalItems === 1 ? "item" : "items"}
-                  </p>
-                </div>
-              </div>
+              </dl>
             </section>
 
-            <section className="bg-white rounded-xl border border-slate-200 p-5 md:p-6 shadow-sm">
-              <h2 className="text-base font-bold text-slate-950">
-                Shipping Address
+            <section className="glass-2 p-6">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+                Shipping address
               </h2>
-              <div className="h-px bg-slate-200 my-3" />
 
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-[110px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+              <dl className="mt-5 space-y-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <MapPin className="w-3.5 h-3.5" />
-                    Address:
-                  </p>
-                  <p className="text-slate-700">{order.address || "—"}</p>
+                    Address
+                  </dt>
+                  <dd className="text-ink-800 min-w-0">{order.address || "—"}</dd>
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-2">
-                  <p className="font-bold text-slate-950">City:</p>
-                  <p className="text-slate-700">{order.place || "—"}</p>
+                <div className="flex items-start gap-3">
+                  <dt className="w-[92px] shrink-0 text-ink-500">City</dt>
+                  <dd className="text-ink-800 min-w-0">{order.place || "—"}</dd>
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <Building2 className="w-3.5 h-3.5" />
-                    State:
-                  </p>
-                  <p className="text-slate-700">{order.state || "—"}</p>
+                    State
+                  </dt>
+                  <dd className="text-ink-800 min-w-0">{order.state || "—"}</dd>
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-2">
-                  <p className="font-bold text-slate-950">Pincode:</p>
-                  <p className="text-slate-700">{order.pincode || "—"}</p>
+                <div className="flex items-start gap-3">
+                  <dt className="w-[92px] shrink-0 text-ink-500">Pincode</dt>
+                  <dd className="text-ink-800 min-w-0">{order.pincode || "—"}</dd>
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-2">
-                  <p className="font-bold text-slate-950 flex items-center gap-1">
+                <div className="flex items-start gap-3">
+                  <dt className="flex items-center gap-1.5 w-[92px] shrink-0 text-ink-500">
                     <Phone className="w-3.5 h-3.5" />
-                    Phone:
-                  </p>
-                  <p className="text-slate-700">
+                    Phone
+                  </dt>
+                  <dd className="text-ink-800 min-w-0">
                     {order.phone ? `+91 ${order.phone}` : "—"}
-                  </p>
+                  </dd>
                 </div>
-              </div>
+              </dl>
             </section>
           </div>
 
-          <section className="bg-white rounded-xl border border-slate-200 p-5 md:p-6 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950">
-              Order Items
-            </h2>
-            <div className="h-px bg-slate-200 my-3" />
+          {/* ---- RIGHT: items + summary ---- */}
+          <div className="space-y-5"data-aos="fade-left"data-aos-delay="100">
+            <section className="glass-2 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
+                  Order items
+                </h2>
+                <span className="text-[11px] font-semibold text-ink-400 tabular-nums">
+                  {order.orderItem?.length || 0}
+                </span>
+              </div>
 
-            <div className="space-y-3">
-              {order.orderItem?.map((item) => {
-                const imageUrl = getImageUrl(item);
+              <div className="mt-5 space-y-3">
+                {order.orderItem?.map((item) => {
+                  const imageUrl = getImageUrl(item);
 
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 md:p-4 flex gap-4"
-                  >
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={item.productName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/80?text=No+Image";
-                          }}
-                        />
-                      ) : (
-                        <Package className="w-7 h-7 text-slate-300" />
-                      )}
-                    </div>
+                  return (
+                    <div
+                      key={item.id}
+                      className="group glass-3 flex gap-4 p-3 md:p-4 transition-colors duration-300 hover:bg-white"
+                    >
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white border border-ink-200 overflow-hidden grid place-items-center shrink-0 p-1.5">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            aria-hidden="true"
+                            className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://via.placeholder.com/80?text=No+Image";
+                            }}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <Package className="w-7 h-7 text-ink-400" />
+                        )}
+                      </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm md:text-base font-extrabold text-slate-950 leading-snug">
-                        {item.productName}
-                      </h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm md:text-[15px] font-medium text-ink-900 leading-snug line-clamp-2">
+                          {item.productName}
+                        </h3>
 
-                      <p className="mt-2 text-sm text-slate-700">
-                        Qty:{" "}
-                        <span className="font-semibold">{item.quantity}</span>{" "}
-                        × {formatCurrency(item.unitPrice)}
-                      </p>
+                        <p className="mt-2 text-[13px] text-ink-500 tabular-nums">
+                          <span className="font-semibold text-ink-700">
+                            {item.quantity}
+                          </span>{" "}
+                          × {formatCurrency(item.unitPrice)}
+                        </p>
+                      </div>
 
-                      <p className="mt-1 text-sm font-bold text-slate-950">
-                        Total:{" "}
+                      <p className="font-display text-sm font-bold text-ink-900 tabular-nums shrink-0 self-end">
                         {formatCurrency(item.unitPrice * item.quantity)}
                       </p>
                     </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* ---- Summary ---- */}
+            <section className="glass-1 p-6">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+                Summary
+              </h2>
+
+              <dl className="mt-5 space-y-3.5 text-sm">
+                <div className="flex justify-between items-center">
+                  <dt className="text-ink-500">
+                    Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})
+                  </dt>
+                  <dd className="font-semibold text-ink-900 tabular-nums">
+                    {formatCurrency(order.totalAmount)}
+                  </dd>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <dt className="text-ink-500">Payment method</dt>
+                  <dd className="font-semibold text-ink-800 uppercase">
+                    {order.paymentMethod || "—"}
+                  </dd>
+                </div>
+
+                {order.paymentStatus && (
+                  <div className="flex justify-between items-center">
+                    <dt className="text-ink-500">Payment status</dt>
+                    <dd className="font-semibold text-ink-800">
+                      {order.paymentStatus}
+                    </dd>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                )}
+
+                <div className="h-px bg-white !my-5" />
+
+                <div className="flex justify-between items-baseline">
+                  <dt className="font-semibold text-ink-900">Total</dt>
+                  <dd className="font-display text-2xl font-bold tracking-tight text-ink-900 tabular-nums">
+                    {formatCurrency(order.totalAmount)}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          </div>
         </div>
       </main>
     </div>

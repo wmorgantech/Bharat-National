@@ -28,7 +28,7 @@ const features = [
 export default function FeatureSection() {
   return (
     <section className="bg-white">
-      <div className="section-shell py-10 md:py-14">
+      <div className="section-shell py-8 md:py-10">
         {/* One continuous band with hairline dividers, rather than four
             detached cards floating on grey. */}
         <div

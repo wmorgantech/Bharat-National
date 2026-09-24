@@ -369,14 +369,14 @@ export default function CheckoutPage() {
  </div>
  </div>
 
- <div className="border-t border-ink-200 bg-gradient-to-b from-white/[0.03] to-transparent">
+ <div className="border-t border-ink-200 bg-ink-50">
  <div className="section-shell py-5 flex justify-center">
  <nav aria-label="Checkout progress"className="w-full max-w-xl">
  <ol className="flex items-center justify-between relative">
- <div className="absolute top-5 left-[10%] right-[10%] h-[2px] bg-white rounded-full"></div>
+ <div className="absolute top-5 left-[10%] right-[10%] h-[2px] bg-ink-200 rounded-full"></div>
  <div
  className="absolute top-5 left-[10%] h-[2px] rounded-full transition-all duration-200"
- style={{ width: "40%", background: "linear-gradient(90deg, var(--primary), #00695C)" }}
+ style={{ width: "40%", background: "var(--primary)" }}
  ></div>
 
  {[
@@ -390,7 +390,7 @@ export default function CheckoutPage() {
  type="button"
  onClick={step.onClick}
  className="flex h-10 w-10 items-center justify-center rounded-full text-ink-900 shadow-lg ring-4 ring-white transition-transform hover:scale-110"
- style={{ background: "linear-gradient(135deg, var(--primary), #00695C)", boxShadow: "0 6px 20px -4px rgba(0,137,123,0.4)" }}
+ style={{ background: "var(--primary)", boxShadow: "0 6px 20px -4px rgba(0,137,123,0.4)" }}
  >
  <CheckCircle2 className="w-5 h-5" />
  </button>
@@ -400,7 +400,7 @@ export default function CheckoutPage() {
  <div className="absolute inset-0 rounded-full animate-ping opacity-40"style={{ backgroundColor: "var(--primary)" }}></div>
  <div
  className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink-900 shadow-lg ring-4 ring-white"
- style={{ background: "linear-gradient(135deg, var(--primary), #00695C)", boxShadow: "0 8px 24px -4px rgba(0,137,123,0.5)" }}
+ style={{ background: "var(--primary)", boxShadow: "0 8px 24px -4px rgba(0,137,123,0.5)" }}
  >
  <step.icon className="w-5 h-5" />
  </div>
@@ -456,7 +456,7 @@ export default function CheckoutPage() {
  <div className="p-4 sm:p-5 md:px-6 md:py-5">
  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5 gap-2">
  <div className="flex items-center gap-2 sm:gap-2.5">
- <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-2xl flex items-center justify-center"style={{ backgroundColor: "var(--primary-lighthead,#E0F2F1)" }}>
+ <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-2xl flex items-center justify-center bg-primary-50">
  <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4"style={{ color: "var(--primary)" }} />
  </div>
  <div>
@@ -505,7 +505,7 @@ export default function CheckoutPage() {
  <div className="bg-white glass-1 overflow-hidden">
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 md:px-6 py-4 sm:py-5 border-b border-ink-200 bg-white">
  <div className="flex items-center gap-2 sm:gap-3">
- <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0"style={{ background: "linear-gradient(135deg, var(--primary), #00695C)" }}>
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center bg-primary shadow-md flex-shrink-0">
  {hasSavedAddress ? <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-ink-900" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-ink-900" />}
  </div>
  <div>
@@ -537,7 +537,7 @@ export default function CheckoutPage() {
  type="button"
  onClick={handleSaveAddress}
  className="group relative w-full flex items-center justify-center gap-2 text-ink-900 font-bold py-3 sm:py-3.5 rounded-xl transition-all duration-300 overflow-hidden text-sm sm:text-base"
- style={{ background: "linear-gradient(135deg, var(--primary), #00695C)", boxShadow: "0 10px 30px -10px rgba(0, 137, 123, 0.5)" }}
+ style={{ background: "var(--primary)", boxShadow: "0 10px 30px -10px rgba(0, 137, 123, 0.5)" }}
  >
  <span className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
  <span className="relative flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{hasSavedAddress ? "Update Address" : "Save Address"}</span>
@@ -599,7 +599,7 @@ export default function CheckoutPage() {
  </div>
 
  {/* Online Payment Option */}
- <label className={`group/pay block rounded-2xl border-2 p-3 sm:p-4 cursor-pointer transition-all ${paymentMethod === "online" ? "border-[var(--primary)] bg-gradient-to-br from-[var(--primary-lighthead,#E0F2F1)]/30 to-transparent shadow-md" : "border-ink-200 hover:border-ink-200 bg-white"}`}>
+ <label className={`group/pay block rounded-2xl border-2 p-3 sm:p-4 cursor-pointer transition-all ${paymentMethod === "online" ? "border-primary bg-primary-50 shadow-md" : "border-ink-200 hover:border-ink-300 bg-white"}`}>
  <div className="flex items-center gap-3">
  <div className="relative">
  <input type="radio"name="paymentMethod"value="online"checked={paymentMethod === "online"} onChange={() => setPaymentMethod("online")} className="sr-only peer" />
@@ -613,8 +613,8 @@ export default function CheckoutPage() {
  <p className="text-sm font-bold text-ink-900">Online Payment</p>
  <p className="text-xs text-ink-500">UPI, Cards, Net Banking</p>
  </div>
- <div className="h-9 w-9 rounded-xl flex items-center justify-center"style={{ backgroundColor: paymentMethod === "online" ? "var(--primary-lighthead, #E0F2F1)" : "#F1F5F9" }}>
- <CreditCard className="w-4 h-4"style={{ color: paymentMethod === "online" ? "var(--primary)" : "#64748B" }} />
+ <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${paymentMethod === "online" ? "bg-primary-100" : "bg-ink-100"}`}>
+ <CreditCard className={`w-4 h-4 ${paymentMethod === "online" ? "text-primary" : "text-ink-500"}`} />
  </div>
  </div>
  <div className="mt-3 flex items-center gap-3">
@@ -629,7 +629,7 @@ export default function CheckoutPage() {
  </label>
 
  {/* COD Payment Option */}
- <label className={`group/pay block rounded-2xl border-2 p-3 sm:p-4 cursor-pointer transition-all ${paymentMethod === "cod" ? "border-[var(--primary)] bg-gradient-to-br from-[var(--primary-lighthead,#E0F2F1)]/30 to-transparent shadow-md" : "border-ink-200 hover:border-ink-200 bg-white"}`}>
+ <label className={`group/pay block rounded-2xl border-2 p-3 sm:p-4 cursor-pointer transition-all ${paymentMethod === "cod" ? "border-primary bg-primary-50 shadow-md" : "border-ink-200 hover:border-ink-300 bg-white"}`}>
  <div className="flex items-center gap-3">
  <div className="relative">
  <input type="radio"name="paymentMethod"value="cod"checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="sr-only peer" />
@@ -642,8 +642,8 @@ export default function CheckoutPage() {
  <p className="text-sm font-bold text-ink-900">Cash on Delivery</p>
  <p className="text-xs text-ink-500">Pay when you receive</p>
  </div>
- <div className="h-9 w-9 rounded-xl flex items-center justify-center"style={{ backgroundColor: paymentMethod === "cod" ? "var(--primary-lighthead, #E0F2F1)" : "#F1F5F9" }}>
- <Wallet className="w-4 h-4"style={{ color: paymentMethod === "cod" ? "var(--primary)" : "#64748B" }} />
+ <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${paymentMethod === "cod" ? "bg-primary-100" : "bg-ink-100"}`}>
+ <Wallet className={`w-4 h-4 ${paymentMethod === "cod" ? "text-primary" : "text-ink-500"}`} />
  </div>
  </div>
  </div>
@@ -663,7 +663,7 @@ export default function CheckoutPage() {
  type="submit"
  disabled={submitting || viewMode === "form"}
  className="group relative w-full flex items-center justify-center gap-2 text-ink-900 font-bold py-3 sm:py-4 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden text-sm sm:text-base"
- style={{ background: "linear-gradient(135deg, var(--primary), #00695C)", boxShadow: "0 12px 30px -10px rgba(0, 137, 123, 0.6)" }}
+ style={{ background: "var(--primary)", boxShadow: "0 12px 30px -10px rgba(0, 137, 123, 0.6)" }}
  >
  <span className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
  <span className="relative flex items-center gap-2">
@@ -707,7 +707,7 @@ export default function CheckoutPage() {
  <span className="text-[11px] sm:text-xs font-semibold text-ink-700">{totalItems} {totalItems === 1 ? "item" : "items"} • ₹{total.toLocaleString()}</span>
  </div>
  <div className="mt-5 space-y-2 sm:space-y-3">
- <button onClick={() => navigate("/products")} className="group relative w-full flex items-center justify-center gap-2 text-ink-900 font-bold py-2.5 sm:py-3.5 rounded-2xl transition-all duration-300 overflow-hidden text-sm sm:text-base"style={{ background: "linear-gradient(135deg, var(--primary), #00695C)", boxShadow: "0 10px 30px -10px rgba(0, 137, 123, 0.5)" }}>
+ <button onClick={() => navigate("/products")} className="group relative w-full flex items-center justify-center gap-2 bg-primary text-white font-bold py-2.5 sm:py-3.5 rounded-2xl transition-all duration-300 overflow-hidden text-sm sm:text-base hover:bg-primary-dark"style={{ boxShadow: "0 10px 30px -10px rgba(0, 137, 123, 0.5)" }}>
  <span className="relative flex items-center gap-2">Continue Shopping <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" /></span>
  </button>
  <button onClick={() => navigate("/orders")} className="w-full text-xs sm:text-sm font-bold hover:underline transition-colors"style={{ color: "var(--primary)" }}>View My Orders →</button>

@@ -76,11 +76,11 @@ export default function ClientReviews() {
 "hidden lg:flex absolute -translate-y-1/2 top-1/2 items-center justify-center h-11 w-11 rounded-full bg-white shadow-lift border border-ink-200 text-ink-700 hover:bg-primary hover:text-ink-900 hover:border-primary transition-all duration-200 z-20";
 
   return (
-    <section className="section">
+    <section className="py-8 md:py-12">
       <div className="section-shell">
         {/* Heading */}
         <div
-          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 md:mb-12"
+          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 md:mb-8"
           data-aos="fade-up"
         >
           <div className="max-w-2xl">

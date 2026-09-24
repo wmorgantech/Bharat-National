@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  ArrowUpRight,
   Laptop,
   Monitor,
   Cpu,
@@ -15,7 +14,7 @@ import {
   ShieldCheck,
   Package,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getActiveCategories } from "../api/Category";
 import laptopImg from "../assets/products/laptop.svg";
 import desktopImg from "../assets/products/desktop.svg";
@@ -70,23 +69,21 @@ const iconFor = (name = "") => {
 // same frame instead of each rendering their own heading.
 function CategoriesShell({ children, actions = null }) {
   return (
-    <section className="relative section overflow-hidden">
-      {/* Faint brand grid, so the light section still has depth. */}
+    <section className="pt-7 md:pt-10">
+      <div className="section-shell">
+        {/* Compact storefront section header: title left, VIEW ALL right. */}
+        <div className="mb-5 flex items-center justify-between gap-4" data-aos="fade-up">
+          <h2 className="section-heading">Popular Categories</h2>
 
-      <div className="relative section-shell">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10 md:mb-14">
-          <div data-aos="fade-up"className="max-w-2xl">
-            <span className="eyebrow">Browse the catalogue</span>
-            <h2 className="section-title mt-3 text-balance">
-              Shop by <span className="text-primary">category</span>
-            </h2>
-            <p className="section-sub">
-              Everything from workstations and printers to networking and
-              surveillance, organised so you can find it fast.
-            </p>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/products"
+              className="text-[12px] font-semibold uppercase tracking-[0.1em] text-primary transition-colors hover:text-primary-dark"
+            >
+              View All
+            </Link>
+            {actions}
           </div>
-
-          {actions}
         </div>
 
         {children}
@@ -242,44 +239,33 @@ export default function CategoriesSlider() {
                   state: { category: cat },
                 })
               }
-              className="group cursor-pointer overflow-hidden rounded-xl border border-ink-200 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-hover"
+              className="group cursor-pointer"
             >
-              {/* Product image on a light plate, matching the product cards.
-                  A category with no stored image falls back to a local
-                  illustration rather than a third-party placeholder URL. */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink-50">
-                <img
-                  src={cat.imageUrl || cat.image || artFor(cat.name)}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = artFor(cat.name);
-                  }}
-                />
+              {/* Soft grey plate holding the product image, as in the
+                  reference. A category with no stored image falls back to a
+                  local illustration rather than a third-party placeholder. */}
+              <div className="relative overflow-hidden rounded-2xl bg-ink-100 transition-colors duration-200 group-hover:bg-ink-200/70">
+                <div className="aspect-square w-full">
+                  <img
+                    src={cat.imageUrl || cat.image || artFor(cat.name)}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-contain p-6 transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = artFor(cat.name);
+                    }}
+                  />
+                </div>
 
-                <span className="absolute left-2.5 top-2.5 grid h-8 w-8 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition-colors duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-white">
+                <span className="absolute left-3 top-3 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-ink-600 transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
                   <Icon size={15} />
                 </span>
               </div>
 
-              <div className="border-t border-ink-200 p-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="h-card truncate">{cat.name}</h3>
-                  <ArrowUpRight
-                    size={15}
-                    aria-hidden="true"
-                    className="shrink-0 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  />
-                </div>
-
-                {cat.description && (
-                  <p className="mt-1 line-clamp-1 text-[11.5px] leading-snug text-ink-500">
-                    {cat.description}
-                  </p>
-                )}
-              </div>
+              <h3 className="mt-3 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-800 transition-colors duration-200 group-hover:text-primary">
+                {cat.name}
+              </h3>
             </article>
           );
         })}

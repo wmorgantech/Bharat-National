@@ -33,18 +33,24 @@ export class MailService {
 
   constructor() {
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+    const smtpHost = SMTP_HOST?.trim();
+    const smtpPort = Number(SMTP_PORT?.trim());
+    const smtpUser = SMTP_USER?.trim();
+    // Google displays app passwords grouped with spaces. Remove whitespace so
+    // either the displayed form or the compact form works in .env.
+    const smtpPass = SMTP_PASS?.replace(/\s+/g, '');
 
-    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+    if (!smtpHost || !Number.isInteger(smtpPort) || !smtpUser || !smtpPass) {
       throw new Error('SMTP configuration is missing');
     }
 
     this.transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: Number(SMTP_PORT) === 465,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
       auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
+        user: smtpUser,
+        pass: smtpPass,
       },
       connectionTimeout: 15_000,
       greetingTimeout: 15_000,
@@ -52,7 +58,10 @@ export class MailService {
 
     this.transporter.verify((err) => {
       if (err) {
-        this.logger.error('SMTP verification failed', err);
+        this.logger.error(
+          'SMTP verification failed. For Gmail, use the SMTP_USER account with a Google App Password (not the normal account password), and confirm 2-Step Verification is enabled.',
+          err,
+        );
       } else {
         this.logger.log('SMTP ready');
       }

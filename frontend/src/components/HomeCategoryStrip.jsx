@@ -68,7 +68,7 @@ export default function HomeCategoryStrip() {
   if (!loading && categories.length === 0) return null;
 
   return (
-    <section className="section-shell pt-4">
+    <section className="section-shell pt-3 md:pt-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {loading
           ? Array.from({ length: 6 }, (_, i) => (

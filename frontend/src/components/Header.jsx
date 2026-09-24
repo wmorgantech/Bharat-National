@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Phone,
   Mail,
+  Clock,
   User,
   ShoppingCart,
   Search,
@@ -70,9 +71,9 @@ export default function Header() {
 
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Products", path: "/products" },
-    { name: "Services", path: "/services" },
     { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Product", path: "/products" },
     { name: "Contact", path: "/contact" },
   ];
 
@@ -206,47 +207,61 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[100] w-full">
-      {/* ================= UTILITY STRIP ================= */}
-      <div
-        className={`hidden md:block transition-colors duration-300 ${
- solid ? "bg-white " : "bg-white "
- }`}
-      >
-        <div className="section-shell flex items-center justify-between gap-4 h-9">
-          <div className="flex items-center gap-5 min-w-0 text-ink-600">
-            <a href="tel:9789345333"className="flex items-center gap-2 text-[11px] hover:text-ink-900 transition-colors">
-              <Phone size={12} className="text-primary-light shrink-0" />
+      {/* ================= ANNOUNCEMENT BAR =================
+          Dark navy strip above the white nav, matching the reference
+          layout. Content is BNC's own published contact details and
+          opening hours - no delivery or pricing promise is implied. */}
+      <div className="hidden bg-ink-900 md:block">
+        <div className="section-shell flex h-9 items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-5">
+            <a
+              href="tel:9789345333"
+              className="flex items-center gap-2 text-[11.5px] text-white/80 transition-colors hover:text-white"
+            >
+              <Phone size={12} className="shrink-0 text-primary-light" />
               9789345333, 8903037883
             </a>
-            <a href="mailto:bncbalajicbe@gmail.com"className="flex items-center gap-2 text-[11px] hover:text-ink-900 transition-colors min-w-0">
-              <Mail size={12} className="text-primary-light shrink-0" />
+            <a
+              href="mailto:bncbalajicbe@gmail.com"
+              className="flex min-w-0 items-center gap-2 text-[11.5px] text-white/80 transition-colors hover:text-white"
+            >
+              <Mail size={12} className="shrink-0 text-primary-light" />
               <span className="truncate">bncbalajicbe@gmail.com</span>
             </a>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            {SOCIALS.map((social) =>
-              social.href ? (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  className="h-7 w-7 grid place-items-center rounded-full text-ink-500 hover:bg-white hover:text-ink-900 transition-colors"
-                >
-                  <social.Icon size={12} />
-                </a>
-              ) : (
-                <span
-                  key={social.label}
-                  aria-label={social.label}
-                  className="h-7 w-7 grid place-items-center rounded-full text-ink-500 hover:bg-white hover:text-ink-900 transition-colors cursor-pointer"
-                >
-                  <social.Icon size={12} />
-                </span>
-              )
-            )}
+          <div className="flex items-center gap-3">
+            <span className="hidden items-center gap-2 text-[11.5px] text-white/70 lg:inline-flex">
+              <Clock size={12} className="shrink-0 text-primary-light" />
+              Mon&ndash;Sat, 9:00 AM &ndash; 8:00 PM
+            </span>
+
+            <span aria-hidden="true" className="hidden h-3.5 w-px bg-white/20 lg:block" />
+
+            <div className="flex items-center gap-0.5">
+              {SOCIALS.map((social) =>
+                social.href ? (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="grid h-7 w-7 place-items-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <social.Icon size={12} />
+                  </a>
+                ) : (
+                  <span
+                    key={social.label}
+                    aria-label={social.label}
+                    className="grid h-7 w-7 cursor-pointer place-items-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <social.Icon size={12} />
+                  </span>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -284,7 +299,7 @@ export default function Header() {
           </Link>
 
           {/* ---- Desktop nav ---- */}
-          <nav className="hidden lg:flex items-center gap-0.5 shrink-0">
+          <nav className="hidden lg:flex items-center gap-1 whitespace-nowrap shrink-0">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
@@ -293,7 +308,7 @@ export default function Header() {
                 onClick={closeAllMenus}
                 className={({ isActive }) =>
                   [
-"relative px-3.5 py-2 rounded-lg text-[13.5px] font-semibold transition-colors duration-200",
+"relative px-3 py-2 rounded-lg text-[13.5px] font-semibold transition-colors duration-200",
                     isActive
                       ? solid
                         ? "text-primary"
@@ -310,7 +325,7 @@ export default function Header() {
                     {/* Active indicator */}
                     <span
                       aria-hidden="true"
-                      className={`absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full bg-primary transition-transform duration-300 origin-left ${
+                        className={`absolute left-3 right-3 -bottom-0.5 h-[2px] rounded-full bg-primary transition-transform duration-300 origin-left ${
  isActive ? "scale-x-100" : "scale-x-0"
  }`}
                     />
@@ -512,7 +527,7 @@ export default function Header() {
       {openNav && (
         <div className="fixed inset-0 z-[120] lg:hidden">
           <div
-            className="absolute inset-0 bg-white motion-safe:animate-[fadeIn_200ms_ease-out_both]"
+            className="absolute inset-0 bg-ink-900/30 motion-safe:animate-[fadeIn_200ms_ease-out_both]"
             onClick={closeAllMenus}
           />
 

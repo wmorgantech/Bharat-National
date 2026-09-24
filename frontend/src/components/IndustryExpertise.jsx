@@ -23,10 +23,10 @@ export default function IndustryExpertise() {
   return (
     // Dark band: gives the homepage a rhythm break between the white product
     // and service sections instead of one continuous light scroll.
-    <section className="relative section overflow-hidden">
+    <section className="relative py-8 md:py-12 overflow-hidden">
 
       <div className="relative section-shell">
-        <div className="max-w-2xl mb-10 md:mb-14"data-aos="fade-up">
+        <div className="max-w-2xl mb-6 md:mb-8"data-aos="fade-up">
           <span className="eyebrow text-primary-light">Who we serve</span>
           <h2 className="section-title mt-3 text-ink-900">
             Multi-sector expertise

@@ -1,215 +1,115 @@
-// src/components/HeroSection.jsx
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
+import { ArrowRight, BadgeCheck, Headphones, LockKeyhole, RefreshCcw, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  ShieldCheck,
-  BadgeCheck,
-  Wrench,
-  Lock,
-} from "lucide-react";
-import laptopImg from "../assets/products/laptop.svg";
-import monitorImg from "../assets/products/monitor.svg";
-import routerImg from "../assets/products/router.svg";
-import cctvImg from "../assets/products/cctv.svg";
-import printerImg from "../assets/products/printer.svg";
-import accessoriesImg from "../assets/products/accessories.svg";
 
-/**
- * Home banner.
- *
- * Three slides, each pointing at a route that already exists. Copy is drawn
- * from what BNC actually supplies and supports - nothing here claims a
- * product line, statistic or policy the project does not already state.
- */
-const SLIDES = [
-  {
-    id: "compute",
-    eyebrow: "Laptops, desktops & workstations",
-    title: ["Technology that", "powers your business"],
-    copy: "Genuine hardware from the brands we partner with, specified for the way you actually work.",
-    cta: { label: "Shop Now", to: "/products" },
-    alt: { label: "Talk to us", to: "/contact" },
-    lead: laptopImg,
-    leadAlt: "Laptop",
-    thumbs: [
-      { src: monitorImg, alt: "Monitor" },
-      { src: accessoriesImg, alt: "Keyboard and mouse" },
-    ],
-  },
-  {
-    id: "network",
-    eyebrow: "Networking & surveillance",
-    title: ["Connected and", "secured, end to end"],
-    copy: "Routers, switches, firewalls and CCTV - supplied, installed and maintained by our own engineers.",
-    cta: { label: "Explore Services", to: "/services" },
-    alt: { label: "Browse Products", to: "/products" },
-    lead: routerImg,
-    leadAlt: "Wireless router",
-    thumbs: [
-      { src: cctvImg, alt: "CCTV camera" },
-      { src: monitorImg, alt: "Monitor" },
-    ],
-  },
-  {
-    id: "print",
-    eyebrow: "Printers & peripherals",
-    title: ["Everything else", "your office runs on"],
-    copy: "Printers, scanners, storage and accessories, with service support that continues after the sale.",
-    cta: { label: "Shop Now", to: "/products" },
-    alt: { label: "Our Services", to: "/services" },
-    lead: printerImg,
-    leadAlt: "Office printer",
-    thumbs: [
-      { src: accessoriesImg, alt: "Keyboard and mouse" },
-      { src: routerImg, alt: "Wireless router" },
-    ],
-  },
+const HERO_DEVICES = {
+  monitor: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&q=80",
+  laptop: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80",
+  phone: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80",
+  headphones: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
+  watch: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80",
+  earbuds: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80",
+  camera: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80",
+};
+
+const TRUST_BADGES = [
+  { Icon: Truck, title: "100% Genuine", subtitle: "Products" },
+  { Icon: BadgeCheck, title: "Official Warranty", subtitle: "& Support" },
+  { Icon: RefreshCcw, title: "Easy Returns", subtitle: "& Exchanges" },
+  { Icon: LockKeyhole, title: "Secure Checkout", subtitle: "& Payment" },
+  { Icon: Headphones, title: "24/7 Customer", subtitle: "Support" },
 ];
 
-/** Grounded in commitments the site already makes elsewhere. */
-const ASSURANCES = [
-  { Icon: ShieldCheck, label: "100% Genuine Products" },
-  { Icon: BadgeCheck, label: "Official Brand Warranty" },
-  { Icon: Wrench, label: "On-site Installation" },
-  { Icon: Lock, label: "Secure Checkout" },
-];
-
-const AUTOPLAY_MS = 6000;
+function DeviceImage({ src, alt, className }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="eager"
+      onError={(event) => {
+        event.currentTarget.style.visibility = "hidden";
+      }}
+    />
+  );
+}
 
 export default function HeroSection() {
   const navigate = useNavigate();
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timer = useRef(null);
-
-  // Absolute jump from the dots; wrapped so an out-of-range index is safe.
-  const go = useCallback((next) => {
-    setIndex(((next % SLIDES.length) + SLIDES.length) % SLIDES.length);
-  }, []);
-
-  // Autoplay, skipped entirely when the visitor prefers reduced motion and
-  // paused while the banner has pointer or keyboard focus.
-  useEffect(() => {
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduced || paused) return undefined;
-
-    timer.current = setInterval(() => {
-      setIndex((prev) => (prev + 1) % SLIDES.length);
-    }, AUTOPLAY_MS);
-
-    return () => clearInterval(timer.current);
-  }, [paused]);
-
-  const slide = SLIDES[index];
 
   return (
     <>
-      {/* ================= BANNER ================= */}
-      <section className="section-shell pt-6 md:pt-8">
-        <div
-          className="relative overflow-hidden rounded-2xl border border-ink-200 bg-gradient-to-br from-ink-50 via-white to-ink-50"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocusCapture={() => setPaused(true)}
-          onBlurCapture={() => setPaused(false)}
-          aria-roledescription="carousel"
-          aria-label="Featured categories"
-        >
-          <div className="grid items-center gap-8 px-6 py-10 sm:px-10 md:py-14 lg:grid-cols-2 lg:gap-6 lg:px-14">
-            {/* ---- Copy ---- */}
-            <div key={`copy-${slide.id}`} className="anim-panel-fast min-w-0">
-              <span className="eyebrow">{slide.eyebrow}</span>
+      <section className="relative isolate w-full overflow-hidden bg-gradient-to-br from-ink-50 via-primary-50/30 to-ink-100">
+        <div className="relative mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-8 md:px-8 md:py-9 lg:px-10">
+          <div className="pointer-events-none absolute -right-28 -top-40 -z-10 h-[500px] w-[500px] rounded-full border-[28px] border-white/70 bg-primary-50/60 blur-[1px]" />
+          <div className="pointer-events-none absolute bottom-[-210px] left-[38%] -z-10 h-[400px] w-[650px] rounded-[50%] bg-white/80 blur-2xl" />
 
-              <h1 className="mt-3 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.03em] text-ink-900 sm:text-[38px] lg:text-[46px]">
-                {slide.title[0]}
+          <div className="grid items-center gap-5 lg:grid-cols-[38%_62%] lg:gap-2">
+            <div className="relative z-10 max-w-lg">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Latest tech collection</p>
+              <h1 className="font-display text-4xl font-extrabold leading-tight text-ink-900 md:text-5xl">
+                Tech That
                 <br />
-                <span className="text-primary">{slide.title[1]}</span>
+                <span className="text-primary">Powers</span> Your Life
               </h1>
-
               <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-600">
-                {slide.copy}
+                Discover the latest electronics, smart devices and accessories at the best prices.
               </p>
-
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate(slide.cta.to)}
-                  className="btn-primary btn-lg"
-                >
-                  {slide.cta.label}
-                  <ArrowRight size={17} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(slide.alt.to)}
-                  className="btn-secondary btn-lg"
-                >
-                  {slide.alt.label}
-                </button>
-              </div>
+              <button type="button" onClick={() => navigate("/products")} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-white shadow-md transition-all hover:bg-primary-dark hover:shadow-lg">
+                Shop Now
+                <ArrowRight size={17} />
+              </button>
             </div>
 
-            {/* ---- Product visual ---- */}
-            <div key={`art-${slide.id}`} className="anim-panel-fast">
-              <img
-                src={slide.lead}
-                alt={slide.leadAlt}
-                className="mx-auto w-full max-w-[420px]"
-                width="400"
-                height="300"
-              />
-              <div className="mx-auto mt-2 flex max-w-[420px] items-center justify-center gap-4">
-                {slide.thumbs.map((t) => (
-                  <img
-                    key={t.alt}
-                    src={t.src}
-                    alt={t.alt}
-                    className="w-28 sm:w-32"
-                    width="400"
-                    height="300"
-                    loading="lazy"
-                  />
-                ))}
+            <div className="relative mx-auto h-[260px] w-full max-w-[700px] sm:h-[320px] lg:h-[350px]">
+              <div className="absolute bottom-3 left-[6%] right-[2%] h-20 rounded-[45%] bg-white/90 shadow-2xl [transform:perspective(800px)_rotateX(58deg)] sm:h-28" />
+              <div className="absolute bottom-12 left-[13%] right-[10%] h-20 rounded-2xl border border-white bg-white/75 shadow-xl [transform:perspective(800px)_rotateX(58deg)] sm:bottom-20 sm:h-28" />
+
+              <div className="absolute right-[9%] top-[7%] hidden h-[42%] w-[27%] rounded-lg bg-ink-900 p-1.5 shadow-2xl sm:block">
+                <DeviceImage src={HERO_DEVICES.monitor} alt="Desktop monitor" className="h-full w-full rounded object-cover" />
+              </div>
+              <div className="absolute right-[2%] top-[19%] hidden h-[43%] w-[15%] rounded-lg bg-ink-900 shadow-2xl sm:block">
+                <div className="ml-auto mt-5 h-24 w-2 rounded-l bg-ink-600/80" />
+                <div className="absolute bottom-4 left-2 right-2 h-1 rounded-full bg-ink-600" />
+              </div>
+
+              <div className="absolute left-[20%] top-[28%] z-20 h-[47%] w-[52%] -rotate-3 rounded-xl bg-ink-600 p-1 shadow-2xl sm:left-[17%] sm:top-[25%] sm:h-[52%] sm:w-[55%]">
+                <DeviceImage src={HERO_DEVICES.laptop} alt="Modern laptop" className="h-[84%] w-full rounded-lg object-cover" />
+                <div className="absolute bottom-[-9%] left-[-7%] h-[14%] w-[114%] rounded-b-[50%] bg-ink-800 shadow-lg" />
+              </div>
+
+              <div className="absolute bottom-[12%] left-[3%] z-30 h-28 w-16 -rotate-6 overflow-hidden rounded-[13px] border-[3px] border-ink-900 bg-ink-800 shadow-2xl sm:h-36 sm:w-20">
+                <DeviceImage src={HERO_DEVICES.phone} alt="Modern smartphone" className="h-full w-full object-cover" />
+              </div>
+              <div className="absolute bottom-[19%] left-[0%] z-20 h-24 w-20 -rotate-12 overflow-hidden rounded-[45%] bg-ink-700 shadow-xl sm:h-28 sm:w-24">
+                <DeviceImage src={HERO_DEVICES.headphones} alt="Wireless headphones" className="h-full w-full object-cover opacity-90" />
+              </div>
+              <div className="absolute bottom-[15%] left-[24%] z-30 h-12 w-12 rounded-full bg-primary-light/70 shadow-lg sm:h-16 sm:w-16" aria-label="Desk plant" role="img">
+                <span className="absolute -left-2 bottom-1 h-12 w-5 -rotate-45 rounded-full bg-primary-light" />
+                <span className="absolute left-7 bottom-2 h-14 w-5 rotate-45 rounded-full bg-primary-dark" />
+                <span className="absolute left-5 top-3 h-12 w-4 -rotate-12 rounded-full bg-primary-100" />
+              </div>
+
+              <div className="absolute bottom-[12%] right-[4%] z-30 h-16 w-16 overflow-hidden rounded-full border-4 border-ink-800 bg-ink-900 shadow-xl sm:h-20 sm:w-20">
+                <DeviceImage src={HERO_DEVICES.camera} alt="DSLR camera" className="h-full w-full object-cover" />
+              </div>
+              <div className="absolute bottom-[18%] right-[27%] z-30 h-12 w-12 overflow-hidden rounded-xl border-2 border-ink-300 bg-white shadow-lg sm:h-14 sm:w-14">
+                <DeviceImage src={HERO_DEVICES.earbuds} alt="Wireless earbuds case" className="h-full w-full object-cover" />
+              </div>
+              <div className="absolute bottom-[18%] right-[18%] z-30 h-10 w-10 overflow-hidden rounded-xl border-2 border-ink-800 bg-ink-900 shadow-lg sm:h-12 sm:w-12">
+                <DeviceImage src={HERO_DEVICES.watch} alt="Smartwatch" className="h-full w-full object-cover" />
               </div>
             </div>
-          </div>
-
-          {/* ---- Slide controls ---- */}
-          <div className="flex items-center justify-center gap-2 pb-5">
-            {SLIDES.map((s, i) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => go(i)}
-                aria-label={`Show slide ${i + 1}: ${s.eyebrow}`}
-                aria-current={i === index}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === index
-                    ? "w-6 bg-primary"
-                    : "w-2 bg-ink-300 hover:bg-ink-400"
-                }`}
-              />
-            ))}
           </div>
         </div>
       </section>
 
-      {/* ================= TRUST STRIP ================= */}
-      <section className="section-shell pt-4">
-        <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink-200 bg-ink-200 lg:grid-cols-4">
-          {ASSURANCES.map((a) => (
-            <li
-              key={a.label}
-              className="flex items-center justify-center gap-2.5 bg-white px-4 py-4 text-center"
-            >
-              <a.Icon size={18} className="shrink-0 text-primary" />
-              <span className="text-[12.5px] font-medium text-ink-700 sm:text-[13.5px]">
-                {a.label}
-              </span>
+      <section className="relative mx-auto max-w-7xl px-4 pt-3 sm:px-6 md:px-8 md:pt-4 lg:px-10">
+        <ul className="grid grid-cols-2 divide-x divide-ink-200 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-card sm:grid-cols-3 lg:grid-cols-5">
+          {TRUST_BADGES.map(({ Icon, title, subtitle }) => (
+            <li key={title} className="flex items-center justify-center gap-3 px-3 py-3 text-left sm:px-4 md:py-4">
+              <Icon size={22} strokeWidth={1.8} className="shrink-0 text-primary" />
+              <span className="text-[11px] leading-tight text-ink-700 sm:text-xs"><strong className="block font-semibold text-ink-900">{title}</strong>{subtitle}</span>
             </li>
           ))}
         </ul>

@@ -37,11 +37,11 @@ export default function HomeServicesPreview() {
   const navigate = useNavigate();
 
   return (
-    <section className="section">
+    <section className="py-8 md:py-12">
       <div className="section-shell">
         {/* Heading */}
         <div
-          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 md:mb-12"
+          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 md:mb-8"
           data-aos="fade-up"
         >
           <div className="max-w-2xl">
@@ -67,7 +67,7 @@ export default function HomeServicesPreview() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {previewServices.map((service, index) => {
             const Icon = service.icon;
             return (

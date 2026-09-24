@@ -1,7 +1,6 @@
 // src/components/ProductGrid.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import AOS from "aos";
 import ProductCard from "./ProductCard";
 
@@ -26,6 +25,7 @@ const ProductGrid = ({
   sectionClassName = "",
   containerClassName = "",
   showViewAll = false,
+  gridClassName = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
 }) => {
   const navigate = useNavigate();
   const [cols, setCols] = useState(getCols(window.innerWidth));
@@ -51,33 +51,29 @@ const ProductGrid = ({
   }, [products, cols]);
 
   return (
-    <section className={`section ${sectionClassName}`}>
+    <section className={`pt-10 md:pt-14 ${sectionClassName}`}>
       <div className={`section-shell ${containerClassName}`}>
         {showTitle && (
           <div
-            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 md:mb-12"
+            className="mb-5 flex items-center justify-between gap-4"
             data-aos="fade-up"
           >
-            <div>
-              <span className="eyebrow">Catalogue</span>
-              <h2 className="section-title mt-3">{title}</h2>
-            </div>
+            <h2 className="section-heading">{title}</h2>
 
             {showViewAll && products.length > 0 && (
               <button
                 type="button"
                 onClick={() => navigate("/products")}
-                className="btn-secondary btn-md self-start sm:self-auto shrink-0"
+                className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-primary transition-colors hover:text-primary-dark"
               >
-                See all products
-                <ArrowRight size={16} />
+                View All
               </button>
             )}
           </div>
         )}
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 xl:gap-6 items-stretch">
+        <div className={`grid ${gridClassName} gap-3 md:gap-5 xl:gap-6 items-stretch`}>
           {products.map((p, i) => (
             <div
               key={p.id}

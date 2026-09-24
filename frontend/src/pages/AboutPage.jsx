@@ -1,17 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ShoppingBag,
-  Settings2,
-  Wrench,
   ArrowRight,
   ArrowUpRight,
   Eye,
   Target,
-  MonitorSmartphone,
   ShieldCheck,
   Network,
-  Briefcase,
   HeartHandshake,
   BadgeCheck,
   GraduationCap,
@@ -19,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import server from "../assets/server.jpeg";
+import PageHeroBreadcrumb from "../components/Breadcrumb";
 
 /**
  * About - recomposed as a floating-glass composition.
@@ -78,50 +74,6 @@ const JOURNEY = [
   },
 ];
 
-// Mapped onto real catalogue and service lines.
-const WHAT_WE_DO = [
-  {
-    n: "01",
-    Icon: MonitorSmartphone,
-    title: "Hardware",
-    copy: "Desktops, laptops, printers, CCTV and server infrastructure from Dell, HPE and Lenovo — sourced genuine, at competitive prices.",
-    to: "/products",
-    edge: "",
-    tint: "text-primary",
-    ring: "group-hover:border-primary/30",
-  },
-  {
-    n: "02",
-    Icon: ShieldCheck,
-    title: "Software",
-    copy: "Antivirus and endpoint security, Windows updates and patching, driver installation and compatibility checks.",
-    to: "/services",
-    edge: "",
-    tint: "text-primary",
-    ring: "group-hover:border-primary/30",
-  },
-  {
-    n: "03",
-    Icon: Network,
-    title: "IT Services",
-    copy: "LAN and structured cabling, router and firewall configuration, server installation, backup and remote monitoring.",
-    to: "/services",
-    edge: "",
-    tint: "text-primary",
-    ring: "group-hover:border-primary/30",
-  },
-  {
-    n: "04",
-    Icon: Briefcase,
-    title: "Business Solutions",
-    copy: "Annual maintenance contracts — comprehensive or service-only — built around uptime for schools, offices and institutions.",
-    to: "/services",
-    edge: "",
-    tint: "text-primary",
-    ring: "group-hover:border-primary/30",
-  },
-];
-
 const VALUES = [
   {
     Icon: HeartHandshake,
@@ -153,70 +105,16 @@ const VALUES = [
   },
 ];
 
-const ECOSYSTEM = [
-  {
-    Icon: ShoppingBag,
-    title: "Product Sales",
-    copy: "Access the world's best technology brands. From PCs and laptops to servers, networking gear, and smart devices, we source genuine products at competitive prices.",
-    to: "/products",
-  },
-  {
-    Icon: Settings2,
-    title: "Implementation",
-    copy: "Buying is easy; setting up is hard. Our certified team handles on-site installation, network configuration, software deployment, and integration so you're productive from day one.",
-    to: "/services",
-  },
-  {
-    Icon: Wrench,
-    title: "Service & Repair",
-    copy: "Downtime is costly. We offer warranty support, annual maintenance contracts (AMC), emergency repair services, and proactive health checks to keep you running.",
-    to: "/services",
-  },
-];
-
 const AboutPage = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen">
-      {/* ==================================================================
-          HERO - central console with orbiting panels
-      ================================================================== */}
-      <section className="border-b border-ink-200 bg-ink-50">
-        <div className="section-shell py-14 md:py-20">
-          <div className="max-w-3xl" data-aos="fade-up">
-            <span className="eyebrow">About Us</span>
-
-            <h1 className="mt-3 font-display text-[32px] sm:text-[40px] lg:text-[46px] font-bold leading-[1.1] tracking-[-0.025em] text-ink-900">
-              Technology that works for you
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-[15px] md:text-base leading-relaxed text-ink-600">
-              Bharat National Computers isn&apos;t just a store. From purchasing
-              the latest hardware to complex implementations and lifetime
-              service support, we are with you every step of the way.
-            </p>
-
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate("/products")}
-                className="btn-primary btn-lg"
-              >
-                View Products
-                <ArrowRight size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/services")}
-                className="btn-secondary btn-lg"
-              >
-                Our Services
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeroBreadcrumb
+        currentLabel="About"
+        title="About Us"
+        subtitle="Technology that works for you."
+      />
 
       {/* ==================================================================
           WHO WE ARE
@@ -422,116 +320,6 @@ const AboutPage = () => {
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* ==================================================================
-          WHAT WE DO - four large floating panels
-      ================================================================== */}
-      <section className="relative section overflow-hidden">
-
-        <div className="relative section-shell">
-          <div className="max-w-2xl mb-12 md:mb-16"data-aos="fade-up">
-            <span className="eyebrow">What we do</span>
-            <h2 className="section-title mt-3">Four ways we support you</h2>
-            <p className="section-sub">
-              Unlike big-box retailers, we don&apos;t just hand you a box. We
-              provide a complete lifecycle solution for your technology needs.
-            </p>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {WHAT_WE_DO.map((item, i) => (
-              <button
-                key={item.title}
-                type="button"
-                onClick={() => navigate(item.to)}
-                data-aos="fade-up"
-                data-aos-delay={i * 110}
-                className={`group glass-2 ${item.edge} flex flex-col p-6 text-left
- transition-all duration-200 ease-out
- hover:-translate-y-0.5 hover:bg-white ${item.ring}`}
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute top-5 right-6 font-display text-5xl font-bold leading-none text-ink-200 select-none"
-                >
-                  {item.n}
-                </span>
-
-                <span
-                  className={`relative grid place-items-center h-12 w-12 rounded-2xl bg-white ${item.tint}
- transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-105`}
-                >
-                  <item.Icon size={20} />
-                </span>
-
-                <h3 className="relative mt-6 font-display text-lg font-semibold text-ink-900">
-                  {item.title}
-                </h3>
-
-                <p className="relative mt-3 flex-1 text-[13px] leading-relaxed text-ink-500">
-                  {item.copy}
-                </p>
-
-                <span
-                  className={`relative mt-6 pt-5 border-t border-ink-200 inline-flex items-center gap-1.5 text-[13px] font-semibold ${item.tint}`}
-                >
-                  Explore
-                  <ArrowRight
-                    size={14}
-                    className="transition-transform duration-300 group-hover:translate-x-1.5"
-                  />
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================
-          THE BNC ECOSYSTEM - existing three-part lifecycle
-      ================================================================== */}
-      <section className="relative section overflow-hidden">
-        <div className="relative section-shell">
-          <div className="max-w-2xl mb-12 md:mb-16"data-aos="fade-up">
-            <span className="eyebrow">Our expertise</span>
-            <h2 className="section-title mt-3">The BNC ecosystem</h2>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            {ECOSYSTEM.map((item, index) => (
-              <article
-                key={item.title}
-                data-aos="fade-up"
-                data-aos-delay={index * 120}
-                onClick={() => navigate(item.to)}
-                className="group glass-2 flex flex-col p-7 cursor-pointer
- transition-all duration-200 ease-out
- hover:-translate-y-0.5 hover:bg-white hover:border-primary/30"
-              >
-                <span className="grid place-items-center h-12 w-12 rounded-2xl bg-primary-50 text-primary transition-transform duration-200 group-hover:scale-105">
-                  <item.Icon className="w-5 h-5" />
-                </span>
-
-                <h3 className="mt-6 font-display text-lg font-semibold text-ink-900">
-                  {item.title}
-                </h3>
-
-                <p className="mt-3 flex-1 text-[13px] leading-relaxed text-ink-500">
-                  {item.copy}
-                </p>
-
-                <span className="mt-6 pt-5 border-t border-ink-200 inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary">
-                  Learn More
-                  <ArrowUpRight
-                    size={14}
-                    className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5"
-                  />
-                </span>
-              </article>
-            ))}
-          </div>
         </div>
       </section>
 

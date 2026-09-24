@@ -17,9 +17,14 @@ const ProductCard = ({ product }) => {
   const [justAdded, setJustAdded] = useState(false);
   const navigate = useNavigate();
 
-  const mainImage = Array.isArray(product.imageUrl)
+  // An empty imageUrl array used to short-circuit past the fallback chain and
+  // render <img> with no src at all, which produces a broken image no onError
+  // handler can catch. Resolve the first entry first, then fall back.
+  const firstImage = Array.isArray(product.imageUrl)
     ? product.imageUrl[0]
-    : product.imageUrl || product.image || placeholderImg;
+    : product.imageUrl;
+
+  const mainImage = firstImage || product.image || placeholderImg;
 
   const categoryLabel =
     product.category?.name || product.categoryName || product.category || "";
@@ -127,6 +132,12 @@ const ProductCard = ({ product }) => {
         <h3 className="h-card line-clamp-2 leading-snug transition-colors duration-200 group-hover:text-primary">
           {product.name}
         </h3>
+
+        {product.description && (
+          <p className="mt-1.5 line-clamp-1 text-[12px] leading-relaxed text-ink-500">
+            {product.description}
+          </p>
+        )}
 
         {/* Pushes the price/action block to the bottom so cards in a row
             stay aligned regardless of title length. */}

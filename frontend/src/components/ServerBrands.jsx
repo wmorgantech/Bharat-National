@@ -36,17 +36,17 @@ export default function ServerBrands({
   subtitle = "We partner with global technology leaders to provide robust, scalable, and high-performance server infrastructure for your enterprise needs.",
 }) {
   return (
-    <section className="section">
+    <section className="py-8 md:py-12">
       <div className="section-shell">
         {/* Heading */}
-        <div className="max-w-2xl mb-10 md:mb-14"data-aos="fade-up">
+        <div className="max-w-2xl mb-6 md:mb-8"data-aos="fade-up">
           <span className="eyebrow">Partners</span>
           <h2 className="section-title mt-3">{title}</h2>
           <p className="section-sub">{subtitle}</p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {BRANDS.map((b, index) => (
             <article
               key={b.id}

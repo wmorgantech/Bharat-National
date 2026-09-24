@@ -73,7 +73,7 @@ export default function CartDrawer({ open, onClose }) {
  <div className="fixed inset-0 z-[999]"role="dialog"aria-modal="true"aria-label="Shopping cart">
  {/* backdrop */}
  <div
- className="absolute inset-0 bg-white motion-safe:animate-[fadeIn_200ms_ease-out_both]"
+ className="absolute inset-0 bg-ink-900/30 motion-safe:animate-[fadeIn_200ms_ease-out_both]"
  onClick={onClose}
  />
 

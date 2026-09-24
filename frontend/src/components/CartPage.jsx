@@ -217,7 +217,7 @@ export default function CartPage() {
                     </dd>
                   </div>
 
-                  <div className="h-px bg-white !my-5" />
+                  <div className="h-px bg-ink-200 !my-5" />
 
                   <div className="flex justify-between items-baseline">
                     <dt className="font-semibold text-ink-900">Total</dt>

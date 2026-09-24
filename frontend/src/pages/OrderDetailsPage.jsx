@@ -39,18 +39,18 @@ const getImageUrl = (item) => {
 const statusConfig = {
   PLACED: {
     label: "Placed",
-    className: "bg-orange-100 text-orange-700 border-orange-100",
-    dot: "bg-orange-500",
+    className: "bg-primary-50 text-primary-dark border-primary/25",
+    dot: "bg-primary-light",
   },
   ACCEPTED: {
     label: "Accepted",
-    className: "bg-white text-ink-700 border-ink-200",
-    dot: "bg-white",
+    className: "bg-primary-50 text-primary border-primary/25",
+    dot: "bg-primary",
   },
   SHIPPED: {
     label: "Shipped",
-    className: "bg-amber-100 text-amber-700 border-amber-100",
-    dot: "bg-amber-500",
+    className: "bg-primary-50 text-primary border-primary/25",
+    dot: "bg-primary",
   },
   DELIVERED: {
     label: "Delivered",
@@ -59,8 +59,8 @@ const statusConfig = {
   },
   CANCELLED: {
     label: "Cancelled",
-    className: "bg-rose-100 text-rose-700 border-rose-100",
-    dot: "bg-rose-500",
+    className: "bg-red-50 text-red-700 border-red-200",
+    dot: "bg-red-400",
   },
 };
 
@@ -393,7 +393,7 @@ export default function OrderDetailsPage() {
                 </span>
 
                 {order.paymentStatus && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-ink-200 bg-white text-xs font-semibold text-ink-600">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-ink-200 bg-ink-50 text-xs font-semibold text-ink-600">
                     <CreditCard className="w-3.5 h-3.5" />
                     {order.paymentStatus}
                   </span>
@@ -440,7 +440,7 @@ export default function OrderDetailsPage() {
                         className={`block h-1 rounded-full transition-colors duration-200 ${
  reached
  ? "bg-primary"
- : "bg-white"
+ : "bg-ink-200"
  }`}
                       />
                       <span
@@ -648,7 +648,7 @@ export default function OrderDetailsPage() {
                   </div>
                 )}
 
-                <div className="h-px bg-white !my-5" />
+                <div className="h-px bg-ink-200 !my-5" />
 
                 <div className="flex justify-between items-baseline">
                   <dt className="font-semibold text-ink-900">Total</dt>

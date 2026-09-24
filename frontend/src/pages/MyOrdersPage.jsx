@@ -53,8 +53,8 @@ const formatCurrency = (val) =>
 const statusConfig = {
   PLACED: {
     label: "Placed",
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-400",
+    pill: "bg-primary-50 text-primary-dark border-primary/25",
+    dot: "bg-primary-light",
     Icon: ClipboardCheck,
   },
   ACCEPTED: {

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   MapPin,
   Phone,
@@ -7,7 +6,6 @@ import {
   Clock,
   Send,
   Radio,
-  ArrowRight,
   ArrowUpRight,
   MessageSquare,
   User,
@@ -16,6 +14,7 @@ import {
 import { SelectInput, TextArea, TextInput } from "../components/FormControl";
 import { toast } from "react-toastify";
 import { createContact } from "../api/Contact";
+import PageHeroBreadcrumb from "../components/Breadcrumb";
 
 /**
  * Contact page.
@@ -27,8 +26,6 @@ import { createContact } from "../api/Contact";
  */
 
 const ContactPage = () => {
-  const navigate = useNavigate();
-
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -47,7 +44,7 @@ const ContactPage = () => {
     if (!form.name.trim()) return "Name is required";
     if (!form.phone.trim()) return "Phone is required";
     if (!form.email.trim()) return "Email is required";
-    if (!form.interestedIn.trim()) return "Please select Interested In";
+    if (!form.interestedIn.trim()) return "Please select a subject";
     if (!form.message.trim()) return "Message is required";
     return null;
   };
@@ -140,56 +137,34 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen">
-      {/* ==================================================================
-          HERO
-      ================================================================== */}
-      <section className="border-b border-ink-200 bg-ink-50">
-        <div className="section-shell py-14 md:py-20">
-          <div className="max-w-3xl" data-aos="fade-up">
-            <span className="eyebrow">Contact Us</span>
-
-            <h1 className="mt-3 font-display text-[32px] sm:text-[40px] lg:text-[46px] font-bold leading-[1.1] tracking-[-0.025em] text-ink-900">
-              Get in touch with our team
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-[15px] md:text-base leading-relaxed text-ink-600">
-              Send us your requirement or visit our Coimbatore office. We are
-              open Monday to Saturday, 9:00 AM to 8:00 PM.
-            </p>
-
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a href="#contact-form" className="btn-primary btn-lg">
-                Send a Message
-                <ArrowRight size={16} />
-              </a>
-              <a href="tel:9789345333" className="btn-secondary btn-lg">
-                <Phone size={15} />
-                Call 9789345333
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeroBreadcrumb
+        currentLabel="Contact"
+        title="Contact Us"
+        subtitle="Phone, email, location and support from our Coimbatore team."
+      />
 
       {/* ==================================================================
           CONTACT DETAILS
       ================================================================== */}
-      <section className="section-shell pt-12 md:pt-16">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="section-shell pt-10 md:pt-14">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {details.map((d, i) => (
             <div
               key={d.label}
               data-aos="fade-up"
               data-aos-delay={i * 70}
-              className="card-contact"
+              className="group rounded-2xl border border-ink-200 bg-ink-50/70 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white hover:shadow-card-hover"
             >
-              <span className="icon-chip-md">
-                <d.Icon className="w-[18px] h-[18px]" />
-              </span>
-              <h2 className="h-card">
-                {d.label}
-              </h2>
-              <div className="text-muted mt-2">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary">
+                  <d.Icon className="h-[17px] w-[17px]" />
+                </span>
+                <h2 className="text-sm font-bold tracking-[-0.01em] text-ink-900">
+                  {d.label}
+                </h2>
+              </div>
+
+              <div className="mt-3 text-[13px] leading-relaxed text-ink-600">
                 {d.lines}
               </div>
             </div>
@@ -263,23 +238,17 @@ const ContactPage = () => {
 
                   {/* if SelectInput supports value/onChange pass it */}
                   <SelectInput
-                    label="Interested In"
+                    label="Subject"
                     icon={Radio}
                     value={form.interestedIn}
                     onChange={onChange("interestedIn")}
                   >
-                    <option value="">Select a service…</option>
-                    <option value="Desktop / Laptop Service">
-                      Desktop / Laptop Service
-                    </option>
-                    <option value="Networking & WiFi Setup">
-                      Networking &amp; WiFi Setup
-                    </option>
-                    <option value="CCTV Installation">CCTV Installation</option>
-                    <option value="Annual Maintenance (AMC)">
-                      Annual Maintenance (AMC)
-                    </option>
-                    <option value="Other Services">Other Services</option>
+                    <option value="">Select a subject…</option>
+                    <option value="Product enquiry">Product enquiry</option>
+                    <option value="Service enquiry">Service enquiry</option>
+                    <option value="Support">Support</option>
+                    <option value="Order enquiry">Order enquiry</option>
+                    <option value="Other">Other</option>
                   </SelectInput>
                 </div>
 
@@ -356,41 +325,6 @@ const ContactPage = () => {
         </div>
       </section>
 
-      {/* ==================================================================
-          FINAL CTA
-      ================================================================== */}
-      <section className="section-shell pb-16 md:pb-24">
-        <div
-          className="rounded-xl border border-ink-200 bg-ink-50 px-6 py-12 md:px-16 md:py-14 text-center"
-          data-aos="fade-up"
-        >
-          <h2 className="font-display text-[24px] md:text-[32px] font-bold leading-tight tracking-[-0.025em] text-ink-900">
-            Have a technology requirement?
-          </h2>
-          <p className="mt-3 mx-auto max-w-xl text-[15px] leading-relaxed text-ink-600">
-            Browse what we supply and support, or talk to us about a custom
-            setup.
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/services")}
-              className="btn-primary btn-lg"
-            >
-              Explore Services
-              <ArrowRight size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/products")}
-              className="btn-secondary btn-lg"
-            >
-              Explore Products
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

@@ -57,9 +57,9 @@ const Homepage = () => {
 
       {/* Best sellers */}
       {loading ? (
-        <section className="section">
+        <section className="py-8 md:py-12">
           <div className="section-shell">
-            <div className="mb-8 md:mb-12">
+            <div className="mb-5 md:mb-7">
               <span className="eyebrow">Catalogue</span>
               <h2 className="section-title mt-3">Best Sellers</h2>
             </div>
@@ -81,9 +81,9 @@ const Homepage = () => {
       ) : products.length === 0 ? (
         /* The catalogue is genuinely empty rather than still loading. Show a
            real empty state instead of a heading above a blank grid. */
-        <section className="section">
+        <section className="py-8 md:py-12">
           <div className="section-shell">
-            <div className="mb-8 md:mb-12" data-aos="fade-up">
+            <div className="mb-5 md:mb-7" data-aos="fade-up">
               <span className="eyebrow">Catalogue</span>
               <h2 className="section-title mt-3">Best Sellers</h2>
             </div>
@@ -111,7 +111,7 @@ const Homepage = () => {
           </div>
         </section>
       ) : (
-        <ProductGrid products={products} title="Best Sellers" showViewAll />
+        <ProductGrid products={products} title="Best Sellers" showViewAll sectionClassName="!pt-7 md:!pt-10" />
       )}
 
       {/* Supporting sections */}

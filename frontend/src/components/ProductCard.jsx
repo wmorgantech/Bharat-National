@@ -74,10 +74,10 @@ const ProductCard = ({ product }) => {
 
   return (
     <article
-      className="group relative h-full cursor-pointer overflow-hidden rounded-[26px] border border-ink-200 bg-white p-2.5 shadow-card transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-primary/35 hover:shadow-card-hover"
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white p-2.5 shadow-card transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-primary/35 hover:shadow-card-hover"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden rounded-[20px] border border-ink-200 bg-[#F7FAF9] transition-colors duration-300 group-hover:border-primary/25 group-hover:bg-[#F1F9F7]">
+      <div className="relative overflow-hidden rounded-xl border border-ink-200 bg-white transition-colors duration-300 group-hover:border-primary/25 group-hover:bg-[#F1F9F7]">
         {categoryLabel && (
           <span className="absolute left-2.5 top-2.5 z-10 max-w-[72%] truncate rounded-full border border-ink-200 bg-white/90 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-ink-600 backdrop-blur-sm">
             {categoryLabel}
@@ -108,7 +108,7 @@ const ProductCard = ({ product }) => {
         </div>
       </div>
 
-      <div className="flex h-full flex-col px-1 pb-1 pt-4">
+      <div className="flex flex-1 flex-col px-1 pb-1 pt-4">
         {brandLabel && (
           <p className="truncate text-[10.5px] font-semibold uppercase tracking-[0.14em] text-primary">
             {brandLabel}

@@ -158,7 +158,6 @@ export default function MyOrdersPage() {
         setLoadingList(true);
         setError("");
         const data = await getOrdersByUser(user.id);
-        console.log("Orders data:", data);
         setOrders(data || []);
       } catch (err) {
         console.error(err);

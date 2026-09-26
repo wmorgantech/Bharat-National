@@ -14,7 +14,7 @@ import { SelectInput, TextArea, TextInput } from "../components/FormControl";
 import { toast } from "react-toastify";
 import { createContact } from "../api/Contact";
 import PageHeroBreadcrumb from "../components/Breadcrumb";
-import contactBanner from "../assets/contact.jpeg";
+import contactBanner from "../assets/contact-banner.jpg";
 
 /**
  * Contact page.
@@ -76,7 +76,7 @@ const ContactPage = () => {
         message: "",
       });
     } catch (error) {
-      console.log(error.message);
+      console.error(error.message);
     } finally {
       setLoading(false);
     }

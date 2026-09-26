@@ -24,15 +24,15 @@ import { addToCart, loadCart } from "../utils/CartStorage";
 const HIGHLIGHTS = [
   {
     Icon: Truck,
-    title: "Fast Delivery",
-    copy: "Delivery in 2–5 business days for major cities.",
+    title: "Delivery",
+    copy: "Shipped to the delivery address on your order.",
     tint: "text-primary",
     chip: "bg-primary-50",
   },
   {
     Icon: ShieldCheck,
     title: "Warranty",
-    copy: "1-year standard brand warranty on electronics.",
+    copy: "Standard brand warranty on electronics.",
     tint: "text-primary",
     chip: "bg-primary-50",
   },
@@ -223,7 +223,7 @@ const ProductDetailsPage = () => {
         {/* ---- LEFT: gallery ---- */}
         <div
           className="flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24"
-          data-aos="fade-right"
+          data-aos="fade-up"
         >
           {/* Thumbnails */}
           {images.length > 1 && (
@@ -254,11 +254,11 @@ const ProductDetailsPage = () => {
           )}
 
           <div className="glass-1 relative flex-1 overflow-hidden">
-            <div className="relative w-full aspect-square max-h-[560px] flex items-center justify-center p-8 md:p-12">
+            <div className="relative w-full aspect-square max-h-[560px] flex items-center justify-center p-6 md:p-8">
               <img
                 src={mainImage}
                 alt={product.name}
-                className="w-full h-full object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.6)] transition-transform duration-300 ease-out hover:scale-[1.04]"
+                className="w-full h-full object-contain drop-shadow-[0_18px_28px_rgba(15,23,42,0.12)] transition-transform duration-300 ease-out hover:scale-[1.04]"
                 loading="lazy"
               />
             </div>
@@ -266,7 +266,7 @@ const ProductDetailsPage = () => {
         </div>
 
         {/* ---- RIGHT: information console ---- */}
-        <div data-aos="fade-left"data-aos-delay="100">
+        <div data-aos="fade-up"data-aos-delay="100">
           <div className="glass-1 p-6 md:p-8">
             {brandLabel && (
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
@@ -280,10 +280,7 @@ const ProductDetailsPage = () => {
 
             {/* Price */}
             <div className="mt-7 pb-7 border-b border-ink-200">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-ink-500">
-                Price
-              </p>
-              <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+              <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="font-display text-4xl font-bold tracking-tight text-ink-900 tabular-nums">
                   {priceNumber.toLocaleString("en-IN", {
                     style: "currency",

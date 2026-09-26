@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import PageHeroBreadcrumb from "../components/Breadcrumb";
 import aboutUsBanner from "../assets/About.jpeg";
-import serverInfrastructure from "../assets/server.jpeg";
+import serverInfrastructure from "../assets/about-infrastructure.jpg";
 
 const CAPABILITIES = [
   {
@@ -151,7 +151,7 @@ const AboutPage = () => {
 
       <section className="section-shell pt-12 md:pt-14">
         <div className="mx-auto max-w-6xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-          <div className="overflow-hidden rounded-[20px] border border-ink-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)]" data-aos="fade-right">
+          <div className="overflow-hidden rounded-[20px] border border-ink-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)]" data-aos="fade-up">
             <img
               src={serverInfrastructure}
               alt="IT infrastructure support and server systems"
@@ -160,7 +160,7 @@ const AboutPage = () => {
             />
           </div>
 
-          <div className="rounded-[20px] border border-ink-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]" data-aos="fade-left">
+          <div className="rounded-[20px] border border-ink-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]" data-aos="fade-up">
             <span className="eyebrow">BUILT FOR BUSINESS</span>
             <h3 className="mt-3 font-display text-[28px] font-bold leading-tight tracking-[-0.04em] text-ink-900 md:text-[34px]">
               Infrastructure designed to keep operations moving.

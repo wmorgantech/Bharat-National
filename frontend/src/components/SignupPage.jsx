@@ -7,7 +7,7 @@ import Logo from '../assets/logo.jpeg';
 
 const PERKS = [
   { Icon: ShieldCheck, label: 'Genuine products, brand warranty' },
-  { Icon: Truck, label: 'Fast delivery across major cities' },
+  { Icon: Truck, label: 'Delivered to your address' },
   { Icon: Headset, label: 'Lifetime service support' },
 ];
 

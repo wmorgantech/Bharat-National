@@ -173,7 +173,6 @@ const AdminOverview = () => {
     try {
       setLoading(true);
       const result = await getOverviewData();
-      console.log("Overview data:", result);
       setData(result);
     } catch (err) {
       console.error(err);

@@ -81,8 +81,6 @@ const CustomerList = () => {
         setCustomers(users);
         setUserStats(normalizeUserStats(statsData));
         
-        console.log("Fetched customers:", users);
-        console.log("User stats:", statsData);
       } catch (err) {
         console.error(err);
         toast.error(err?.message || "Failed to load customers");

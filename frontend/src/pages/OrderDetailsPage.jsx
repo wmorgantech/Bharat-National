@@ -17,6 +17,7 @@ import { getOrderById } from "../api/Order";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import placeholderImg from "../assets/products/placeholder.svg";
 
 const formatCurrency = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -463,7 +464,7 @@ export default function OrderDetailsPage() {
       <main className="relative section-shell py-8 md:py-12">
         <div className="grid lg:grid-cols-[0.9fr_1.35fr] gap-5 lg:gap-6 items-start">
           {/* ---- LEFT ---- */}
-          <div className="space-y-5"data-aos="fade-right">
+          <div className="space-y-5"data-aos="fade-up">
             <section className="glass-2 p-6">
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
                 Order information
@@ -556,7 +557,7 @@ export default function OrderDetailsPage() {
           </div>
 
           {/* ---- RIGHT: items + summary ---- */}
-          <div className="space-y-5"data-aos="fade-left"data-aos-delay="100">
+          <div className="space-y-5"data-aos="fade-up"data-aos-delay="100">
             <section className="glass-2 p-6">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
@@ -584,8 +585,10 @@ export default function OrderDetailsPage() {
                             aria-hidden="true"
                             className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
                             onError={(e) => {
+                              // Local fallback: the previous third-party
+                              // placeholder host was itself a broken-image risk.
                               e.target.onerror = null;
-                              e.target.src = "https://via.placeholder.com/80?text=No+Image";
+                              e.target.src = placeholderImg;
                             }}
                             loading="lazy"
                           />

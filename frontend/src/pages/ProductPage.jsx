@@ -132,9 +132,6 @@ export default function ProductsPage() {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Availability">
-          <p className="flex items-center gap-2 text-[13px] text-ink-600"><span className="h-2 w-2 rounded-full bg-primary" /> In stock and ready to ship</p>
-        </FilterSection>
       </>
     );
 
@@ -170,7 +167,7 @@ export default function ProductsPage() {
           {activeFilters.length > 0 && <div className="mb-5 flex flex-wrap items-center gap-2"><span className="mr-1 text-xs font-semibold text-ink-500">Active filters</span>{activeFilters.map((filter) => <button type="button" key={filter.key} onClick={filter.clear} className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-dark">{filter.label}<X size={13} /></button>)}<button type="button" onClick={clearFilters} className="ml-1 text-xs font-semibold text-ink-500 underline underline-offset-2">Clear filters</button></div>}
 
           <div className="grid gap-7 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="hidden rounded-xl border border-ink-200 bg-white p-5 shadow-card lg:block">{filterContent}</aside>
+            <aside className="hidden self-start rounded-xl border border-ink-200 bg-white p-5 shadow-card lg:block">{filterContent}</aside>
             <section className="min-w-0">
               {loading && <div className="grid grid-cols-2 gap-4 md:grid-cols-3">{Array.from({ length: PAGE_SIZE }, (_, index) => <div key={index} className="rounded-xl border border-ink-200 bg-white p-3 shadow-card"><div className="skeleton aspect-[4/3] w-full" /><div className="skeleton mt-4 h-3 w-2/5" /><div className="skeleton mt-2 h-4 w-4/5" /><div className="skeleton mt-4 h-9 w-full" /></div>)}</div>}
               {!loading && error && <div className="state-panel"><span className="icon-chip icon-chip-lg mx-auto bg-red-50 text-red-700"><AlertCircle size={24} /></span><h2 className="mt-5 text-lg font-semibold">Could not load the catalogue</h2><p className="mt-2 text-sm text-ink-500">{error}</p><button onClick={loadProducts} className="btn-secondary btn-md mt-6"><RefreshCw size={15} /> Retry</button></div>}

@@ -28,6 +28,7 @@ import laptop from "../assets/laptop.jpeg";
 import lan from "../assets/lan.jpeg";
 import firewall from "../assets/firewall.jpeg";
 import server from "../assets/server.jpeg";
+import infrastructureImage from "../assets/services-infrastructure.jpg";
 import antivirus from "../assets/antivirus.jpeg";
 
 /**
@@ -210,33 +211,57 @@ export default function ServicesPage() {
 
           <div className="grid gap-5 lg:grid-cols-3">
             {serviceGroups.map((group, index) => {
-              const panelTone =
+              const panelStyles =
                 index === 0
-                  ? "border-[#D5E8E4] bg-white/90"
+                  ? {
+                      panel: "border-[#D5E8E4] bg-white/90",
+                      number: "text-[#00897B]",
+                      iconWrap: "bg-[#EAF6F4] text-[#00897B] group-hover:bg-[#E0F3F0]",
+                      edge: "border-[#D5E8E4] bg-[#F5FAF9] text-[#00897B] group-hover:border-[#00897B] group-hover:bg-[#EAF6F4]",
+                      divider: "bg-[#00897B]",
+                      rowHover: "hover:bg-[#F1FAF8]",
+                      rowIcon: "bg-[#F0F8F7] text-[#6F7F7B] group-hover/row:bg-[#EAF6F4] group-hover/row:text-[#00897B]",
+                    }
                   : index === 1
-                    ? "border-[#DDEEEA] bg-[#F9FCFB]"
-                    : "border-[#D9E9E2] bg-white/90";
+                    ? {
+                        panel: "border-[#DDEEEA] bg-[#F9FCFB]",
+                        number: "text-[#123C36]",
+                        iconWrap: "bg-[#E7F4F2] text-[#123C36] group-hover:bg-[#DCEEEA]",
+                        edge: "border-[#CFE6E1] bg-[#F3FAF9] text-[#123C36] group-hover:border-[#123C36] group-hover:bg-[#EAF6F4]",
+                        divider: "bg-[#123C36]",
+                        rowHover: "hover:bg-[#F1FAF8]",
+                        rowIcon: "bg-[#EEF8F6] text-[#123C36] group-hover/row:bg-[#DCEEEA] group-hover/row:text-[#123C36]",
+                      }
+                    : {
+                        panel: "border-[#D9E9E2] bg-white/90",
+                        number: "text-[#17302D]",
+                        iconWrap: "bg-[#EDF5F4] text-[#17302D] group-hover:bg-[#E2F0EE]",
+                        edge: "border-[#D9E7E4] bg-[#F5FAF9] text-[#17302D] group-hover:border-[#00897B] group-hover:bg-[#EAF6F4]",
+                        divider: "bg-[#17302D]",
+                        rowHover: "hover:bg-[#F4FAF9]",
+                        rowIcon: "bg-[#F2F8F7] text-[#17302D] group-hover/row:bg-[#E9F4F3] group-hover/row:text-[#00897B]",
+                      };
 
               return (
                 <div
                   key={group.title}
                   data-aos="fade-up"
                   data-aos-delay={index * 110}
-                  className={`group relative rounded-[24px] border p-5 shadow-[0_12px_24px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#8FC7BE] hover:shadow-[0_18px_30px_rgba(18,60,54,0.08)] md:p-6 ${panelTone}`}
+                  className={`group relative rounded-[24px] border p-5 shadow-[0_12px_24px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#8FC7BE] hover:shadow-[0_18px_30px_rgba(18,60,54,0.08)] md:p-6 ${panelStyles.panel}`}
                 >
                   <div className="flex items-center justify-between pb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#00897B]">{group.number}</span>
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-[#EAF6F4] text-[#00897B] transition-all duration-200 group-hover:scale-105 group-hover:bg-[#E0F3F0]">
+                      <span className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${panelStyles.number}`}>{group.number}</span>
+                      <span className={`grid h-9 w-9 place-items-center rounded-full transition-all duration-200 group-hover:scale-105 ${panelStyles.iconWrap}`}>
                         <group.icon size={15} />
                       </span>
                     </div>
-                    <span className="rounded-full border border-[#D5E8E4] bg-[#F5FAF9] p-1.5 text-[#00897B] transition-all duration-200 group-hover:border-[#00897B] group-hover:bg-[#EAF6F4]">
+                    <span className={`rounded-full border p-1.5 transition-all duration-200 ${panelStyles.edge}`}>
                       <ArrowUpRight size={14} />
                     </span>
                   </div>
 
-                  <div className="mb-4 h-px w-12 bg-[#00897B] opacity-75" aria-hidden="true" />
+                  <div className={`mb-4 h-px w-12 opacity-80 ${panelStyles.divider}`} aria-hidden="true" />
 
                   <h3 className="font-display text-[20px] font-semibold leading-tight tracking-[-0.03em] text-[#17302D]">
                     {group.title}
@@ -248,10 +273,10 @@ export default function ServicesPage() {
                       <li key={service.title} className="border-t border-[#E7F0EE] first:border-t-0">
                         <button
                           type="button"
-                          className="group/row flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-2.5 text-left transition-all duration-250 hover:-translate-x-1 hover:bg-[#F1FAF8] hover:px-3"
+                          className={`group/row flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-2.5 text-left transition-all duration-250 hover:-translate-x-1 hover:px-3 ${panelStyles.rowHover}`}
                         >
                           <span className="flex min-w-0 items-center gap-2.5">
-                            <span className="grid h-6 w-6 place-items-center rounded-full bg-[#F0F8F7] text-[#6F7F7B] transition-all duration-200 group-hover/row:bg-[#EAF6F4] group-hover/row:text-[#00897B]">
+                            <span className={`grid h-6 w-6 place-items-center rounded-full transition-all duration-200 ${panelStyles.rowIcon}`}>
                               <service.icon size={12} />
                             </span>
                             <span className="truncate text-[13px] font-medium leading-relaxed text-[#1F2E2B]">
@@ -283,17 +308,17 @@ export default function ServicesPage() {
           className="overflow-hidden rounded-[30px] border border-[#DDEEEA] bg-white shadow-[0_18px_32px_rgba(18,60,54,0.06)]"
           data-aos="fade-up"
         >
-          <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <div className="p-3 md:p-4 lg:p-5" data-aos="fade-right" data-aos-delay="80">
+          <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-6">
+            <div className="p-3 md:p-4 lg:p-5 lg:pr-2" data-aos="fade-up" data-aos-delay="80">
               <img
-                src={server}
+                src={infrastructureImage}
                 alt="IT infrastructure support"
-                className="h-[270px] w-full rounded-[22px] border border-[#DDEEEA] object-cover shadow-[0_14px_24px_rgba(14,36,32,0.06)] md:h-[340px] lg:h-[420px]"
+                className="h-[270px] w-full rounded-[22px] border border-[#DDEEEA] object-cover shadow-[0_14px_24px_rgba(14,36,32,0.06)] md:h-[320px] lg:h-[390px]"
                 loading="lazy"
               />
             </div>
 
-            <div className="px-5 pb-6 pt-4 md:px-7 md:pb-7 md:pt-5 lg:px-9 lg:pb-8 lg:pt-6">
+            <div className="px-5 pb-6 pt-4 md:px-7 md:pb-7 md:pt-5 lg:px-8 lg:pb-8 lg:pt-6 xl:px-10">
               <div className="mb-4">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#00897B]">
                   INFRASTRUCTURE & IT SUPPORT
@@ -382,8 +407,8 @@ export default function ServicesPage() {
         </div>
 
         <div className="relative">
-          <div className="absolute left-6 top-6 bottom-6 w-px bg-[#E2EFEB] md:left-8 lg:hidden" aria-hidden="true" />
-          <div className="absolute left-[10%] right-[10%] top-[54px] hidden h-px bg-[#E2EFEB] lg:block" aria-hidden="true" />
+          <div className="absolute left-6 top-7 bottom-7 w-px bg-[#D5EAE6] md:left-8 lg:hidden" aria-hidden="true" />
+          <div className="absolute left-[11%] right-[11%] top-[38px] hidden h-px bg-[#D5EAE6] lg:block" aria-hidden="true" />
 
           <ol className="relative grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {PROCESS.map((step, i) => (
@@ -391,15 +416,15 @@ export default function ServicesPage() {
                 key={step.n}
                 data-aos="fade-up"
                 data-aos-delay={i * 70}
-                className="group relative z-10 lg:pt-7"
+                className="group relative z-10 lg:pt-5"
               >
-                <div className="relative flex h-full items-start gap-3 rounded-[18px] border border-[#E8F1EF] bg-white p-4 pl-5 shadow-[0_10px_20px_rgba(18,60,54,0.03)] transition-all duration-250 group-hover:-translate-y-1 group-hover:border-[#D4E9E5] group-hover:shadow-[0_14px_22px_rgba(18,60,54,0.06)] md:p-4.5 md:pl-5 lg:flex-col lg:items-center lg:gap-4 lg:rounded-[22px] lg:p-5 lg:text-center lg:pl-5">
+                <div className="relative flex h-full items-start gap-3 rounded-[18px] border border-[#EAF2F1] bg-[#F9FCFB] p-4 pl-5 transition-all duration-250 group-hover:-translate-y-1 group-hover:border-[#D7EDE9] group-hover:bg-white md:p-4.5 md:pl-5 lg:flex-col lg:items-center lg:gap-3 lg:rounded-[22px] lg:border-[#EEF4F2] lg:bg-white lg:p-5 lg:pl-5 lg:text-center">
                   <div className="lg:mt-1">
-                    <div className="flex items-center gap-2.5 lg:flex-col lg:gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#00897B] lg:text-[11px]">
+                    <div className="flex items-center gap-2.5 lg:flex-col lg:gap-2.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#123C36] lg:text-[11px]">
                         {step.n}
                       </span>
-                      <span className="grid h-9 w-9 place-items-center rounded-full border border-[#DDEEEA] bg-[#F5FAF9] text-[#00897B] transition-all duration-200 group-hover:border-[#00897B] group-hover:bg-[#EAF6F4] group-hover:text-[#006F66]">
+                      <span className="grid h-9 w-9 place-items-center rounded-full border border-[#DDEEEA] bg-[#F5FAF9] text-[#00897B] shadow-[0_4px_14px_rgba(0,137,123,0.08)] transition-all duration-200 group-hover:border-[#00897B] group-hover:bg-[#EAF6F4] group-hover:text-[#006F66]">
                         <step.Icon size={15} />
                       </span>
                     </div>

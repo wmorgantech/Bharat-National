@@ -21,6 +21,8 @@ const getCols = (w) => {
 const ProductGrid = ({
   products = [],
   title = "Products",
+  eyebrow = "Catalogue",
+  supportingText = "",
   showTitle = true,
   sectionClassName = "",
   containerClassName = "",
@@ -54,21 +56,30 @@ const ProductGrid = ({
     <section className={`pt-10 md:pt-14 ${sectionClassName}`}>
       <div className={`section-shell ${containerClassName}`}>
         {showTitle && (
-          <div
-            className="mb-5 flex items-center justify-between gap-4"
-            data-aos="fade-up"
-          >
-            <h2 className="section-heading">{title}</h2>
+          <div className="mb-6 md:mb-8" data-aos="fade-up">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+                <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[30px] lg:text-[34px]">
+                  {title}
+                </h2>
+                {supportingText && (
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-500 md:text-[15px]">
+                    {supportingText}
+                  </p>
+                )}
+              </div>
 
-            {showViewAll && products.length > 0 && (
-              <button
-                type="button"
-                onClick={() => navigate("/products")}
-                className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-primary transition-colors hover:text-primary-dark"
-              >
-                View All
-              </button>
-            )}
+              {showViewAll && products.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/products")}
+                  className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary-dark"
+                >
+                  View All
+                </button>
+              )}
+            </div>
           </div>
         )}
 

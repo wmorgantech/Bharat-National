@@ -21,78 +21,38 @@ const sectors = [
 
 export default function IndustryExpertise() {
   return (
-    // Dark band: gives the homepage a rhythm break between the white product
-    // and service sections instead of one continuous light scroll.
-    <section className="relative py-8 md:py-12 overflow-hidden">
-
-      <div className="relative section-shell">
-        <div className="max-w-2xl mb-6 md:mb-8"data-aos="fade-up">
-          <span className="eyebrow text-primary-light">Who we serve</span>
-          <h2 className="section-title mt-3 text-ink-900">
-            Multi-sector expertise
+    <section className="relative overflow-hidden bg-[#F4FAF8] py-8 md:py-12">
+      <div className="section-shell">
+        <div className="mb-6 max-w-2xl md:mb-8" data-aos="fade-up">
+          <span className="eyebrow text-primary">Who we serve</span>
+          <h2 className="mt-3 font-display text-[24px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[32px]">
+            Built for business environments that need to move faster
           </h2>
-          <p className="section-sub text-ink-500">
-            Delivering reliable technology solutions tailored for diverse
-            industries.
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-600">
+            We deliver dependable technology solutions tailored for industries where uptime, security, and smooth operations matter most.
           </p>
         </div>
 
-        {/* Marquee. The reveal stays on this wrapper - the row inside is a
-            duplicated, continuously scrolling track. */}
-        <div className="relative"data-aos="fade-up"data-aos-delay="100">
-          <div className="relative overflow-hidden">
-            {/* Fade edges */}
-
-            <div
-              className="flex gap-4 md:gap-5 animate-marquee"
-              style={{ width: "max-content" }}
-            >
-              {[...sectors, ...sectors].map((sector, idx) => {
-                const Icon = sector.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="group flex items-center gap-3.5 shrink-0
- rounded-2xl border border-ink-200 bg-white 
- px-5 py-4 min-w-[190px]
- transition-all duration-300
- hover:border-primary/50 hover:bg-primary/10"
-                  >
-                    <span
-                      className="grid place-items-center h-11 w-11 shrink-0 rounded-xl
- bg-primary/15 text-primary-light
- transition-colors duration-300
- group-hover:bg-primary group-hover:text-ink-900"
-                    >
-                      <Icon className="w-5 h-5" />
-                    </span>
-                    <p className="text-sm font-semibold text-ink-800 whitespace-nowrap">
-                      {sector.label}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-aos="fade-up" data-aos-delay="100">
+          {sectors.map((sector, index) => {
+            const Icon = sector.icon;
+            return (
+              <div
+                key={sector.id}
+                className="group rounded-[22px] border border-ink-200 bg-white p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-card-hover"
+              >
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#EAF7F5] text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <p className="mt-4 text-[15px] font-semibold text-ink-900">{sector.label}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-600">
+                  {index % 2 === 0 ? "Operational reliability and technology enablement." : "Secure systems and practical business continuity."}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
-
-      {/* Marquee keyframes */}
-      <style>
-        {`
-          @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-marquee {
-            display: flex;
-            animation: marquee 32s linear infinite;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .animate-marquee { animation: none; }
-          }
-        `}
-      </style>
     </section>
   );
 }

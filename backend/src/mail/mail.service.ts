@@ -29,7 +29,7 @@ type OrderEmailPayload = {
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter?: nodemailer.Transporter;
 
   constructor() {
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
@@ -41,7 +41,10 @@ export class MailService {
     const smtpPass = SMTP_PASS?.replace(/\s+/g, '');
 
     if (!smtpHost || !Number.isInteger(smtpPort) || !smtpUser || !smtpPass) {
-      throw new Error('SMTP configuration is missing');
+      this.logger.warn(
+        'SMTP configuration is missing. Email sending is disabled until SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS are set.',
+      );
+      return;
     }
 
     this.transporter = nodemailer.createTransport({
@@ -68,14 +71,28 @@ export class MailService {
     });
   }
 
+  private getTransporter() {
+    if (!this.transporter) {
+      this.logger.warn('SMTP is not configured. Skipping email send.');
+      return null;
+    }
+
+    return this.transporter;
+  }
+
   // ============================================================
   // 1) CONTACT ACK EMAIL
   // ============================================================
   async sendContactAckToUser(data: ContactAckPayload) {
     const html = this.buildUserAckTemplate(data);
+    const transporter = this.getTransporter();
+
+    if (!transporter) {
+      return undefined;
+    }
 
     try {
-      return await this.transporter.sendMail({
+      return await transporter.sendMail({
         from: `"Bharath National Computers" <${process.env.SMTP_USER}>`,
         to: data.to,
         replyTo: process.env.SMTP_USER,
@@ -93,9 +110,14 @@ export class MailService {
   // ============================================================
   async sendOrderPlacedToUser(order: OrderEmailPayload) {
     const html = this.buildOrderPlacedTemplate(order);
+    const transporter = this.getTransporter();
+
+    if (!transporter) {
+      return undefined;
+    }
 
     try {
-      return await this.transporter.sendMail({
+      return await transporter.sendMail({
         from: `"Bharath National Computers" <${process.env.SMTP_USER}>`,
         to: order.email,
         replyTo: process.env.SMTP_USER,

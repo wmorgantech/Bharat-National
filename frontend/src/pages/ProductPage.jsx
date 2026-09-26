@@ -3,6 +3,7 @@ import { Search, X, SlidersHorizontal, PackageOpen, AlertCircle, RefreshCw, Filt
 import { getActiveProducts } from "../api/Product";
 import ProductGrid from "../components/ProductGrid";
 import PageHeroBreadcrumb from "../components/Breadcrumb";
+import productsBanner from "../assets/Product.png";
 
 import Pagination from "../components/Pagination";
 
@@ -143,6 +144,9 @@ export default function ProductsPage() {
           currentLabel="Products"
           title="Products"
           subtitle="Browse our computer, IT hardware and technology products."
+          image={productsBanner}
+          imagePosition="50% 44%"
+          heightClass="min-h-[160px] md:min-h-[180px] lg:min-h-[190px]"
         />
 
         <main className="section-shell py-6 md:py-8">

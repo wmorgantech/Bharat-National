@@ -59,9 +59,14 @@ const Homepage = () => {
       {loading ? (
         <section className="py-8 md:py-12">
           <div className="section-shell">
-            <div className="mb-5 md:mb-7">
-              <span className="eyebrow">Catalogue</span>
-              <h2 className="section-title mt-3">Best Sellers</h2>
+            <div className="mb-5 md:mb-7" data-aos="fade-up">
+              <span className="eyebrow">Business technology portfolio</span>
+              <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[30px] lg:text-[34px]">
+                Featured Technology Solutions
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-500 md:text-[15px]">
+                BNC provides professional technology hardware and infrastructure products for businesses and organizations.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5 xl:gap-6">
               {Array.from({ length: 5 }, (_, i) => (
@@ -84,8 +89,13 @@ const Homepage = () => {
         <section className="py-8 md:py-12">
           <div className="section-shell">
             <div className="mb-5 md:mb-7" data-aos="fade-up">
-              <span className="eyebrow">Catalogue</span>
-              <h2 className="section-title mt-3">Best Sellers</h2>
+              <span className="eyebrow">Business technology portfolio</span>
+              <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[30px] lg:text-[34px]">
+                Featured Technology Solutions
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-500 md:text-[15px]">
+                BNC provides professional technology hardware and infrastructure products for businesses and organizations.
+              </p>
             </div>
             <div className="state-panel" data-aos="fade-up">
               <span className="icon-chip-lg mx-auto">
@@ -111,7 +121,14 @@ const Homepage = () => {
           </div>
         </section>
       ) : (
-        <ProductGrid products={products} title="Best Sellers" showViewAll sectionClassName="!pt-7 md:!pt-10" />
+        <ProductGrid
+          products={products}
+          title="Featured Technology Solutions"
+          eyebrow="Business technology portfolio"
+          supportingText="BNC provides professional technology hardware and infrastructure products for businesses and organizations."
+          showViewAll
+          sectionClassName="!pt-7 md:!pt-10"
+        />
       )}
 
       {/* Supporting sections */}

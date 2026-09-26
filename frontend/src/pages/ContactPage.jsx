@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   MapPin,
   Phone,
-  Mail,
   Clock,
   Send,
   Radio,
@@ -15,6 +14,7 @@ import { SelectInput, TextArea, TextInput } from "../components/FormControl";
 import { toast } from "react-toastify";
 import { createContact } from "../api/Contact";
 import PageHeroBreadcrumb from "../components/Breadcrumb";
+import contactBanner from "../assets/contact.jpeg";
 
 /**
  * Contact page.
@@ -82,95 +82,16 @@ const ContactPage = () => {
     }
   };
 
-  // Contact details - the project's real published information.
-  const details = [
-    {
-      Icon: Phone,
-      label: "Phone",
-      lines: (
-        <>
-          <a href="tel:9789345333" className="hover:text-primary transition-colors">
-            9789345333
-          </a>
-          <br />
-          <a href="tel:8903037883" className="hover:text-primary transition-colors">
-            8903037883
-          </a>
-        </>
-      ),
-    },
-    {
-      Icon: Mail,
-      label: "Email",
-      lines: (
-        <a
-          href="mailto:bncbalajicbe@gmail.com"
-          className="hover:text-primary transition-colors break-all"
-        >
-          bncbalajicbe@gmail.com
-        </a>
-      ),
-    },
-    {
-      Icon: MapPin,
-      label: "Location",
-      lines: (
-        <>
-          Nehru St, Peranaidu Layout,
-          <br />
-          Ram Nagar, Coimbatore 641009
-        </>
-      ),
-    },
-    {
-      Icon: Clock,
-      label: "Business Hours",
-      lines: (
-        <>
-          Mon – Sat: 9:00 AM – 8:00 PM
-          <br />
-          Sunday: Closed
-        </>
-      ),
-    },
-  ];
-
   return (
     <div className="min-h-screen">
       <PageHeroBreadcrumb
-        currentLabel="Contact"
+        currentLabel="Contact Us"
         title="Contact Us"
         subtitle="Phone, email, location and support from our Coimbatore team."
+        image={contactBanner}
+        imagePosition="50% 38%"
+        heightClass="min-h-[160px] md:min-h-[180px] lg:min-h-[190px]"
       />
-
-      {/* ==================================================================
-          CONTACT DETAILS
-      ================================================================== */}
-      <section className="section-shell pt-10 md:pt-14">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {details.map((d, i) => (
-            <div
-              key={d.label}
-              data-aos="fade-up"
-              data-aos-delay={i * 70}
-              className="group rounded-2xl border border-ink-200 bg-ink-50/70 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white hover:shadow-card-hover"
-            >
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary">
-                  <d.Icon className="h-[17px] w-[17px]" />
-                </span>
-                <h2 className="text-sm font-bold tracking-[-0.01em] text-ink-900">
-                  {d.label}
-                </h2>
-              </div>
-
-              <div className="mt-3 text-[13px] leading-relaxed text-ink-600">
-                {d.lines}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ==================================================================
           FORM + MAP
@@ -188,18 +109,18 @@ const ContactPage = () => {
           <div className="grid gap-6 lg:grid-cols-12 items-start">
             {/* ---- Form ---- */}
             <div
-              className="lg:col-span-7 rounded-xl border border-ink-200 bg-white p-6 md:p-8 shadow-card"
+              className="lg:col-span-7 rounded-xl border border-[#1D5A4F] bg-[#123C36] p-6 md:p-8 shadow-[0_18px_40px_rgba(8,32,28,0.18)]"
               data-aos="fade-up"
             >
-              <div className="flex items-center gap-3 pb-6 mb-6 border-b border-ink-200">
-                <span className="grid place-items-center h-11 w-11 rounded-xl bg-primary-50 text-primary shrink-0">
+              <div className="flex items-center gap-3 pb-6 mb-6 border-b border-white/10">
+                <span className="grid place-items-center h-11 w-11 rounded-xl bg-[#1C524D] text-[#E9F8F4] shrink-0">
                   <MessageSquare size={18} />
                 </span>
                 <div>
-                  <h3 className="font-display text-base font-semibold text-ink-900">
+                  <h3 className="font-display text-base font-semibold text-white">
                     Send us a message
                   </h3>
-                  <p className="text-[12.5px] text-ink-500">
+                  <p className="text-[12.5px] text-[#D7EEE9]">
                     All fields are required.
                   </p>
                 </div>
@@ -211,6 +132,9 @@ const ContactPage = () => {
                   <TextInput
                     label="Your Name"
                     icon={User}
+                    labelClassName="text-[#EAF9F4]"
+                    iconClassName="w-3.5 h-3.5 text-[#A9D9D0]"
+                    className="border-[#D9EAE7] bg-[#F7FBFA] text-[#0F172A] placeholder:text-[#6B7E7A] focus:border-[#2AAEA0] focus:ring-[#2AAEA0]/15"
                     placeholder="Enter your full name"
                     type="text"
                     value={form.name}
@@ -219,6 +143,9 @@ const ContactPage = () => {
                   <TextInput
                     label="Phone Number"
                     icon={Phone}
+                    labelClassName="text-[#EAF9F4]"
+                    iconClassName="w-3.5 h-3.5 text-[#A9D9D0]"
+                    className="border-[#D9EAE7] bg-[#F7FBFA] text-[#0F172A] placeholder:text-[#6B7E7A] focus:border-[#2AAEA0] focus:ring-[#2AAEA0]/15"
                     placeholder="Enter your phone number"
                     type="tel"
                     value={form.phone}
@@ -230,16 +157,21 @@ const ContactPage = () => {
                   <TextInput
                     label="Email Address"
                     icon={AtSign}
+                    labelClassName="text-[#EAF9F4]"
+                    iconClassName="w-3.5 h-3.5 text-[#A9D9D0]"
+                    className="border-[#D9EAE7] bg-[#F7FBFA] text-[#0F172A] placeholder:text-[#6B7E7A] focus:border-[#2AAEA0] focus:ring-[#2AAEA0]/15"
                     placeholder="Enter your email"
                     type="email"
                     value={form.email}
                     onChange={onChange("email")}
                   />
 
-                  {/* if SelectInput supports value/onChange pass it */}
                   <SelectInput
                     label="Subject"
                     icon={Radio}
+                    labelClassName="text-[#EAF9F4]"
+                    iconClassName="w-3.5 h-3.5 text-[#A9D9D0]"
+                    className="border-[#D9EAE7] bg-[#F7FBFA] text-[#0F172A] placeholder:text-[#6B7E7A] focus:border-[#2AAEA0] focus:ring-[#2AAEA0]/15"
                     value={form.interestedIn}
                     onChange={onChange("interestedIn")}
                   >
@@ -255,6 +187,9 @@ const ContactPage = () => {
                 <TextArea
                   label="Message / Requirements"
                   icon={MessageSquare}
+                  labelClassName="text-[#EAF9F4]"
+                  iconClassName="w-3.5 h-3.5 text-[#A9D9D0]"
+                  className="border-[#D9EAE7] bg-[#F7FBFA] text-[#0F172A] placeholder:text-[#6B7E7A] focus:border-[#2AAEA0] focus:ring-[#2AAEA0]/15"
                   placeholder="Tell us briefly about your requirement…"
                   rows={5}
                   value={form.message}
@@ -264,7 +199,7 @@ const ContactPage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary btn-lg w-full sm:w-auto sm:min-w-[240px]"
+                  className="btn-lg w-full sm:w-auto sm:min-w-[240px] rounded-xl border border-[#1AA992] bg-[#1AA992] text-white shadow-[0_12px_24px_rgba(26,169,146,0.28)] transition hover:bg-[#159A84] hover:border-[#159A84] focus:outline-none focus:ring-4 focus:ring-[#1AA992]/20 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {loading ? "Sending..." : "Send Message"}
                   {!loading && <Send size={16} />}

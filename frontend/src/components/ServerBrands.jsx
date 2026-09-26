@@ -9,93 +9,87 @@ const BRANDS = [
     id: "dell",
     name: "Dell Technologies",
     line: "PowerEdge",
-    tagline:
-"PowerEdge servers for scalable business architecture and high-performance computing.",
+    tagline: "PowerEdge servers for scalable business architecture and high-performance computing.",
     logo: dell,
+    theme: {
+      card: "border-[#cfe2f7] bg-[#edf6ff] shadow-[0_10px_24px_rgba(24,62,99,0.08)]",
+      panel: "border-[#d3e6fb] bg-[#f6fbff]",
+      label: "border-[#d7e9ff] bg-[#f7fbff] text-blue-800",
+    },
   },
   {
     id: "hpe",
     name: "HPE",
     line: "ProLiant Gen11",
-    tagline:
-"ProLiant Gen11 servers designed for hybrid cloud intelligence and data security.",
+    tagline: "ProLiant Gen11 servers designed for hybrid cloud intelligence and data security.",
     logo: hp,
+    theme: {
+      card: "border-[#c9eaf3] bg-[#eaf8ff] shadow-[0_10px_24px_rgba(20,74,95,0.08)]",
+      panel: "border-[#d4edf7] bg-[#f7fdff]",
+      label: "border-[#d7effa] bg-[#f7fdff] text-cyan-800",
+    },
   },
   {
     id: "lenovo",
     name: "Lenovo Infrastructure",
     line: "ThinkSystem",
-    tagline:
-"ThinkSystem servers delivering reliability, management, and security for the data center.",
+    tagline: "ThinkSystem servers delivering reliability, management, and security for the data center.",
     logo: lenova,
+    theme: {
+      card: "border-[#f2d2d8] bg-[#fff0f3] shadow-[0_10px_24px_rgba(126,64,70,0.08)]",
+      panel: "border-[#f5dfe5] bg-[#fffafc]",
+      label: "border-[#f7e1e7] bg-[#fffafc] text-red-700",
+    },
   },
 ];
 
 export default function ServerBrands({
-  title = "Server Brands",
-  subtitle = "We partner with global technology leaders to provide robust, scalable, and high-performance server infrastructure for your enterprise needs.",
+  title = "Trusted technology brands",
+  subtitle = "We work with established technology leaders to deliver scalable, dependable infrastructure for growing businesses.",
 }) {
   return (
     <section className="py-8 md:py-12">
       <div className="section-shell">
-        {/* Heading */}
-        <div className="max-w-2xl mb-6 md:mb-8"data-aos="fade-up">
+        <div className="mb-5 md:mb-7" data-aos="fade-up">
           <span className="eyebrow">Partners</span>
-          <h2 className="section-title mt-3">{title}</h2>
-          <p className="section-sub">{subtitle}</p>
+          <h2 className="mt-3 font-display text-[24px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[32px]">
+            {title}
+          </h2>
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-ink-600">{subtitle}</p>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {BRANDS.map((b, index) => (
             <article
               key={b.id}
               data-aos="fade-up"
               data-aos-delay={Math.min(index, 5) * 120}
-              className="group relative overflow-hidden rounded-3xl bg-white
- border border-ink-200 shadow-card
- hover:shadow-lift hover:-translate-y-0.5 hover:border-primary/30
- transition-all duration-300 ease-out"
+              className={`group relative overflow-hidden rounded-[22px] border ${b.theme.card} p-4 shadow-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-card-hover`}
             >
-              {/* Teal wash that warms the card on hover. */}
-
-              <div className="relative p-7 md:p-8 flex flex-col">
-                {/* logo plate */}
-                <div className="h-20 w-full flex items-center justify-start">
+              <div className="relative flex flex-col">
+                <div className={`flex h-28 items-center justify-center rounded-[18px] border ${b.theme.panel} px-4 shadow-sm md:h-32`}>
                   <img
                     src={b.logo}
                     alt={b.name}
-                    className="h-10 md:h-11 w-auto max-w-[70%] object-contain object-left
- grayscale opacity-60
- transition-all duration-300
- group-hover:grayscale-0 group-hover:opacity-100"
+                    className="h-14 w-auto max-w-[80%] object-contain object-center transition-transform duration-300 group-hover:scale-[1.05] md:h-16"
                     loading="lazy"
                   />
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-ink-200">
-                  <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                <div className="mt-5 border-t border-ink-200/80 pt-5">
+                  <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${b.theme.label}`}>
                     {b.line}
                   </span>
 
-                  <h3 className="mt-3 text-lg font-semibold tracking-tight text-ink-900">
+                  <h3 className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-ink-900 md:text-[1.1rem]">
                     {b.name}
                   </h3>
 
-                  <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
+                  <p className="mt-2 text-sm leading-relaxed text-ink-600 md:text-[13px]">
                     {b.tagline}
                   </p>
                 </div>
               </div>
-
-              {/* Accent rule sweeping in along the bottom edge. */}
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]
- bg-gradient-to-r from-primary-light via-primary to-primary-dark
- origin-left scale-x-0 transition-transform duration-300 ease-out
- group-hover:scale-x-100"
-              />
             </article>
           ))}
         </div>

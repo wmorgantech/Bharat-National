@@ -1,0 +1,68 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>final responsive</title>
+<style>body{font:12px monospace;margin:0;padding:8px}#o{white-space:pre}iframe{position:absolute;left:-10000px;border:0}</style>
+</head><body><div id="o">…</div>
+<script>
+const o = document.getElementById("o");
+const L = [];
+const ROUTES = ["/", "/about", "/services", "/products", "/product/20",
+                "/category/1/products", "/contact", "/cart", "/checkout",
+                "/login", "/signup", "/orders", "/orders/1", "/nope"];
+const WIDTHS = [375, 768, 1280, 1440];
+const FIRST_PARTY = new Set([location.origin, "http://localhost:3000"]);
+
+function run(url, w) {
+  return new Promise((res) => {
+    const f = document.createElement("iframe");
+    f.style.width = w + "px"; f.style.height = "1400px"; f.src = url;
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      let line;
+      try {
+        const d = f.contentDocument, de = d.documentElement;
+        const sw = de.scrollWidth, cw = de.clientWidth, ov = sw - cw;
+        let culprit = "";
+        if (ov > 1) {
+          let worst = null, ww = 0;
+          d.querySelectorAll("body *").forEach((el) => {
+            const b = el.getBoundingClientRect();
+            if (b.right > cw + 1 && b.width > ww) { ww = b.width; worst = el; }
+          });
+          if (worst) culprit = " <- " + worst.tagName.toLowerCase() + "." +
+            String(worst.className || "").split(" ").slice(0, 2).join(".");
+        }
+        const imgs = Array.prototype.slice.call(d.querySelectorAll("img"));
+        const broken = imgs.filter((i) => i.complete && i.naturalWidth === 0).length;
+        const mounted = !!d.getElementById("root") && d.getElementById("root").children.length > 0;
+        let thirdParty = [];
+        try {
+          thirdParty = Array.from(new Set(
+            f.contentWindow.performance.getEntriesByType("resource")
+              .filter((r) => r.initiatorType === "img")
+              .map((r) => { try { return new URL(r.name).origin; } catch (e) { return null; } })
+              .filter((org) => org && !FIRST_PARTY.has(org))));
+        } catch (e) { thirdParty = []; }
+        const bad = ov > 1 || broken > 0 || !mounted || thirdParty.length > 0;
+        line = "  " + (bad ? "FAIL" : "ok  ") + " " + String(w).padStart(4) + "px " +
+          url.padEnd(22) + (ov > 1 ? "OVERFLOW=+" + ov + culprit : "no-overflow") +
+          " mounted=" + (mounted ? "y" : "N") +
+          " imgs=" + imgs.length + " broken=" + broken +
+          " extImgHosts=" + (thirdParty.length ? thirdParty.join(",") : "0");
+      } catch (e) { line = "  ERR " + url + " " + String(e).slice(0, 50); }
+      L.push(line); o.textContent = L.join("\n"); res(); f.remove();
+    };
+    f.addEventListener("load", () => setTimeout(finish, 2600));
+    setTimeout(finish, 11000);
+    document.body.appendChild(f);
+  });
+}
+
+(async () => {
+  for (const w of WIDTHS) { for (const r of ROUTES) { await run(r, w); } }
+  const fails = L.filter((x) => x.includes("FAIL") || x.includes("ERR")).length;
+  L.push(""); L.push("TOTAL CHECKS: " + L.filter((x)=>x.trim()).length + "   FAILURES: " + fails);
+  L.push("DONE");
+  o.textContent = L.join("\n");
+})();
+</script></body></html>

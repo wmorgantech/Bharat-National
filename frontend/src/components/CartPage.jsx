@@ -195,7 +195,7 @@ export default function CartPage() {
             {/* ---- Order summary ---- */}
             <div
               className="lg:col-span-4 lg:sticky lg:top-28"
-              data-aos="fade-left"
+              data-aos="fade-up"
               data-aos-delay="100"
             >
               <div className="glass-1 p-6">
@@ -251,7 +251,7 @@ export default function CartPage() {
                   </li>
                   <li className="flex items-center gap-2.5 text-[11.5px] text-ink-500">
                     <Truck size={13} className="text-primary shrink-0" />
-                    Delivery in 2–5 business days for major cities
+                    Shipped to your delivery address
                   </li>
                 </ul>
               </div>

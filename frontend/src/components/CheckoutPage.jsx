@@ -147,7 +147,7 @@ export default function CheckoutPage() {
  setHasSavedAddress(hasAddress);
  setViewMode(hasAddress ? "card" : "form");
  } catch (err) {
- console.log("No last order / failed to load last order:", err.message);
+ console.error("No last order / failed to load last order:", err.message);
  setViewMode("form");
  setHasSavedAddress(false);
  }

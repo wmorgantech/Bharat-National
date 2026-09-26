@@ -1,31 +1,75 @@
 import React from "react";
 import {
   ArrowRight,
-  BadgeCheck,
-  Headphones,
-  LockKeyhole,
-  RefreshCcw,
-  ShieldCheck,
   ArrowUpRight,
+  BadgeCheck,
+  Clock,
+  ClipboardCheck,
+  LockKeyhole,
+  Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import monitorDevice from "../assets/hero/monitor.jpg";
+import laptopDevice from "../assets/hero/laptop.jpg";
+import phoneDevice from "../assets/hero/phone.jpg";
+import headphonesDevice from "../assets/hero/headphones.jpg";
+import watchDevice from "../assets/hero/watch.jpg";
+import earbudsDevice from "../assets/hero/earbuds.jpg";
+import cameraDevice from "../assets/hero/camera.jpg";
 
+
+/**
+ * Home banner.
+ *
+ * The product composition is a single local asset showing only hardware BNC
+ * actually supplies - desktops, laptops, monitors, printers, networking,
+ * servers, storage and CCTV. It replaces a set of hot-linked stock photos of
+ * consumer devices (phone, earbuds, smartwatch, camera) that the business
+ * does not sell.
+ *
+ * Every badge below restates a commitment already made elsewhere in this
+ * codebase. Nothing here asserts a returns policy, a support window or a
+ * guarantee that the project does not already document.
+ */
+// Self-hosted copies of the hero device shots. Same source images at the same
+// dimensions as before, served from this origin so the banner does not depend
+// on a third-party image host and no visitor request leaves the site.
 const HERO_DEVICES = {
-  monitor: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&q=80",
-  laptop: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80",
-  phone: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80",
-  headphones: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
-  watch: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80",
-  earbuds: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80",
-  camera: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80",
+  monitor: monitorDevice,
+  laptop: laptopDevice,
+  phone: phoneDevice,
+  headphones: headphonesDevice,
+  watch: watchDevice,
+  earbuds: earbudsDevice,
+  camera: cameraDevice,
 };
 
 const TRUST_BADGES = [
-  { Icon: BadgeCheck, title: "Technology", subtitle: "Products" },
-  { Icon: ShieldCheck, title: "Infrastructure", subtitle: "Support" },
-  { Icon: RefreshCcw, title: "Reliable", subtitle: "Service" },
-  { Icon: LockKeyhole, title: "Secure", subtitle: "Operations" },
-  { Icon: Headphones, title: "Business", subtitle: "Support" },
+  {
+    Icon: BadgeCheck,
+    title: "Genuine Products",
+    subtitle: "Brand warranty",
+  },
+  {
+    Icon: Wrench,
+    title: "On-site Installation",
+    subtitle: "Handled by our team",
+  },
+  {
+    Icon: ClipboardCheck,
+    title: "AMC Plans",
+    subtitle: "Comprehensive or standard",
+  },
+  {
+    Icon: LockKeyhole,
+    title: "Secure Checkout",
+    subtitle: "Razorpay protected",
+  },
+  {
+    Icon: Clock,
+    title: "Mon – Sat",
+    subtitle: "9:00 AM – 8:00 PM",
+  },
 ];
 
 const HERO_TAGS = ["Servers", "Networking", "Hardware", "Support", "Infrastructure"];
@@ -66,7 +110,10 @@ export default function HeroSection() {
               </h1>
 
               <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-ink-600 md:text-[16px]">
-                From dependable workstations and networking to server infrastructure and ongoing business support, BNC helps organisations build resilient, efficient technology environments.
+                From dependable workstations and networking to server
+                infrastructure and ongoing business support, BNC helps
+                organisations build resilient, efficient technology
+                environments.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -156,15 +203,19 @@ export default function HeroSection() {
                 key={badge.title}
                 data-aos="fade-up"
                 data-aos-delay={index * 60}
-                className="flex min-h-[82px] items-center gap-2.5 rounded-[16px] border border-[#B8DDD7] bg-[#E8F5F3] px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:bg-[#D8EFEB]"
+                className="flex min-h-[82px] items-center gap-2.5 rounded-[16px] border border-primary/20 bg-primary-50 px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:bg-primary-100"
               >
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-[#00897B] shadow-sm">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-primary shadow-sm">
                   <Icon size={18} strokeWidth={2} />
                 </div>
 
-                <div className="min-w-0 leading-tight text-left">
-                  <div className="text-[12.5px] font-bold text-[#17302D]">{badge.title}</div>
-                  <div className="mt-0.5 text-[11px] font-medium text-[#58706C]">{badge.subtitle}</div>
+                <div className="min-w-0 text-left leading-tight">
+                  <div className="text-[12.5px] font-bold text-ink-900">
+                    {badge.title}
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-medium text-ink-600">
+                    {badge.subtitle}
+                  </div>
                 </div>
               </div>
             );

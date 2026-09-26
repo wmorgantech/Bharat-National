@@ -196,14 +196,16 @@ const ContactPage = () => {
                   onChange={onChange("message")}
                 />
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-lg w-full sm:w-auto sm:min-w-[240px] rounded-xl border border-[#1AA992] bg-[#1AA992] text-white shadow-[0_12px_24px_rgba(26,169,146,0.28)] transition hover:bg-[#159A84] hover:border-[#159A84] focus:outline-none focus:ring-4 focus:ring-[#1AA992]/20 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {loading ? "Sending..." : "Send Message"}
-                  {!loading && <Send size={16} />}
-                </button>
+                <div className="flex w-full justify-start pt-1">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-lg w-full max-w-[260px] rounded-xl border border-[#1AA992] bg-[#1AA992] text-white shadow-[0_12px_24px_rgba(26,169,146,0.28)] transition hover:bg-[#159A84] hover:border-[#159A84] focus:outline-none focus:ring-4 focus:ring-[#1AA992]/20 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[240px]"
+                  >
+                    {loading ? "Sending..." : "Send Message"}
+                    {!loading && <Send size={16} />}
+                  </button>
+                </div>
               </form>
             </div>
 

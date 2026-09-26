@@ -22,6 +22,7 @@ import ContactSection from "./pages/ContactPage";
 import AppToaster from "./components/AppToaster";
 import "react-toastify/dist/ReactToastify.css";
 import CartDrawer from "./components/CartDrawer";
+import ScrollToTopOnRouteChange from "./components/ScrollToTopOnRouteChange";
 import { useEffect, useState } from "react";
 import LoginPage from "./components/LoginPage";
 import SignupPage from "./components/SignupPage";
@@ -93,6 +94,7 @@ function App() {
       <AppToaster />
       <Router>
         <AosRouteRefresh />
+        <ScrollToTopOnRouteChange />
         <div className="min-h-screen">
 
           <Header />

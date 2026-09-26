@@ -14,14 +14,23 @@ const LABEL_BASE =
 "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500 mb-2.5";
 
 // Text input with label + optional icon
-export function TextInput({ label, icon: Icon, className, ...inputProps }) {
+export function TextInput({
+  label,
+  icon: Icon,
+  className,
+  labelClassName,
+  iconClassName,
+  ...inputProps
+}) {
   const finalClass = className ? `${FIELD_BASE} ${className}` : FIELD_BASE;
+  const labelClass = labelClassName ? `${LABEL_BASE} ${labelClassName}` : LABEL_BASE;
+  const iconClass = iconClassName ? iconClassName : "w-3.5 h-3.5 text-primary";
 
   return (
     <div>
       {label && (
-        <label className={LABEL_BASE}>
-          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
+        <label className={labelClass}>
+          {Icon && <Icon className={iconClass} />}
           {label}
         </label>
       )}
@@ -31,15 +40,24 @@ export function TextInput({ label, icon: Icon, className, ...inputProps }) {
 }
 
 // Textarea with label + optional icon
-export function TextArea({ label, icon: Icon, className, ...textareaProps }) {
+export function TextArea({
+  label,
+  icon: Icon,
+  className,
+  labelClassName,
+  iconClassName,
+  ...textareaProps
+}) {
   const base = `${FIELD_BASE} resize-none leading-relaxed`;
   const finalClass = className ? `${base} ${className}` : base;
+  const labelClass = labelClassName ? `${LABEL_BASE} ${labelClassName}` : LABEL_BASE;
+  const iconClass = iconClassName ? iconClassName : "w-3.5 h-3.5 text-primary";
 
   return (
     <div>
       {label && (
-        <label className={LABEL_BASE}>
-          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
+        <label className={labelClass}>
+          {Icon && <Icon className={iconClass} />}
           {label}
         </label>
       )}
@@ -53,17 +71,21 @@ export function SelectInput({
   label,
   icon: Icon,
   className,
+  labelClassName,
+  iconClassName,
   children,
   ...selectProps
 }) {
   const base = `${FIELD_BASE} cursor-pointer`;
   const finalClass = className ? `${base} ${className}` : base;
+  const labelClass = labelClassName ? `${LABEL_BASE} ${labelClassName}` : LABEL_BASE;
+  const iconClass = iconClassName ? iconClassName : "w-3.5 h-3.5 text-primary";
 
   return (
     <div>
       {label && (
-        <label className={LABEL_BASE}>
-          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
+        <label className={labelClass}>
+          {Icon && <Icon className={iconClass} />}
           {label}
         </label>
       )}

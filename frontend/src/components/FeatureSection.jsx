@@ -4,65 +4,52 @@ import { RotateCcw, Truck, Headphones, BadgeCheck } from "lucide-react";
 const features = [
   {
     Icon: RotateCcw,
-    title: "14-Day Returns",
-    desc: "Risk-free shopping with easy returns.",
+    title: "Business-ready support",
+    desc: "Flexible service coverage that keeps operations moving.",
   },
   {
     Icon: Truck,
-    title: "Free Shipping",
-    desc: "No extra costs, just the price you see.",
+    title: "Fast deployment",
+    desc: "Products delivered and implemented with minimal friction.",
   },
   {
     Icon: Headphones,
-    title: "24/7 Support",
-    desc: "24/7 support, always here just for you.",
+    title: "Expert assistance",
+    desc: "Real people helping with setup, upgrades, and troubleshooting.",
   },
   {
     Icon: BadgeCheck,
-    title: "Member Discounts",
-    desc: "Special prices for our loyal customers.",
+    title: "Trusted by teams",
+    desc: "Solutions shaped for reliability, security, and long-term value.",
   },
 ];
 
-// AOS is initialised once at app level in App.jsx.
 export default function FeatureSection() {
   return (
     <section className="bg-white">
       <div className="section-shell py-8 md:py-10">
-        {/* One continuous band with hairline dividers, rather than four
-            detached cards floating on grey. */}
-        <div
-          className="rounded-3xl border border-ink-200 bg-white shadow-card
- grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
- divide-y sm:divide-y-0 divide-ink-200
- lg:divide-x lg:divide-ink-200 overflow-hidden"
-        >
+        <div className="mb-5 md:mb-6" data-aos="fade-up">
+          <span className="eyebrow">Why businesses choose BNC</span>
+          <h2 className="mt-3 font-display text-[24px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[32px]">
+            Practical technology support, built around outcomes
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
             <div
               key={feature.title}
               data-aos="fade-up"
               data-aos-delay={Math.min(index, 5) * 120}
-              className="group relative p-6 md:p-7 flex items-start gap-4 transition-colors duration-300 hover:bg-white
- sm:[&:nth-child(2)]:border-l sm:[&:nth-child(2)]:border-ink-200
- sm:[&:nth-child(4)]:border-l sm:[&:nth-child(4)]:border-ink-200
- lg:[&:nth-child(2)]:border-l-0 lg:[&:nth-child(4)]:border-l-0"
+              className="group rounded-[22px] border border-ink-200 bg-[#F9FBFB] p-5 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-white hover:shadow-card-hover"
             >
-              <span
-                className="shrink-0 grid place-items-center h-12 w-12 rounded-2xl
- bg-primary/10 text-primary
- transition-all duration-300
- group-hover:bg-primary group-hover:text-ink-900 group-hover:scale-105"
-              >
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#EAF7F5] text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white">
                 <feature.Icon size={22} />
               </span>
 
-              <div className="min-w-0">
-                <h3 className="text-[15px] font-semibold tracking-tight text-ink-900">
-                  {feature.title}
-                </h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
-                  {feature.desc}
-                </p>
+              <div className="mt-4 min-w-0">
+                <h3 className="text-[15px] font-semibold tracking-tight text-ink-900">{feature.title}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-600">{feature.desc}</p>
               </div>
             </div>
           ))}

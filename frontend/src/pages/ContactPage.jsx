@@ -197,13 +197,21 @@ const ContactPage = () => {
                 />
 
                 <div className="flex w-full justify-start pt-1">
+                  {/*
+                    `btn-lg` only carries size (padding + font-size); the flex
+                    layout lives in `btn`, which this button does not use. Without
+                    it the button stays display:inline-block, and because preflight
+                    renders svg as display:block the icon broke onto its own line
+                    below the label. These three utilities restore the same
+                    centring and 8px gap every other button in the app gets.
+                  */}
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn-lg w-full max-w-[260px] rounded-xl border border-[#1AA992] bg-[#1AA992] text-white shadow-[0_12px_24px_rgba(26,169,146,0.28)] transition hover:bg-[#159A84] hover:border-[#159A84] focus:outline-none focus:ring-4 focus:ring-[#1AA992]/20 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[240px]"
+                    className="btn-lg inline-flex items-center justify-center gap-2 w-full max-w-[260px] rounded-xl border border-[#1AA992] bg-[#1AA992] text-white shadow-[0_12px_24px_rgba(26,169,146,0.28)] transition hover:bg-[#159A84] hover:border-[#159A84] focus:outline-none focus:ring-4 focus:ring-[#1AA992]/20 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[240px]"
                   >
                     {loading ? "Sending..." : "Send Message"}
-                    {!loading && <Send size={16} />}
+                    {!loading && <Send size={16} className="shrink-0" />}
                   </button>
                 </div>
               </form>

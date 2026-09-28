@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { getCompanyNotificationEmail, getMailLogoUrl } from '../config/env';
 
 type ContactAckPayload = {
   to: string;
@@ -7,6 +8,12 @@ type ContactAckPayload = {
   phone: string;
   interestedIn?: string;
   message?: string;
+};
+
+/** Internal copy of an enquiry, sent to the BNC mailbox. */
+type ContactNotificationPayload = ContactAckPayload & {
+  contactId: number;
+  submittedAt: Date;
 };
 
 type OrderEmailPayload = {
@@ -19,6 +26,9 @@ type OrderEmailPayload = {
   totalAmount: number;
   isActive?: boolean;
   createdAt: Date;
+  status?: string | null;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
   orderItem: Array<{
     productName: string;
     unitPrice: number;
@@ -26,12 +36,28 @@ type OrderEmailPayload = {
   }>;
 };
 
+/**
+ * Company details shown in the footer of customer-facing mail. These are the
+ * same details the storefront Contact page already publishes; nothing here is
+ * new business information.
+ */
+const BNC_ADDRESS_LINES = [
+  'Dno - 333- F2 - Geetha Building, Nehru St,',
+  'Peranaidu Layout, Ram Nagar,',
+  'Coimbatore, Tamil Nadu 641009',
+];
+const BNC_HOURS = 'Mon – Sat: 9:00 AM – 8:00 PM';
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter?: nodemailer.Transporter;
+  /** Validated once at startup; undefined means "render the text header only". */
+  private readonly logoUrl?: string;
 
   constructor() {
+    this.logoUrl = this.resolveLogoUrl();
+
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
     const smtpHost = SMTP_HOST?.trim();
     const smtpPort = Number(SMTP_PORT?.trim());
@@ -71,6 +97,86 @@ export class MailService {
     });
   }
 
+  /**
+   * Validates MAIL_LOGO_URL once, at startup.
+   *
+   * A logo hosted on localhost or a private address renders as a broken image
+   * in the recipient's inbox - their mail client, not this server, fetches it.
+   * That failure is invisible here and obvious to the customer, so the value is
+   * rejected up front rather than shipped.
+   */
+  private resolveLogoUrl(): string | undefined {
+    const raw = getMailLogoUrl();
+
+    if (!raw) {
+      this.logger.log(
+        'MAIL_LOGO_URL is not set. Outgoing email will use the text-only header.',
+      );
+      return undefined;
+    }
+
+    let parsed: URL;
+
+    try {
+      parsed = new URL(raw);
+    } catch {
+      this.logger.error(
+        'MAIL_LOGO_URL is not a valid absolute URL. Falling back to the text-only header.',
+      );
+      return undefined;
+    }
+
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      this.logger.error(
+        `MAIL_LOGO_URL must use http or https (got "${parsed.protocol}"). Falling back to the text-only header.`,
+      );
+      return undefined;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+      this.logger.error(
+        'MAIL_LOGO_URL points at localhost, which no recipient can load. Falling back to the text-only header.',
+      );
+      return undefined;
+    }
+
+    if (parsed.protocol === 'http:') {
+      this.logger.warn(
+        'MAIL_LOGO_URL uses http. Some mail clients refuse to load insecure images; https is recommended.',
+      );
+    }
+
+    this.logger.log('MAIL_LOGO_URL configured; email header logo enabled.');
+    return parsed.toString();
+  }
+
+  /**
+   * Logo row for the top of an email, or an empty string when no logo is
+   * configured.
+   *
+   * Email-safe on purpose: a table row rather than flex/grid, width and height
+   * as HTML attributes as well as inline styles (Outlook ignores CSS sizing on
+   * images), `display:block` to kill the inline-image baseline gap, and real
+   * alt text because most clients block remote images until the reader opts in.
+   */
+  private logoBlock() {
+    if (!this.logoUrl) {
+      return '';
+    }
+
+    return `
+  <tr>
+    <td style="padding:24px 32px 0 32px;" align="left">
+      <img src="${this.esc(this.logoUrl)}"
+           alt="Bharath National Computers"
+           width="150" height="auto"
+           style="display:block;width:150px;max-width:150px;height:auto;border:0;outline:none;text-decoration:none;" />
+    </td>
+  </tr>`;
+  }
+
   private getTransporter() {
     if (!this.transporter) {
       this.logger.warn('SMTP is not configured. Skipping email send.');
@@ -106,6 +212,52 @@ export class MailService {
   }
 
   // ============================================================
+  // 1b) CONTACT NOTIFICATION TO THE COMPANY
+  // ============================================================
+  /**
+   * Forwards an enquiry to the internal BNC mailbox.
+   *
+   * The recipient comes from COMPANY_NOTIFICATION_EMAIL; no address is ever
+   * hardcoded. When it is unset the send is skipped with a warning rather than
+   * failing, because the enquiry is already saved and the customer has already
+   * been acknowledged - losing the internal copy must not surface as an error.
+   *
+   * `replyTo` is the customer, so staff can answer straight from the inbox.
+   */
+  async sendContactNotificationToCompany(data: ContactNotificationPayload) {
+    const recipient = getCompanyNotificationEmail();
+
+    if (!recipient) {
+      this.logger.warn(
+        `COMPANY_NOTIFICATION_EMAIL is not set. Enquiry #${data.contactId} was saved but no internal notification was sent.`,
+      );
+      return undefined;
+    }
+
+    const transporter = this.getTransporter();
+
+    if (!transporter) {
+      return undefined;
+    }
+
+    const html = this.buildCompanyNotificationTemplate(data);
+
+    try {
+      return await transporter.sendMail({
+        from: `"Bharath National Computers" <${process.env.SMTP_USER}>`,
+        to: recipient,
+        // Replying from the inbox goes straight back to the customer.
+        replyTo: data.to,
+        subject: `New enquiry #${data.contactId} – ${data.interestedIn || 'General Enquiry'}`,
+        html,
+      });
+    } catch (error) {
+      this.logger.error('Contact notification email send failed', error);
+      throw new Error('Failed to send contact notification email');
+    }
+  }
+
+  // ============================================================
   // 2) ORDER PLACED EMAIL
   // ============================================================
   async sendOrderPlacedToUser(order: OrderEmailPayload) {
@@ -121,12 +273,12 @@ export class MailService {
         from: `"Bharath National Computers" <${process.env.SMTP_USER}>`,
         to: order.email,
         replyTo: process.env.SMTP_USER,
-        subject: `We received your Order Enquiry – #${order.id}`,
+        subject: `Your order is confirmed – #ORD-${order.id}`,
         html,
       });
     } catch (error) {
-      this.logger.error('Order enquiry email send failed', error);
-      throw new Error('Failed to send order enquiry email');
+      this.logger.error('Order confirmation email send failed', error);
+      throw new Error('Failed to send order confirmation email');
     }
   }
 
@@ -177,6 +329,7 @@ export class MailService {
   <tr>
     <td style="height:6px;background:#2563eb;"></td>
   </tr>
+${this.logoBlock()}
 
   <tr>
     <td style="padding:28px 32px;">
@@ -254,6 +407,86 @@ export class MailService {
   }
 
   // ============================================================
+  // TEMPLATE 1b: COMPANY NOTIFICATION
+  // ============================================================
+  private buildCompanyNotificationTemplate(data: ContactNotificationPayload) {
+    const year = new Date().getFullYear();
+
+    return `
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Inter,Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;">
+<tr><td align="center" style="padding:40px 12px;">
+
+<table width="600" cellpadding="0" cellspacing="0"
+  style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.08);">
+
+  <tr><td style="height:6px;background:#0f766e;"></td></tr>
+${this.logoBlock()}
+
+  <tr>
+    <td style="padding:28px 32px 8px 32px;">
+      <div style="font-size:18px;font-weight:900;color:#0f172a;">New enquiry received</div>
+      <div style="font-size:13px;margin-top:4px;color:#64748b;">
+        Enquiry #${this.esc(data.contactId)} · ${this.esc(this.formatDate(data.submittedAt))}
+      </div>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:16px 32px 24px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0"
+        style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
+        ${this.row('Name', this.esc(data.name))}
+        ${this.row('Email', this.esc(data.to))}
+        ${this.row('Phone', this.esc(data.phone))}
+        ${this.row('Subject', this.esc(data.interestedIn || 'General Enquiry'))}
+        ${this.row('Message', this.esc(data.message || '—'), true)}
+      </table>
+
+      <p style="margin:18px 0 0;font-size:13px;color:#64748b;line-height:1.6;">
+        Reply to this email to respond to ${this.esc(data.name)} directly.
+      </p>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:18px;background:#f8fafc;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #e5e7eb;">
+      © ${year} Bharath National Computers · internal notification
+    </td>
+  </tr>
+
+</table>
+
+</td></tr></table>
+</body>
+</html>
+`;
+  }
+
+  // ============================================================
+  // COMPANY FOOTER (shared by customer-facing mail)
+  // ============================================================
+  private companyFooter() {
+    const year = new Date().getFullYear();
+
+    return `
+  <tr>
+    <td style="padding:20px 32px;background:#f8fafc;border-top:1px solid #e5e7eb;">
+      <div style="font-size:13px;font-weight:700;color:#0f172a;">Bharath National Computers</div>
+      <div style="font-size:12px;color:#64748b;line-height:1.7;margin-top:6px;">
+        ${BNC_ADDRESS_LINES.map((line) => this.esc(line)).join('<br/>')}<br/>
+        ${this.esc(BNC_HOURS)}
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:12px;">
+        © ${year} Bharath National Computers
+      </div>
+    </td>
+  </tr>`;
+  }
+
+  // ============================================================
   // TEMPLATE 2: ORDER PLACED (NO INVOICE)
   // ============================================================
   private buildOrderPlacedTemplate(order: OrderEmailPayload) {
@@ -297,6 +530,7 @@ export class MailService {
   style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.08);">
 
   <tr><td style="height:6px;background:#16a34a;"></td></tr>
+${this.logoBlock()}
 
   <tr>
     <td style="padding:28px 32px;">
@@ -311,15 +545,18 @@ export class MailService {
         Hi <b>${this.esc(order.fullName)}</b>,
       </p>
 <p style="margin:0 0 16px;font-size:14px;line-height:1.7;color:#334155;">
-        Thank you for contacting <b>Bharath National Computers</b>.
-        We’ve received your enquiry about order details and our team is reviewing it.
+        Thank you for your order with <b>Bharath National Computers</b>.
+        Your order is confirmed and our team has begun processing it.
       </p>
 
       <table width="100%" cellpadding="0" cellspacing="0"
         style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;margin:14px 0 16px 0;">
-        
+
         ${this.row('Order ID', this.esc(orderIdFormatted))}
         ${this.row('Order Date', this.esc(dateStr))}
+        ${this.row('Order Status', this.esc(order.status || 'PLACED'))}
+        ${this.row('Payment Status', this.esc(order.paymentStatus || 'PENDING'))}
+        ${order.paymentMethod ? this.row('Payment Method', this.esc(order.paymentMethod.toUpperCase())) : ''}
         ${this.row('Email', this.esc(order.email))}
         ${this.row('Phone', this.esc(order.phone))}
         ${this.row('Delivery Place', this.esc(order.place))}
@@ -371,12 +608,7 @@ export class MailService {
       </a>
     </td>
   </tr>
-
-  <tr>
-    <td style="padding:18px;background:#f8fafc;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #e5e7eb;">
-      © ${year} Bharath National Computers
-    </td>
-  </tr>
+${this.companyFooter()}
 
 </table>
 

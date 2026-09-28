@@ -6,7 +6,7 @@ import { Roles } from 'src/auth/roles.decorator';
 
 @ApiTags('Overview')
 @ApiBearerAuth()
-@Roles('ADMIN', 'SUPER_ADMIN')
+@Roles('ADMIN')
 @Controller('overview')
 export class OverviewController {
   constructor(private readonly overviewService: OverviewService) {}

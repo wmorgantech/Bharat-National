@@ -2,11 +2,13 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AuthUser } from '../auth/jwt.strategy';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
@@ -29,7 +31,12 @@ const SAFE_USER_SELECT = {
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(OrderService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   private isAdmin(requester: AuthUser): boolean {
     return requester.type === 'ADMIN';
@@ -114,10 +121,75 @@ export class OrderService {
       },
     });
 
+    // Confirmation mail.
+    //
+    // Only cash-on-delivery orders are confirmed at this point. An `online`
+    // order still has to clear Razorpay, so its confirmation is sent from
+    // PaymentService once verification succeeds - sending here would tell the
+    // customer their order is confirmed before they have paid.
+    if ((order.paymentMethod ?? '').toLowerCase() !== 'online') {
+      await this.sendOrderConfirmation(order);
+    }
+
     return {
       message: 'Order created successfully',
       order,
     };
+  }
+
+  /**
+   * Best-effort order confirmation mail.
+   *
+   * Never throws: the order is already committed, so a mail transport problem
+   * must not surface as a failed order to a customer whose order did succeed.
+   */
+  private async sendOrderConfirmation(order: {
+    id: number;
+    fullName: string;
+    // Nullable in the schema; the guard below narrows it before use.
+    email: string | null;
+    phone: string;
+    place: string;
+    totalAmount: number;
+    status: string | null;
+    paymentStatus: string | null;
+    paymentMethod: string | null;
+    createdAt: Date;
+    orderItem: Array<{
+      productName: string;
+      unitPrice: number;
+      quantity: number;
+    }>;
+  }): Promise<void> {
+    if (!order.email) {
+      this.logger.warn(
+        `Order #${order.id} has no email address; confirmation mail skipped.`,
+      );
+      return;
+    }
+
+    try {
+      await this.mailService.sendOrderPlacedToUser({
+        id: order.id,
+        fullName: order.fullName,
+        email: order.email,
+        phone: order.phone,
+        place: order.place,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderItem: order.orderItem,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Order #${order.id} was created, but the confirmation email to ${order.email} could not be sent: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 
  findAll(requester: AuthUser, userId?: number) {

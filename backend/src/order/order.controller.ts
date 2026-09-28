@@ -39,7 +39,7 @@ export class OrderController {
 
   // ✅ Get Active Orders
   @Get('active')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   findActive() {
     return this.orderService.findActive();
   }
@@ -53,31 +53,31 @@ export class OrderController {
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   async getSalesStats() {
     return this.orderService.getFilteredStats();
   }
 
   @Get('valid')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   findValidOrders() {
     return this.orderService.findValidOrders();
   }
 
   @Get('status-stats')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   getStatusStats() {
     return this.orderService.getOrderStatusStats();
   }
 
   @Get('users/all')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   async getAllUsersWithOrderStats() {
     return this.orderService.getAllUsersWithOrderStats();
   }
 
   @Get('all/with-users')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   async findAllWithUsers(@Query('userId') userId?: string) {
     return this.orderService.findAllWithUsers(userId ? Number(userId) : undefined);
   }
@@ -89,7 +89,7 @@ export class OrderController {
 
   // ✅ Update Order (status workflow is back-office only)
   @Patch(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateOrderDto: UpdateOrderDto,
@@ -99,7 +99,7 @@ export class OrderController {
 
   // ✅ Soft Delete Order
   @Delete(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.orderService.remove(id);
   }

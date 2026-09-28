@@ -22,7 +22,7 @@ import { Roles } from 'src/auth/roles.decorator';
  */
 @ApiTags('OrderItem')
 @ApiBearerAuth()
-@Roles('ADMIN', 'SUPER_ADMIN')
+@Roles('ADMIN')
 @Controller('order-item')
 export class OrderItemController {
   constructor(private readonly orderItemService: OrderItemService) {}

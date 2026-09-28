@@ -11,6 +11,7 @@ import { Prisma, Payment } from '@prisma/client';
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { AuthUser } from '../auth/jwt.strategy';
 import { requireEnv } from '../config/env';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentOrderDto } from './dto/create-payment-order.dto';
 import { RazorpayClient } from './razorpay.client';
@@ -43,7 +44,59 @@ export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly razorpay: RazorpayClient,
+    private readonly mailService: MailService,
   ) {}
+
+  /**
+   * Best-effort order confirmation mail, sent after a payment is verified.
+   *
+   * Never throws. The payment is already committed and the customer has been
+   * charged, so nothing here may turn a successful payment into an error
+   * response - that would make the caller retry a payment that went through.
+   */
+  private async sendOrderConfirmation(orderId: number): Promise<void> {
+    try {
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: { orderItem: true },
+      });
+
+      if (!order) {
+        this.logger.warn(
+          `Order ${orderId} was paid but could not be loaded for the confirmation email.`,
+        );
+        return;
+      }
+
+      if (!order.email) {
+        this.logger.warn(
+          `Order #${order.id} was paid but has no email address; confirmation mail skipped.`,
+        );
+        return;
+      }
+
+      await this.mailService.sendOrderPlacedToUser({
+        id: order.id,
+        fullName: order.fullName,
+        email: order.email,
+        phone: order.phone,
+        place: order.place,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderItem: order.orderItem,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Payment for order ${orderId} succeeded, but the confirmation email could not be sent: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+  }
 
   async createOrder(
     dto: CreatePaymentOrderDto,
@@ -153,8 +206,14 @@ export class PaymentService {
 
     this.verifySignature(dto);
 
+    // Set inside the transaction only on the path that actually flips the
+    // payment to SUCCESS, so re-verifying an already-verified payment (the
+    // idempotent replay below) does not send a second confirmation.
+    let newlyPaidOrderId: number | null = null;
+
     try {
-      return await this.prisma.$transaction(async (transaction) => {
+      const result = await this.prisma.$transaction(async (transaction) => {
+        newlyPaidOrderId = null;
         const payment = await transaction.payment.findUnique({
           where: { razorpayOrderId: dto.razorpayOrderId },
           include: { order: true },
@@ -221,8 +280,19 @@ export class PaymentService {
           },
         });
 
+        newlyPaidOrderId = payment.orderId;
+
         return this.verificationResponse(payment.orderId, dto.razorpayPaymentId);
       });
+
+      // Deliberately outside the transaction: SMTP is slow and must not be
+      // held inside a Serializable transaction, and the mail must only go out
+      // once the payment is actually committed - never on a rolled-back one.
+      if (newlyPaidOrderId !== null) {
+        await this.sendOrderConfirmation(newlyPaidOrderId);
+      }
+
+      return result;
     } catch (error) {
       if (
         error instanceof BadRequestException ||

@@ -12,6 +12,7 @@ import { extname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { randomBytes } from 'crypto';
 import { Roles } from 'src/auth/roles.decorator';
+import { getUploadUrl } from '../config/env';
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -39,7 +40,7 @@ export class UploadController {
   }
 
   @Post('image')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -79,7 +80,7 @@ export class UploadController {
       throw new BadRequestException('No file uploaded');
     }
 
-    const baseUrl = process.env.UPLOAD_URL;
+    const baseUrl = getUploadUrl();
     const sizeInMB = Number((file.size / (1024 * 1024)).toFixed(2));
 
     return {

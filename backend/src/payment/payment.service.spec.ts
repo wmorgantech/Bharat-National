@@ -70,20 +70,35 @@ function setup(currentOrder = order()) {
     $transaction: jest.fn((callback: (tx: typeof transaction) => unknown) =>
       callback(transaction),
     ),
+    // Read outside the transaction, after a payment is verified, to build the
+    // order confirmation email.
+    order: {
+      findUnique: jest.fn().mockResolvedValue(
+        currentOrder ? { ...currentOrder, email: null, orderItem: [] } : null,
+      ),
+    },
   };
   const razorpay = {
     createOrder: jest.fn().mockResolvedValue({ id: 'order_razorpay_123' }),
     getKeyId: jest.fn().mockReturnValue('rzp_test_public'),
   };
+  const mail = {
+    sendOrderPlacedToUser: jest.fn().mockResolvedValue(undefined),
+  };
 
   return {
-    service: new PaymentService(prisma as never, razorpay as never),
+    service: new PaymentService(
+      prisma as never,
+      razorpay as never,
+      mail as never,
+    ),
     controller: new PaymentController({
       createOrder: jest.fn(),
     } as never),
     transaction,
     prisma,
     razorpay,
+    mail,
   };
 }
 
@@ -287,17 +302,32 @@ describe('PaymentService.verifyPayment', () => {
       $transaction: jest.fn((callback: (tx: typeof transaction) => unknown) =>
         callback(transaction),
       ),
+      // Read outside the transaction, after verification succeeds, to build
+      // the order confirmation email.
+      order: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ ...payment.order, email: null, orderItem: [] }),
+      },
     };
     const razorpay = {
       createOrder: jest.fn(),
       getKeyId: jest.fn(),
     };
+    const mail = {
+      sendOrderPlacedToUser: jest.fn().mockResolvedValue(undefined),
+    };
 
     process.env.RAZORPAY_KEY_SECRET = verificationSecret;
     return {
-      service: new PaymentService(prisma as never, razorpay as never),
+      service: new PaymentService(
+        prisma as never,
+        razorpay as never,
+        mail as never,
+      ),
       transaction,
       prisma,
+      mail,
     };
   }
 

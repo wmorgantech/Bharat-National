@@ -35,29 +35,6 @@ const formatCurrency = (value) =>
 const formatNumber = (value) =>
   Number(value || 0).toLocaleString("en-IN");
 
-const formatTimeAgo = (date) => {
-  if (!date) return "Just now";
-  const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-  
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60
-  };
-
-  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-    const interval = Math.floor(seconds / secondsInUnit);
-    if (interval >= 1) {
-      return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
-    }
-  }
-  
-  return 'Just now';
-};
-
 // Activity type configuration
 const activityConfig = {
   NEW_ORDER: {
@@ -163,7 +140,6 @@ const TopPerformerItem = ({ product, rank, isLast }) => (
 const AdminOverview = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -179,19 +155,6 @@ const AdminOverview = () => {
       toast.error(err?.message || "Failed to load overview data");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      const result = await getOverviewData();
-      setData(result);
-      toast.success("Data refreshed successfully");
-    } catch (err) {
-      toast.error("Failed to refresh data");
-    } finally {
-      setRefreshing(false);
     }
   };
 

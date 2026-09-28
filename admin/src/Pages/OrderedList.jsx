@@ -321,7 +321,8 @@ const getProductImageUrl = (item) => {
 
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
-  const [apiStatusStats, setApiStatusStats] = useState({});
+  // Only the setter is used; the stored value is never read back.
+  const [, setApiStatusStats] = useState({});
   const [loading, setLoading] = useState(false);
 
   const [activeStatus, setActiveStatus] = useState("ALL");
@@ -490,7 +491,7 @@ const OrderList = () => {
       link.href = canvas.toDataURL("image/png");
       link.click();
       toast.success("Status card screenshot saved!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to capture status card");
     } finally {
       setScreenshotLoading(prev => ({ ...prev, statusCard: false }));
@@ -507,43 +508,11 @@ const OrderList = () => {
       link.href = canvas.toDataURL("image/png");
       link.click();
       toast.success("Sales card screenshot saved!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to capture sales card");
     } finally {
       setScreenshotLoading(prev => ({ ...prev, salesCard: false }));
     }
-  };
-
-  const handleSingleOrderDownload = (order) => {
-    const BOM = "\uFEFF";
-    const headers = ["Order ID", "Customer", "Email", "Phone", "Status", "Payment", "State", "Date", "Items", "Quantity", "Total Amount", "Cancel Reason"];
-    const itemCount = order.orderItem?.length || 0;
-    const qty = (order.orderItem || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
-    
-   const rows = [[
-  `"#ORD-${order.id}"`,
-  `"${(order.fullName || "").replace(/"/g, '""')}"`,
-  `"${(order.email || "").replace(/"/g, '""')}"`,
-  `"${(order.phone || "").replace(/"/g, '""')}\t"`,
-  `"${order.status || "PLACED"}"`,
-  `"${order.paymentMethod || ""}"`,
-  `"${(order.state || "").replace(/"/g, '""')}"`, // Add state
-  `"${formatDateTime(order.createdAt)}"`,
-  itemCount,
-  qty,
-  order.totalAmount || 0,
-  `"${(order.cancelRemarks || "").replace(/"/g, '""')}"`,
-]];
-
-    const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `order-${order.id}-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success(`Order #ORD-${order.id} downloaded!`);
   };
 
   const handleBulkDownload = () => {
@@ -1140,7 +1109,7 @@ const OrderList = () => {
                   }}
                   className="w-full px-4 py-2.5 border border-ink-200 rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
                 >
-                  {ORDER_STATUSES.filter(status => {
+                  {ORDER_STATUSES.filter(() => {
                     if (editStatusOrder.status === "CANCELLED" || editStatusOrder.status === "DELIVERED") {
                       return false;
                     }

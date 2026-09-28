@@ -1,7 +1,30 @@
 // src/api/http.js
 // Shared helpers for authenticated admin API calls.
 
-const API_URL = import.meta.env.VITE_API_URL;
+/**
+ * Base URL of the backend API.
+ *
+ * VITE_* values are inlined at BUILD time, not read at runtime, so a build
+ * produced without this variable set bakes `undefined` into the bundle and
+ * every call silently becomes `fetch("undefined/admin/login")` - a build that
+ * succeeds and then fails only in the browser, with a confusing error.
+ *
+ * Reading it through this function instead makes the misconfiguration explicit
+ * at the moment a request is attempted, and names the variable to set.
+ */
+export function apiBaseUrl() {
+  const base = import.meta.env.VITE_API_URL;
+
+  if (typeof base !== "string" || !base.trim()) {
+    throw new Error(
+      "VITE_API_URL is not set. The admin panel cannot reach the backend. " +
+        "Set VITE_API_URL in the environment used for `npm run build` " +
+        "(see .env.example) and rebuild.",
+    );
+  }
+
+  return base.trim();
+}
 
 const ACCESS_TOKEN_KEY = "authToken";
 
@@ -68,7 +91,7 @@ async function requestNewAccessToken() {
   try {
     // No body: the refresh token travels as an HttpOnly cookie, which requires
     // credentials to be included on the request.
-    const res = await fetch(`${API_URL}/admin/refresh`, {
+    const res = await fetch(`${apiBaseUrl()}/admin/refresh`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

@@ -14,8 +14,6 @@ import { toast } from "react-toastify";
 const MAX_IMAGES = 3;
 
 export default function ProductModal({ open, onClose, onSuccess, editData }) {
-  const isEditMode = Boolean(editData?.id);
-
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 

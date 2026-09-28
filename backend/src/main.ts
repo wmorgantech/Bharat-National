@@ -20,19 +20,11 @@ const SWAGGER_PATH = 'api-docs';
  */
 const UPLOADS_DIR = 'uploads';
 
-const DEV_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:5176',
-  'http://localhost:5180',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-  'http://127.0.0.1:5175',
-  'http://127.0.0.1:5176',
-  'http://127.0.0.1:5180',
-];
-
+/**
+ * Allowed browser origins come solely from CORS_ORIGINS. No origin is ever
+ * hardcoded here, so a production build carries no environment-specific URLs
+ * and cannot silently fall back to a development host.
+ */
 function resolveAllowedOrigins(logger: Logger): string[] {
   const configured = (process.env.CORS_ORIGINS ?? '')
     .split(',')
@@ -43,25 +35,14 @@ function resolveAllowedOrigins(logger: Logger): string[] {
     return configured;
   }
 
-  if (isProduction()) {
-    logger.error(
-      'CORS_ORIGINS is not set. All cross-origin browser requests will be rejected.',
-    );
-    return [];
-  }
-
-  logger.warn(
-    `CORS_ORIGINS is not set. Falling back to development origins: ${DEV_ORIGINS.join(', ')}`,
+  logger.error(
+    'CORS_ORIGINS is not set. All cross-origin browser requests will be rejected.',
   );
-  return DEV_ORIGINS;
+
+  return [];
 }
 
-/**
- * Trust-proxy is OFF unless explicitly configured. Getting this wrong has two
- * failure modes: left unset behind a proxy, every client shares one rate-limit
- * bucket; set to a blanket `true`, X-Forwarded-For becomes attacker-controlled
- * and rate limiting can be bypassed entirely. So it is opt-in and explicit.
- */
+
 function applyTrustProxy(app: NestExpressApplication, logger: Logger): void {
   const raw = (process.env.TRUST_PROXY ?? '0').trim();
 
@@ -82,17 +63,17 @@ async function bootstrap() {
 
   // Fail fast rather than starting with an unsigned-in-practice token secret.
   requireEnv('JWT_SECRET');
+  // Upload URLs are persisted into product/brand/category rows, so a missing
+  // value would write permanently broken links. Checked here as well as at the
+  // point of use so the failure surfaces at boot, not on the first upload.
+  requireEnv('UPLOAD_URL');
   validateRazorpayKeySafety();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   applyTrustProxy(app, logger);
 
-  // Security headers. Swagger UI ships inline scripts and styles, which the
-  // default CSP blocks, so the docs path gets the same headers minus CSP.
-  // CORP is relaxed to cross-origin because this API is consumed by the
-  // storefront and admin SPAs from a different origin by design; reads are
-  // still governed by the CORS allow-list below.
+  
   const apiHelmet = helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
@@ -148,14 +129,7 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  // Serve previously uploaded images so the URLs handed back by
-  // POST /upload/image actually resolve.
-  //
-  // These are public: an <img> tag cannot attach a Bearer token, and product
-  // imagery is public content anyway. Uploading stays admin-only and keeps its
-  // type, size and random-filename rules - this route only reads. Registered
-  // after helmet and CORS so static responses still carry those headers, in
-  // particular X-Content-Type-Options: nosniff.
+  
   app.useStaticAssets(join(process.cwd(), UPLOADS_DIR), {
     prefix: `/${UPLOADS_DIR}`,
     // No directory listing and no implicit index file.
@@ -165,8 +139,7 @@ async function bootstrap() {
     redirect: false,
   });
 
-  // API documentation exposes the full route surface, so it stays off in
-  // production unless explicitly re-enabled.
+  
   const swaggerEnabled =
     !isProduction() || process.env.SWAGGER_ENABLED === 'true';
 

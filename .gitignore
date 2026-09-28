@@ -48,6 +48,9 @@ coverage/
 *.lcov
 .nyc_output/
 
+# npm audit output (regenerate with `npm audit --json`; never commit)
+audit-*.json
+
 # Temporary files
 .temp/
 .tmp/

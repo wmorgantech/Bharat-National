@@ -22,7 +22,7 @@ export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Post()
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   create(@Body() createBrandDto: CreateBrandDto) {
     return this.brandService.create(createBrandDto);
@@ -47,7 +47,7 @@ export class BrandController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -57,7 +57,7 @@ export class BrandController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.brandService.remove(id);

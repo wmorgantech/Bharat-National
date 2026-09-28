@@ -22,7 +22,7 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
@@ -47,7 +47,7 @@ export class CategoryController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -57,7 +57,7 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.categoryService.remove(id);

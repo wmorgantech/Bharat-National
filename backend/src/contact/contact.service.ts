@@ -26,10 +26,13 @@ export class ContactService {
       },
     });
 
-    // 2) Send mail to USER email.
+    // 2) Notify both sides.
     //    Best effort only: the enquiry is already stored and the business can
     //    act on it, so a mail transport problem must not turn a successful
     //    submission into a 500 for the visitor.
+    //
+    //    The two sends are independent - the customer still gets their
+    //    acknowledgement if the internal copy fails, and vice versa.
     let emailSent = false;
 
     try {
@@ -50,11 +53,36 @@ export class ContactService {
       );
     }
 
+    let notificationSent = false;
+
+    try {
+      const result = await this.mailService.sendContactNotificationToCompany({
+        to: dto.email,
+        name: dto.name,
+        phone: dto.phone,
+        interestedIn: dto.interestedIn,
+        message: dto.message,
+        contactId: contact.id,
+        submittedAt: contact.createdAt,
+      });
+      // undefined means the send was skipped (no recipient configured, or SMTP
+      // is off), which is not the same as a delivered notification.
+      notificationSent = result !== undefined;
+    } catch (error) {
+      this.logger.error(
+        `Contact #${contact.id} saved, but the internal notification email could not be sent: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
     return {
       message: emailSent
         ? 'Contact saved & email sent to user'
         : 'Contact saved, but the acknowledgement email could not be sent',
       emailSent,
+      notificationSent,
       data: contact,
     };
   }

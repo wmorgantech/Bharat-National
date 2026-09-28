@@ -6,7 +6,7 @@ import { Roles } from 'src/auth/roles.decorator';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
-@Roles('ADMIN', 'SUPER_ADMIN')
+@Roles('ADMIN')
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}

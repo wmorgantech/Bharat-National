@@ -23,7 +23,7 @@ export class ContactController {
 
   /** Submitted enquiries contain visitor PII, so this is admin-only. */
   @Get()
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   async findAll() {
     const data = await this.contactService.findAll();

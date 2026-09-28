@@ -22,6 +22,52 @@ export function getJwtSecret(): string {
   return requireEnv('JWT_SECRET');
 }
 
+/**
+ * Public base URL that uploaded images are served from.
+ *
+ * This is required rather than optional because the value is not just read at
+ * request time - it is baked into the `url` returned by POST /upload/image,
+ * which the admin panel then stores in the database. A missing value would
+ * therefore persist rows reading "undefined/<filename>" that no later
+ * configuration change can repair, so the server refuses to start without it.
+ */
+export function getUploadUrl(): string {
+  return requireEnv('UPLOAD_URL');
+}
+
+/**
+ * Internal mailbox that customer enquiries are forwarded to.
+ *
+ * Optional rather than required: an unset value only means the internal copy is
+ * skipped, and the enquiry is still stored and still acknowledged to the
+ * customer. Making it mandatory would stop existing deployments from booting
+ * over a notification, which is a worse failure than a missing email.
+ *
+ * Returns undefined when unset so the caller can log and carry on.
+ */
+export function getCompanyNotificationEmail(): string | undefined {
+  const value = process.env.COMPANY_NOTIFICATION_EMAIL?.trim();
+
+  return value ? value : undefined;
+}
+
+/**
+ * Publicly reachable URL of the BNC logo, shown at the top of outgoing mail.
+ *
+ * A URL rather than an attached file on purpose: the logo already exists in
+ * the storefront and admin bundles, and copying it into the backend would be a
+ * fourth copy of the same 130 KB image - one that would also ride along on
+ * every single email as an attachment.
+ *
+ * Optional. Unset means mail is sent exactly as before, with the text-only
+ * header, so nothing breaks in an environment that has not configured it.
+ */
+export function getMailLogoUrl(): string | undefined {
+  const value = process.env.MAIL_LOGO_URL?.trim();
+
+  return value ? value : undefined;
+}
+
 export function isProduction(): boolean {
   return process.env.NODE_ENV === 'production';
 }

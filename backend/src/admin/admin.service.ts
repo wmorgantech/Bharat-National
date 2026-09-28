@@ -1,16 +1,15 @@
 // admin.service.ts (Without role)
-import { 
-  Injectable, 
-  BadRequestException, 
+import {
+  Injectable,
   ForbiddenException,
   ConflictException,
-  UnauthorizedException 
+  UnauthorizedException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { CreateAdminDto, LoginAdminDto } from './dto/create-admin.dto';
 
-import { UpdateAdminDto } from './dto/update-admin.dto';
+import { ADMIN_ROLE } from '../auth/roles.decorator';
 import { RefreshTokenService } from '../auth/refresh-token.service';
 import { ACCESS_TOKEN_TTL } from '../config/env';
 import { PrismaService } from '../prisma/prisma.service';
@@ -44,11 +43,17 @@ export class AdminService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new admin
+    // Create new admin.
+    //
+    // `role` is written explicitly rather than left to the schema default so
+    // the single-role rule is asserted by this code, not merely inherited from
+    // a migration that a later change could alter. CreateAdminDto carries no
+    // role field, so there is nothing from the request body to trust here.
     const newAdmin = await this.prisma.admin.create({
-      data: { 
-        email, 
+      data: {
+        email,
         password: hashedPassword,
+        role: ADMIN_ROLE,
         isActive: isActive !== undefined ? isActive : true,
       },
     });
@@ -90,7 +95,7 @@ export class AdminService {
 
     // Check if admin is active
     if (!admin.isActive) {
-      throw new ForbiddenException('Your account has been deactivated. Please contact super admin.');
+      throw new ForbiddenException('Your account has been deactivated. Please contact an administrator.');
     }
 
     // Verify password

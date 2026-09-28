@@ -56,7 +56,7 @@ export class AdminController {
    * admin signs in normally.
    */
   @Post('register')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @Throttle(ADMIN_REGISTER_THROTTLE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Register a new admin (existing admin only)' })
@@ -109,7 +109,7 @@ export class AdminController {
   }
 
   @Post('logout-all')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Revoke all refresh tokens for the current admin' })
   async logoutAll(@Request() req, @Res({ passthrough: true }) res: Response) {

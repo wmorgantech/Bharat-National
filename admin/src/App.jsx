@@ -17,7 +17,7 @@ export default function App() {
   const isLoggedIn = localStorage.getItem("authToken");
 
   return (
-    <BrowserRouter basename="/admin">
+    <BrowserRouter>
       <AppToaster />
 
       <Routes>

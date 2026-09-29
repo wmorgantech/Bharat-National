@@ -56,10 +56,9 @@ export class AdminController {
    * admin signs in normally.
    */
   @Post('register')
-  @Roles('ADMIN')
+  @Public()
   @Throttle(ADMIN_REGISTER_THROTTLE)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Register a new admin (existing admin only)' })
+  @ApiOperation({ summary: 'Register a new admin' })
   async register(@Body() createAdminDto: CreateAdminDto) {
     const { refresh_token, ...rest } =
       await this.adminService.register(createAdminDto);

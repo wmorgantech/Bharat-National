@@ -126,7 +126,7 @@ export default function BrandModal({ open, onClose, onSuccess, editData }) {
                   Click to upload image
                 </span>
                 <span className="text-[11px] text-ink-500">
-                  PNG, JPG up to 5MB
+                  PNG, JPG up to 1MB
                 </span>
               </>
             )}

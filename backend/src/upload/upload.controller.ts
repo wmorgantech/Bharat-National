@@ -14,7 +14,7 @@ import { randomBytes } from 'crypto';
 import { Roles } from 'src/auth/roles.decorator';
 import { getUploadUrl } from '../config/env';
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
 
 /**
  * Raster image types only. SVG is excluded on purpose: it can carry script and

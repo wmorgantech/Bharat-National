@@ -119,7 +119,7 @@ export default function CategoryModal({ open, onClose, onSuccess, editData }) {
                   Click to upload image
                 </span>
                 <span className="text-xs text-ink-500">
-                  PNG, JPG up to 5MB
+                  PNG, JPG up to 1MB
                 </span>
               </>
             )}

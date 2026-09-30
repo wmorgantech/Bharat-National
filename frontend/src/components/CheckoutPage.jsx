@@ -1,5 +1,6 @@
 // src/pages/CheckoutPage.jsx
 import React, { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -758,7 +759,17 @@ export default function CheckoutPage() {
  {/* ==============================================================
  SUCCESS MODAL
  =============================================================== */}
- {showSuccess && (
+ {/*
+ Portalled onto <body> deliberately. Routes render inside
+ `<main class="page-enter">`, whose pageIn animation uses
+ `animation-fill-mode: both` and therefore leaves an identity transform
+ matrix on that element permanently. A transform - even an identity one -
+ makes the element the containing block for `position: fixed` children,
+ and that <main> collapses to zero height once its only child is out of
+ flow. Rendered in place, this modal resolved to a ~32px sliver at the
+ footer instead of covering the viewport.
+ */}
+ {showSuccess && createPortal(
  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-ink-900/40 p-4 animate-in fade-in duration-300">
  <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-300">
  <button
@@ -809,7 +820,8 @@ export default function CheckoutPage() {
  </div>
  </div>
  </div>
- </div>
+ </div>,
+ document.body,
  )}
 
  <style>{`

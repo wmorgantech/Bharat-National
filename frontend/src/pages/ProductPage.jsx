@@ -7,7 +7,7 @@ import productsBanner from "../assets/Product.png";
 
 import Pagination from "../components/Pagination";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 6;
 
 const getName = (value) => String(value || "").trim();
 const getCategory = (product) => getName(product.category?.name || product.categoryName || product.category);

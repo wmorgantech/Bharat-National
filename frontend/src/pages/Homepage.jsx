@@ -4,21 +4,16 @@ import { Link } from "react-router-dom";
 import { PackageOpen, ArrowRight } from "lucide-react";
 import HeroSection from "../components/HeroSection";
 import HomeCategoryStrip from "../components/HomeCategoryStrip";
-import CategorySlider from "../components/Categoriesslider";
 import ProductGrid from "../components/ProductGrid";
-import FeatureSection from "../components/FeatureSection";
-import HomeServicesStrip from "../components/HomeservicesStrip";
 import { getLimitedProducts } from "../api/Product";
 import IndustryExpertise from "../components/IndustryExpertise";
-import ClientReviews from "../components/ClientReview";
 import ServerBrands from "../components/ServerBrands";
 
 /**
  * Home page.
  *
- * Section order follows a standard electronics storefront: banner, trust
- * strip, quick category rail, full categories, best sellers, then the
- * supporting service / brand / review sections the site already had.
+ * Homepage keeps the core shopping paths up front, followed by a concise
+ * customer-and-services overview and server platforms.
  *
  * Notifications are handled by the single global <AppToaster /> mounted in
  * App.jsx - this page deliberately does not mount a ToastContainer.
@@ -33,7 +28,7 @@ const Homepage = () => {
         setLoading(true);
         const res = await getLimitedProducts(); // ⬅️ changed here
         const list = res?.data ?? res ?? [];
-        setProducts(list);
+        setProducts(Array.isArray(list) ? list.slice(0, 4) : []);
       } catch (err) {
         console.error("Failed to load products:", err);
       } finally {
@@ -49,27 +44,24 @@ const Homepage = () => {
       {/* Banner + trust strip */}
       <HeroSection />
 
-      {/* Quick shopping categories */}
+      {/* Compact product categories */}
       <HomeCategoryStrip />
-
-      {/* Popular categories */}
-      <CategorySlider />
 
       {/* Best sellers */}
       {loading ? (
         <section className="py-8 md:py-12">
           <div className="section-shell">
             <div className="mb-5 md:mb-7" data-aos="fade-up">
-              <span className="eyebrow">Business technology portfolio</span>
+              <span className="eyebrow">Computers & infrastructure</span>
               <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[30px] lg:text-[34px]">
-                Featured Technology Solutions
+                Featured products
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-500 md:text-[15px]">
-                BNC provides professional technology hardware and infrastructure products for businesses and organizations.
+                A focused selection of computers, laptops, desktops, accessories, CCTV and infrastructure products.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5 xl:gap-6">
-              {Array.from({ length: 5 }, (_, i) => (
+              {Array.from({ length: 4 }, (_, i) => (
                 <div
                   key={i}
                   className="overflow-hidden rounded-xl border border-ink-200 bg-white p-3"
@@ -89,12 +81,12 @@ const Homepage = () => {
         <section className="py-8 md:py-12">
           <div className="section-shell">
             <div className="mb-5 md:mb-7" data-aos="fade-up">
-              <span className="eyebrow">Business technology portfolio</span>
+              <span className="eyebrow">Computers & infrastructure</span>
               <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[30px] lg:text-[34px]">
-                Featured Technology Solutions
+                Featured products
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-500 md:text-[15px]">
-                BNC provides professional technology hardware and infrastructure products for businesses and organizations.
+                A focused selection of computers, laptops, desktops, accessories, CCTV and infrastructure products.
               </p>
             </div>
             <div className="state-panel" data-aos="fade-up">
@@ -123,9 +115,9 @@ const Homepage = () => {
       ) : (
         <ProductGrid
           products={products}
-          title="Featured Technology Solutions"
-          eyebrow="Business technology portfolio"
-          supportingText="BNC provides professional technology hardware and infrastructure products for businesses and organizations."
+          title="Featured products"
+          eyebrow="Computers & infrastructure"
+          supportingText="A focused selection of computers, laptops, desktops, accessories, CCTV and infrastructure products."
           showViewAll
           sectionClassName="!pt-7 md:!pt-10"
         />
@@ -133,10 +125,7 @@ const Homepage = () => {
 
       {/* Supporting sections */}
       <IndustryExpertise />
-      <HomeServicesStrip />
       <ServerBrands />
-      <FeatureSection />
-      <ClientReviews />
     </div>
   );
 };

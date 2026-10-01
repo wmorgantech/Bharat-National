@@ -125,21 +125,21 @@ const AboutPage = () => {
                 key={item.title}
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
-                className="group rounded-[18px] border border-ink-200 bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.03)] transition-all duration-200 hover:-translate-y-1 hover:border-[#CFE8E5] hover:shadow-[0_12px_28px_rgba(15,23,42,0.06)]"
+                className={`group rounded-[18px] border p-5 shadow-[0_6px_18px_rgba(15,23,42,0.03)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)] ${index === 0 ? "border-[#123C36] bg-[#123C36] text-white hover:border-[#1B5148]" : "border-ink-200 bg-white hover:border-[#CFE8E5]"}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#EAF6F4] text-[#00897B]">
+                  <span className={`grid h-10 w-10 place-items-center rounded-full ${index === 0 ? "bg-white/10 text-[#A9E1D1]" : "bg-[#EAF6F4] text-[#00897B]"}`}>
                     <item.Icon size={18} />
                   </span>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">{item.number}</span>
+                  <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${index === 0 ? "text-white/55" : "text-ink-400"}`}>{item.number}</span>
                 </div>
 
-                <h3 className="mt-5 font-display text-[20px] font-semibold tracking-[-0.03em] text-ink-900">
+                <h3 className={`mt-5 font-display text-[20px] font-semibold tracking-[-0.03em] ${index === 0 ? "text-white" : "text-ink-900"}`}>
                   {item.title}
                 </h3>
-                <p className="mt-3 text-[14px] leading-relaxed text-ink-600">{item.description}</p>
+                <p className={`mt-3 text-[14px] leading-relaxed ${index === 0 ? "text-[#DDEEEB]" : "text-ink-600"}`}>{item.description}</p>
 
-                <div className="mt-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#00897B]">
+                <div className={`mt-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] ${index === 0 ? "text-[#A9E1D1]" : "text-[#00897B]"}`}>
                   <span>Explore</span>
                   <ArrowRight size={14} />
                 </div>
@@ -155,7 +155,7 @@ const AboutPage = () => {
             <img
               src={serverInfrastructure}
               alt="IT infrastructure support and server systems"
-              className="h-[260px] w-full object-cover md:h-[320px]"
+              className="h-[260px] w-full bg-[#F5F8F7] object-contain object-center md:h-[320px]"
               loading="lazy"
             />
           </div>

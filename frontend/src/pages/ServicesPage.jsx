@@ -224,13 +224,13 @@ export default function ServicesPage() {
                     }
                   : index === 1
                     ? {
-                        panel: "border-[#DDEEEA] bg-[#F9FCFB]",
-                        number: "text-[#123C36]",
-                        iconWrap: "bg-[#E7F4F2] text-[#123C36] group-hover:bg-[#DCEEEA]",
-                        edge: "border-[#CFE6E1] bg-[#F3FAF9] text-[#123C36] group-hover:border-[#123C36] group-hover:bg-[#EAF6F4]",
-                        divider: "bg-[#123C36]",
-                        rowHover: "hover:bg-[#F1FAF8]",
-                        rowIcon: "bg-[#EEF8F6] text-[#123C36] group-hover/row:bg-[#DCEEEA] group-hover/row:text-[#123C36]",
+                        panel: "border-[#123C36] bg-[#123C36]",
+                        number: "text-[#A9E1D1]",
+                        iconWrap: "bg-white/10 text-[#A9E1D1] group-hover:bg-white/15",
+                        edge: "border-white/20 bg-white/5 text-white/85 group-hover:border-white/40 group-hover:bg-white/10",
+                        divider: "bg-[#76C7B3]",
+                        rowHover: "hover:bg-white/10",
+                        rowIcon: "bg-white/10 text-[#B9D8D2] group-hover/row:bg-white/20 group-hover/row:text-white",
                       }
                     : {
                         panel: "border-[#D9E9E2] bg-white/90",
@@ -263,14 +263,14 @@ export default function ServicesPage() {
 
                   <div className={`mb-4 h-px w-12 opacity-80 ${panelStyles.divider}`} aria-hidden="true" />
 
-                  <h3 className="font-display text-[20px] font-semibold leading-tight tracking-[-0.03em] text-[#17302D]">
+                  <h3 className={`font-display text-[20px] font-semibold leading-tight tracking-[-0.03em] ${index === 1 ? "text-white" : "text-[#17302D]"}`}>
                     {group.title}
                   </h3>
-                  <p className="mt-2 text-[13.5px] leading-relaxed text-[#58706C]">{group.description}</p>
+                  <p className={`mt-2 text-[13.5px] leading-relaxed ${index === 1 ? "text-[#D7E8E4]" : "text-[#58706C]"}`}>{group.description}</p>
 
                   <ul className="mt-5 space-y-0">
                     {group.items.map((service) => (
-                      <li key={service.title} className="border-t border-[#E7F0EE] first:border-t-0">
+                      <li key={service.title} className={`border-t first:border-t-0 ${index === 1 ? "border-white/15" : "border-[#E7F0EE]"}`}>
                         <button
                           type="button"
                           className={`group/row flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-2.5 text-left transition-all duration-250 hover:-translate-x-1 hover:px-3 ${panelStyles.rowHover}`}
@@ -279,13 +279,13 @@ export default function ServicesPage() {
                             <span className={`grid h-6 w-6 place-items-center rounded-full transition-all duration-200 ${panelStyles.rowIcon}`}>
                               <service.icon size={12} />
                             </span>
-                            <span className="truncate text-[13px] font-medium leading-relaxed text-[#1F2E2B]">
+                            <span className={`truncate text-[13px] font-medium leading-relaxed ${index === 1 ? "text-white/90" : "text-[#1F2E2B]"}`}>
                               {service.title}
                             </span>
                           </span>
                           <ArrowRight
                             size={13}
-                            className="shrink-0 text-[#7B8F8B] transition-all duration-200 group-hover/row:translate-x-1 group-hover/row:text-[#00897B]"
+                            className={`shrink-0 transition-all duration-200 group-hover/row:translate-x-1 ${index === 1 ? "text-white/60 group-hover/row:text-white" : "text-[#7B8F8B] group-hover/row:text-[#00897B]"}`}
                           />
                         </button>
                       </li>
@@ -313,7 +313,7 @@ export default function ServicesPage() {
               <img
                 src={infrastructureImage}
                 alt="IT infrastructure support"
-                className="h-[270px] w-full rounded-[22px] border border-[#DDEEEA] object-cover shadow-[0_14px_24px_rgba(14,36,32,0.06)] md:h-[320px] lg:h-[390px]"
+                className="h-[270px] w-full rounded-[22px] border border-[#DDEEEA] bg-[#F5F8F7] object-contain object-center shadow-[0_14px_24px_rgba(14,36,32,0.06)] md:h-[320px] lg:h-[390px]"
                 loading="lazy"
               />
             </div>

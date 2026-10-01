@@ -354,7 +354,7 @@ export default function MyOrdersPage() {
                   </h2>
                   <p className="mt-2 text-sm text-ink-500">
                     {totalOrders === 0
-                      ? "Start shopping to see your orders here."
+                      ? "Continue shopping to see your orders here."
                       : "Try a different status filter."}
                   </p>
                   {totalOrders === 0 ? (

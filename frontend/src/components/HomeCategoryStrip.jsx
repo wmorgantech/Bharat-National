@@ -59,27 +59,26 @@ export default function HomeCategoryStrip() {
   if (!loading && categories.length === 0) return null;
 
   return (
-    <section className="section-shell pt-7 md:pt-10">
-      <div className="mb-5 md:mb-6" data-aos="fade-up">
+    <section className="section-shell pt-6 md:pt-8">
+      <div className="mb-3 flex items-center justify-between gap-4 md:mb-4" data-aos="fade-up">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <span className="eyebrow">Shop by need</span>
-            <h2 className="mt-3 font-display text-[24px] font-bold leading-tight tracking-[-0.03em] text-ink-900 md:text-[32px]">
-              Explore technology by business need
+            <h2 className="font-display text-[20px] font-bold leading-tight text-ink-900 md:text-[26px]">
+              Shop by category
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/products")}
-            className="hidden items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary-dark sm:inline-flex"
-          >
-            View all
-            <ArrowRight size={13} />
-          </button>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate("/products")}
+          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary transition-colors hover:text-primary-dark"
+        >
+          View all
+          <ArrowRight size={13} />
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
         {loading
           ? Array.from({ length: 6 }, (_, i) => (
               <div
@@ -104,7 +103,7 @@ export default function HomeCategoryStrip() {
                 }
                 data-aos="fade-up"
                 data-aos-delay={Math.min(index, 5) * 80}
-                className="group flex items-center gap-3 rounded-[20px] border border-ink-200 bg-white p-3 text-left shadow-card transition-all duration-250 hover:-translate-y-1 hover:border-primary/40 hover:shadow-card-hover"
+                className="group flex items-center gap-2.5 rounded-xl border border-ink-200 bg-white p-2.5 text-left shadow-card transition-all duration-250 hover:-translate-y-1 hover:border-primary/40 hover:shadow-card-hover sm:gap-3 sm:p-3"
               >
                 <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#F2FAF8] ring-1 ring-primary/10 transition-all duration-250 group-hover:bg-[#E7F7F3]">
                   <img

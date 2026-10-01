@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
-  Clock,
   ClipboardCheck,
   LockKeyhole,
   Wrench,
@@ -52,23 +51,18 @@ const TRUST_BADGES = [
   },
   {
     Icon: Wrench,
-    title: "On-site Installation",
-    subtitle: "Handled by our team",
+    title: "On-site setup",
+    subtitle: "Installation by our team",
   },
   {
     Icon: ClipboardCheck,
-    title: "AMC Plans",
-    subtitle: "Comprehensive or standard",
+    title: "IT & server support",
+    subtitle: "AMC, maintenance & upgrades",
   },
   {
     Icon: LockKeyhole,
     title: "Secure Checkout",
     subtitle: "Razorpay protected",
-  },
-  {
-    Icon: Clock,
-    title: "Mon – Sat",
-    subtitle: "9:00 AM – 8:00 PM",
   },
 ];
 
@@ -194,7 +188,7 @@ export default function HeroSection() {
       </section>
 
       <section className="relative mx-auto max-w-7xl px-4 pt-3 sm:px-6 md:px-8 md:pt-4 lg:px-10">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
           {TRUST_BADGES.map((badge, index) => {
             const Icon = badge.Icon;
 
@@ -203,17 +197,17 @@ export default function HeroSection() {
                 key={badge.title}
                 data-aos="fade-up"
                 data-aos-delay={index * 60}
-                className="flex min-h-[82px] items-center gap-2.5 rounded-[16px] border border-primary/20 bg-primary-50 px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:bg-primary-100"
+                className="flex min-h-[72px] items-center gap-2 rounded-xl border border-primary/20 bg-primary-50 px-2.5 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:bg-primary-100 sm:gap-2.5 sm:px-3"
               >
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-primary shadow-sm">
-                  <Icon size={18} strokeWidth={2} />
+                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-primary shadow-sm sm:h-9 sm:w-9">
+                  <Icon size={16} strokeWidth={2} />
                 </div>
 
                 <div className="min-w-0 text-left leading-tight">
-                  <div className="text-[12.5px] font-bold text-ink-900">
+                  <div className="text-[11px] font-bold leading-tight text-ink-900 sm:text-[12px]">
                     {badge.title}
                   </div>
-                  <div className="mt-0.5 text-[11px] font-medium text-ink-600">
+                  <div className="mt-0.5 text-[10px] font-medium leading-tight text-ink-600 sm:text-[11px]">
                     {badge.subtitle}
                   </div>
                 </div>

@@ -108,7 +108,7 @@ export default function CartPage() {
               className="btn-primary btn-lg mt-9"
               onClick={() => navigate("/products")}
             >
-              Start Shopping
+              Continue Shopping
               <ArrowRight size={16} />
             </button>
           </div>

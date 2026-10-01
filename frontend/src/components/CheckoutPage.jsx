@@ -32,15 +32,12 @@ const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 let razorpayScriptPromise;
 
 /**
- * Checkout accent.
- *
- * The storefront's brand colour is the teal in tailwind.config.js; this red is
- * used only here, and only on the commit action and its supporting marks, so
- * the single most important button on the site reads instantly. Declared once
- * so it can be retuned in one place rather than hunted through the markup.
+ * Checkout accent stays aligned with the storefront's BNC teal.
  */
+const BNC_ACCENT = "#00897B";
+const BNC_ACCENT_DARK = "#006F64";
 const BNC_RED = "#C8102E";
-const BNC_RED_DARK = "#A00D25";
+const BNC_RED_DARK = "#A10E25";
 
 /**
  * Each payment option carries its own accent so the two tiles read apart at a
@@ -385,23 +382,24 @@ export default function CheckoutPage() {
  };
 
  const sectionLabel =
- "text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-400";
+ "font-display text-[17px] font-semibold text-ink-900";
 
  return (
- <div className="min-h-screen bg-white">
+ <div className="min-h-screen overflow-x-hidden bg-[#F6F8F7]">
  {/* ==============================================================
  HEADER
  =============================================================== */}
- <header className="border-b border-ink-100">
- <div className="section-shell flex h-16 items-center justify-between gap-4">
- <h1 className="font-display text-lg font-bold tracking-[-0.02em] text-ink-900 md:text-xl">
- Secure Checkout
- </h1>
+ <header className="border-b border-ink-200 bg-white">
+ <div className="section-shell flex min-h-[56px] items-center justify-between gap-4 py-2">
+ <div className="inline-flex min-w-0 items-center gap-2 text-[12px] font-semibold text-ink-600">
+ <LockKeyhole className="h-4 w-4 shrink-0 text-primary" />
+ Secure checkout
+ </div>
 
  <button
  type="button"
  onClick={() => navigate("/cart")}
- className="group inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-500 transition-colors hover:text-ink-900"
+ className="group inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-2 text-[13px] font-semibold text-ink-600 transition-colors hover:bg-ink-50 hover:text-ink-900 sm:px-3"
  >
  <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
  <span className="hidden sm:inline">Back to Cart</span>
@@ -413,17 +411,37 @@ export default function CheckoutPage() {
  {/* ==============================================================
  MAIN
  =============================================================== */}
- <main className="section-shell py-10 md:py-14">
+ <main className="section-shell py-7 md:py-10">
+ <div className="mb-8 flex flex-col justify-between gap-5 border-b border-ink-200 pb-6 sm:flex-row sm:items-end md:mb-10 md:pb-8">
+ <div>
+ <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+ Order details
+ </span>
+ <h1 className="mt-2 font-display text-[29px] font-bold leading-tight text-ink-900 sm:text-[34px]">
+ Complete your order
+ </h1>
+ <p className="mt-2 max-w-xl text-[13.5px] leading-relaxed text-ink-500 sm:text-sm">
+ Confirm your delivery details and choose how you would like to pay.
+ </p>
+ </div>
+ <div className="flex items-center gap-2 self-start rounded-full border border-ink-200 bg-white px-3 py-2 text-[11.5px] font-medium text-ink-500 sm:self-auto">
+ <ShieldCheck className="h-4 w-4 text-primary" />
+ Protected payment
+ </div>
+ </div>
  {isCartEmpty ? (
- <div className="py-24 text-center">
- <ShoppingBag className="mx-auto h-10 w-10 text-ink-300" />
- <p className="mt-5 font-display text-lg font-bold text-ink-900">
+ <div className="py-20 text-center sm:py-24">
+ <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-ink-200 bg-white text-primary">
+ <ShoppingBag className="h-7 w-7" />
+ </span>
+ <p className="mt-5 font-display text-xl font-bold text-ink-900">
  Your cart is empty
  </p>
+ <p className="mt-2 text-sm text-ink-500">Add something to your cart to continue to checkout.</p>
  <button
  type="button"
  onClick={() => navigate("/products")}
- className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-colors hover:text-primary-dark"
+ className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#C8102E] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#A10E25]"
  >
  Continue shopping
  <ChevronRight className="h-4 w-4" />
@@ -432,21 +450,27 @@ export default function CheckoutPage() {
  ) : (
  <form
  onSubmit={handlePlaceOrder}
- className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,400px)] lg:gap-20"
+ className="grid min-w-0 grid-cols-1 items-start gap-9 lg:grid-cols-[minmax(0,1.35fr)_minmax(310px,0.75fr)] lg:gap-12"
  >
  {/* ==========================================================
  LEFT - contact, address, payment
  =========================================================== */}
- <div className="space-y-14">
+ <div className="min-w-0 space-y-9 lg:space-y-11">
  {/* ---------- CONTACT + DELIVERY ---------- */}
- <section>
- <div className="flex items-baseline justify-between gap-4">
+ <section className="border-b border-ink-200 pb-9 lg:pb-10">
+ <div className="flex items-center justify-between gap-3">
+ <div className="flex min-w-0 items-center gap-3">
+ <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-50 text-[11px] font-bold tabular-nums text-primary">01</span>
+ <div>
  <h2 className={sectionLabel}>Contact &amp; Delivery</h2>
+ <p className="mt-1 text-[12px] text-ink-400">Where should we send your order?</p>
+ </div>
+ </div>
  {viewMode === "card" && (
  <button
  type="button"
  onClick={() => setViewMode("form")}
- className="text-[12.5px] font-semibold text-primary transition-colors hover:text-primary-dark"
+ className="min-h-10 shrink-0 rounded-lg px-3 text-[12.5px] font-semibold text-primary transition-colors hover:bg-primary-50 hover:text-primary-dark"
  >
  Edit
  </button>
@@ -455,7 +479,7 @@ export default function CheckoutPage() {
  <button
  type="button"
  onClick={() => setViewMode("card")}
- className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-ink-400 transition-colors hover:text-ink-700"
+ className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-lg px-3 text-[12.5px] font-semibold text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-700"
  >
  <X className="h-3.5 w-3.5" />
  Cancel
@@ -463,32 +487,30 @@ export default function CheckoutPage() {
  )}
  </div>
 
- <div className="mt-5 h-px bg-ink-100" />
-
  {viewMode === "card" ? (
- <div className="mt-7 grid gap-8 sm:grid-cols-2">
+ <div className="mt-6 grid gap-6 sm:grid-cols-2 sm:gap-8">
  <div>
- <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-400">
+ <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-400">
  Recipient
  </p>
- <p className="mt-2 text-[15px] font-semibold text-ink-900 break-words">
+ <p className="mt-2 break-words text-[15px] font-semibold text-ink-900">
  {fullName || "—"}
  </p>
- <p className="mt-3 flex items-center gap-2 text-[13.5px] text-ink-500 break-all">
+ <p className="mt-3 flex min-w-0 items-center gap-2 break-all text-[13px] text-ink-500">
  <Mail className="h-3.5 w-3.5 shrink-0 text-ink-300" />
  {email || "No email added"}
  </p>
- <p className="mt-1.5 flex items-center gap-2 text-[13.5px] text-ink-500">
+ <p className="mt-1.5 flex items-center gap-2 text-[13px] text-ink-500">
  <Phone className="h-3.5 w-3.5 shrink-0 text-ink-300" />
  {phone ? `+91 ${phone}` : "No phone added"}
  </p>
  </div>
 
  <div>
- <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-400">
+ <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-400">
  Delivery Address
  </p>
- <p className="mt-2 flex gap-2 text-[13.5px] leading-relaxed text-ink-600">
+ <p className="mt-2 flex gap-2 text-[13px] leading-relaxed text-ink-600">
  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
  <span className="break-words">
  {address || "No address saved yet"}
@@ -507,25 +529,25 @@ export default function CheckoutPage() {
  </div>
  </div>
  ) : (
- <div className="mt-7 space-y-5">
- <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
- <TextInput label="Full Name" placeholder="John Doe" icon={User} value={fullName} onChange={(e) => setFullName(e.target.value)} />
- <TextInput label="Email" placeholder="johndoe@gmail.com" icon={Mail} value={email} onChange={(e) => setEmail(e.target.value)} />
+ <div className="mt-6 space-y-5">
+ <div className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
+ <TextInput label="Full Name" placeholder="John Doe" icon={User} className="!rounded-lg !px-3.5 !py-3" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+ <TextInput label="Email" placeholder="johndoe@gmail.com" icon={Mail} className="!rounded-lg !px-3.5 !py-3" value={email} onChange={(e) => setEmail(e.target.value)} />
  </div>
 
- <TextInput label="Phone Number" icon={Phone} type="tel" maxLength={14} placeholder="9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} />
- <TextInput label="Address" icon={MapPin} placeholder="House / Flat No, Street, Area" value={address} onChange={(e) => setAddress(e.target.value)} />
+ <TextInput label="Phone Number" icon={Phone} className="!rounded-lg !px-3.5 !py-3" type="tel" maxLength={14} placeholder="9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+ <TextInput label="Address" icon={MapPin} className="!rounded-lg !px-3.5 !py-3" placeholder="House / Flat No, Street, Area" value={address} onChange={(e) => setAddress(e.target.value)} />
 
- <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
- <TextInput label="City" placeholder="Chennai" icon={MapPin} value={place} onChange={(e) => setPlace(e.target.value)} />
- <TextInput label="State" placeholder="Tamil Nadu" icon={MapPin} value={state} onChange={(e) => setState(e.target.value)} />
- <TextInput label="Pincode" placeholder="560001" icon={MapPin} type="tel" maxLength={6} value={pincode} onChange={(e) => setPincode(e.target.value)} />
+ <div className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-4">
+ <TextInput label="City" placeholder="Chennai" icon={MapPin} className="!rounded-lg !px-3.5 !py-3" value={place} onChange={(e) => setPlace(e.target.value)} />
+ <TextInput label="State" placeholder="Tamil Nadu" icon={MapPin} className="!rounded-lg !px-3.5 !py-3" value={state} onChange={(e) => setState(e.target.value)} />
+ <TextInput label="Pincode" placeholder="560001" icon={MapPin} className="!rounded-lg !px-3.5 !py-3" type="tel" maxLength={6} value={pincode} onChange={(e) => setPincode(e.target.value)} />
  </div>
 
  <button
  type="button"
  onClick={handleSaveAddress}
- className="btn-primary btn-lg mt-1 w-full sm:w-auto sm:min-w-[240px]"
+ className="btn-primary btn-lg mt-1 min-h-12 w-full rounded-lg sm:w-auto sm:min-w-[240px]"
  >
  <CheckCircle2 className="h-4 w-4" />
  {hasSavedAddress ? "Update Address" : "Save Address"}
@@ -536,15 +558,19 @@ export default function CheckoutPage() {
 
  {/* ---------- PAYMENT METHOD ---------- */}
  <section>
- <div className="flex items-baseline justify-between gap-4">
+ <div className="flex items-center justify-between gap-3">
+ <div className="flex min-w-0 items-center gap-3">
+ <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-50 text-[11px] font-bold tabular-nums text-primary">02</span>
+ <div>
  <h2 className={sectionLabel}>Payment Method</h2>
- <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+ <p className="mt-1 text-[12px] text-ink-400">Choose a secure way to pay.</p>
+ </div>
+ </div>
+ <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
  <ShieldCheck className="h-3.5 w-3.5" />
  Secure
  </span>
  </div>
-
- <div className="mt-5 h-px bg-ink-100" />
 
  {/*
  Two compact tiles side by side rather than stacked full-width
@@ -552,7 +578,7 @@ export default function CheckoutPage() {
  underneath, so choosing a method no longer changes the height of
  the block - the layout stays still as you switch.
  */}
- <div className="mt-6 grid grid-cols-2 gap-3">
+ <div className="mt-6 grid grid-cols-2 gap-2.5 sm:gap-3">
  {PAYMENT_OPTIONS.map((option) => {
  const { value, title, hint, accent, tint, ring } = option;
  const active = paymentMethod === value;
@@ -561,7 +587,7 @@ export default function CheckoutPage() {
  <label
  key={value}
  style={active ? { borderColor: accent, backgroundColor: tint, boxShadow: `0 0 0 1px ${accent}, 0 6px 18px -10px ${ring}` } : undefined}
- className={`group relative flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition-all duration-200 ${
+ className={`group relative flex min-h-[76px] min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-2.5 py-3 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/30 sm:gap-3 sm:px-4 ${
  active ? "" : "border-ink-200 bg-white hover:border-ink-300 hover:bg-ink-50/60"
  }`}
  >
@@ -571,12 +597,12 @@ export default function CheckoutPage() {
  value={value}
  checked={active}
  onChange={() => setPaymentMethod(value)}
- className="sr-only"
+ className="peer sr-only"
  />
 
  <span
  style={active ? { backgroundColor: accent } : undefined}
- className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-all duration-200 ${
+ className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-all duration-200 sm:h-8 sm:w-8 ${
  active ? "text-white" : "bg-ink-100 text-ink-400 group-hover:text-ink-600"
  }`}
  >
@@ -586,13 +612,13 @@ export default function CheckoutPage() {
  <span className="min-w-0 flex-1">
  <span
  style={active ? { color: accent } : undefined}
- className={`block truncate text-[13.5px] font-semibold leading-tight transition-colors ${
+ className={`block break-words text-[12px] font-semibold leading-snug transition-colors sm:text-[13px] ${
  active ? "" : "text-ink-700"
  }`}
  >
  {title}
  </span>
- <span className="mt-0.5 block truncate text-[11.5px] leading-tight text-ink-400">
+ <span className="mt-1 block text-[10.5px] leading-tight text-ink-400 sm:text-[11px]">
  {hint}
  </span>
  </span>
@@ -600,7 +626,7 @@ export default function CheckoutPage() {
  {active && (
  <CheckCircle2
  style={{ color: accent }}
- className="h-4 w-4 shrink-0"
+ className="hidden h-4 w-4 shrink-0 sm:block"
  />
  )}
  </label>
@@ -609,7 +635,7 @@ export default function CheckoutPage() {
  </div>
 
  {/* Provider marks - shown once, outside the tiles. */}
- <div className="mt-5 flex items-center gap-4">
+ <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3">
  <div className="flex items-center gap-2.5">
  {[
  { src: upiLogo, alt: "UPI" },
@@ -629,7 +655,7 @@ export default function CheckoutPage() {
 
  <span className="h-4 w-px bg-ink-200" />
 
- <p className="flex items-center gap-1.5 text-[11.5px] text-ink-400">
+ <p className="flex min-w-0 flex-1 items-start gap-1.5 text-[11px] leading-relaxed text-ink-400">
  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
  Card / UPI details are never stored on our website
  </p>
@@ -640,20 +666,26 @@ export default function CheckoutPage() {
  {/* ==========================================================
  RIGHT - sticky order summary
  =========================================================== */}
- <aside className="lg:sticky lg:top-8">
- <div className="rounded-2xl border border-ink-200 p-6 md:p-7">
+ <aside className="min-w-0 lg:sticky lg:top-8">
+ <div className="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-[0_12px_36px_-28px_rgba(15,23,42,0.35)]">
+ <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-5 py-4 sm:px-6">
+ <div>
  <h2 className={sectionLabel}>Order Summary</h2>
+ <p className="mt-1 text-[12px] text-ink-400">{totalItems} {totalItems === 1 ? "item" : "items"} in your order</p>
+ </div>
+ <ShoppingBag className="h-5 w-5 shrink-0 text-primary" />
+ </div>
 
- <div className="mt-5 h-px bg-ink-100" />
+ <div className="p-5 sm:p-6">
 
  {/* Items */}
- <ul className="mt-5 max-h-[248px] space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+ <ul className="max-h-[248px] space-y-4 overflow-y-auto pr-1 custom-scrollbar">
  {cartItems.map((item) => (
  <li
  key={item.id || item.productId}
- className="flex items-center gap-3.5"
+ className="flex min-w-0 items-center gap-3"
  >
- <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink-50">
+ <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-ink-50 sm:h-14 sm:w-14">
  <img
  src={item.image || item.imageUrl}
  alt={item.name}
@@ -661,24 +693,24 @@ export default function CheckoutPage() {
  />
  </span>
  <div className="min-w-0 flex-1">
- <p className="truncate text-[13.5px] font-medium text-ink-900">
+ <p className="line-clamp-2 text-[12.5px] font-medium leading-snug text-ink-900 sm:text-[13px]">
  {item.name}
  </p>
- <p className="mt-0.5 text-[12px] text-ink-400">
+ <p className="mt-1 text-[11.5px] text-ink-400">
  Qty {item.quantity}
  </p>
  </div>
- <p className="shrink-0 text-[13.5px] font-semibold tabular-nums text-ink-900">
+ <p className="shrink-0 text-right text-[12.5px] font-semibold tabular-nums text-ink-900 sm:text-[13px]">
  ₹{(item.price * item.quantity).toLocaleString()}
  </p>
  </li>
  ))}
  </ul>
 
- <div className="mt-6 h-px bg-ink-100" />
+ <div className="my-5 h-px bg-ink-100" />
 
  {/* Totals */}
- <dl className="mt-5 space-y-3 text-[13.5px]">
+ <dl className="space-y-3 text-[13px]">
  <div className="flex items-center justify-between">
  <dt className="text-ink-500">
  Subtotal ({totalItems} {totalItems !== 1 ? "items" : "item"})
@@ -693,13 +725,13 @@ export default function CheckoutPage() {
  </div>
  </dl>
 
- <div className="mt-5 h-px bg-ink-100" />
+ <div className="my-5 h-px bg-ink-100" />
 
  <div className="mt-5 flex items-baseline justify-between">
- <span className="font-display text-[15px] font-bold text-ink-900">
+ <span className="font-display text-[15px] font-semibold text-ink-700">
  Total
  </span>
- <span className="font-display text-[26px] font-bold tabular-nums text-ink-900">
+ <span className="font-display text-[25px] font-bold tabular-nums text-ink-900 sm:text-[28px]">
  ₹{total.toLocaleString()}
  </span>
  </div>
@@ -724,7 +756,7 @@ export default function CheckoutPage() {
  if (!submitting && viewMode !== "form")
  e.currentTarget.style.backgroundColor = BNC_RED;
  }}
- className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-[15px] font-semibold text-white transition-all duration-200 hover:-translate-y-px hover:shadow-[0_10px_28px_-10px_rgba(200,16,46,0.55)] focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 disabled:shadow-none"
+ className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-[14px] font-semibold text-white transition-all duration-200 hover:-translate-y-px hover:shadow-[0_10px_28px_-10px_rgba(200,16,46,0.4)] focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 disabled:shadow-none sm:text-[15px]"
  >
  {submitting ? (
  <>
@@ -746,10 +778,11 @@ export default function CheckoutPage() {
  )}
  </button>
 
- <p className="mt-4 flex items-center justify-center gap-1.5 text-[11.5px] text-ink-400">
+ <p className="mt-4 flex items-start justify-center gap-1.5 text-center text-[11px] leading-relaxed text-ink-400">
  <LockKeyhole className="h-3 w-3" />
  Encrypted and processed by Razorpay
  </p>
+ </div>
  </div>
  </aside>
  </form>

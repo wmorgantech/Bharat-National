@@ -50,10 +50,10 @@ export default function Footer() {
 
   return (
     <footer className="bg-ink-900 text-white/70">
-      <div className="section-shell py-10 md:py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-[1.5fr,1fr,1fr,1fr] lg:gap-10">
+      <div className="section-shell py-6 sm:py-10 md:py-12">
+        <div className="footer-grid grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-6 sm:gap-y-6 md:grid-cols-2 md:gap-8 lg:grid-cols-[1.5fr,1fr,1fr,1fr] lg:gap-10">
           {/* ===== Brand + contact ===== */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-white">
                 <img src={Logo} alt="" aria-hidden="true" className="h-[85%] w-[85%] object-contain" />
@@ -68,7 +68,7 @@ export default function Footer() {
               </span>
             </div>
 
-            <ul className="mt-5 space-y-2.5 text-[13px]">
+            <ul className="mt-4 space-y-2 text-[13px] sm:mt-5 sm:space-y-2.5">
               <li className="flex gap-2.5">
                 <MapPin size={14} className="mt-0.5 shrink-0 text-primary-light" />
                 <span className="leading-relaxed text-white/65">
@@ -108,7 +108,7 @@ export default function Footer() {
           {/* ===== Quick links ===== */}
           <div>
             <h3 className={headingClass}>Quick Links</h3>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-2 space-y-2 sm:mt-4 sm:space-y-2.5">
               {QUICK_LINKS.map((item) => (
                 <li key={item.name}>
                   <Link to={item.path} className={linkClass}>
@@ -122,7 +122,7 @@ export default function Footer() {
           {/* ===== Services ===== */}
           <div>
             <h3 className={headingClass}>Services</h3>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-2 space-y-2 sm:mt-4 sm:space-y-2.5">
               {SERVICES.map((service) => (
                 <li key={service}>
                   <Link to="/services" className={linkClass}>
@@ -136,7 +136,7 @@ export default function Footer() {
           {/* ===== Support + social ===== */}
           <div>
             <h3 className={headingClass}>Support</h3>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-2 space-y-2 sm:mt-4 sm:space-y-2.5">
               {SUPPORT.map((item) => (
                 <li key={item.name}>
                   <Link to={item.path} className={linkClass}>
@@ -146,7 +146,7 @@ export default function Footer() {
               ))}
             </ul>
 
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-4 flex items-center gap-2 sm:mt-5">
               {SOCIALS.map((social) =>
                 social.href ? (
                   <a
@@ -174,7 +174,7 @@ export default function Footer() {
         </div>
 
         {/* ===== Bottom bar ===== */}
-        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row">
+        <div className="mt-5 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-4 sm:mt-8 sm:flex-row sm:pt-5">
           <p className="text-center text-[12px] font-medium text-white/50 sm:text-left">
             © {currentYear} Bharat National Computers. All Rights Reserved.
           </p>

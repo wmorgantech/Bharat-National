@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronRight,
   LayoutGrid,
   Package,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 import { getActiveCategories } from "../api/Category";
+import { getActiveProducts } from "../api/Product";
 import { auth } from "../api/auth";
 import { loadCart } from "../utils/CartStorage";
 
@@ -46,13 +48,20 @@ const logoutUser = () => {
   void auth.logout();
 };
 
+const getProductBrand = (product) => product.brand?.name || product.brandName || product.brand || "";
+const getProductCategory = (product) => product.category?.name || product.categoryName || product.category || "";
+const getProductImage = (product) =>
+  (Array.isArray(product.imageUrl) ? product.imageUrl[0] : product.imageUrl) || product.image;
+
 export default function Header() {
   const [openNav, setOpenNav] = useState(false); // ✅ Mobile drawer
   const [openCategoryList, setOpenCategoryList] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [catLoading, setCatLoading] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [catalogueProducts, setCatalogueProducts] = useState([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [user, setUser] = useState(() => getStoredUser());
 
   const [cartCount, setCartCount] = useState(0);
@@ -62,7 +71,10 @@ export default function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const catRef = useRef(null);
+  const desktopCategoryRef = useRef(null);
+  const mobileCategoryRef = useRef(null);
+  const desktopSearchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   // The header floats transparently over a dark hero, but must become a solid
   // surface on pages that start with light content.
@@ -94,6 +106,21 @@ export default function Header() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    getActiveProducts()
+      .then((res) => {
+        const list = res?.data ?? res;
+        if (!cancelled) setCatalogueProducts(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => console.error("Failed to load products for search:", err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Refresh user when storage changes
   useEffect(() => {
     const refresh = () => setUser(getStoredUser());
@@ -114,17 +141,32 @@ export default function Header() {
     return () => document.removeEventListener("click", handler);
   }, [profileOpen]);
 
-  // Close the categories dropdown when clicking outside it.
+  // Close the category dropdown when clicking outside either responsive version.
   useEffect(() => {
     if (!openCategoryList) return;
-    const handler = (e) => {
-      if (catRef.current && !catRef.current.contains(e.target)) {
+    const handler = (event) => {
+      const insideMenu = [desktopCategoryRef, mobileCategoryRef].some(
+        (ref) => ref.current?.contains(event.target),
+      );
+      if (!insideMenu) {
         setOpenCategoryList(false);
       }
     };
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, [openCategoryList]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handler = (event) => {
+      const insideSearch = [desktopSearchRef, mobileSearchRef].some(
+        (ref) => ref.current?.contains(event.target),
+      );
+      if (!insideSearch) setSearchOpen(false);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [searchOpen]);
 
   // Cart count sync
   useEffect(() => {
@@ -167,6 +209,7 @@ export default function Header() {
   const closeAllMenus = () => {
     setOpenNav(false);
     setOpenCategoryList(false);
+    setSearchOpen(false);
   };
 
   const handleLogout = () => {
@@ -186,7 +229,10 @@ export default function Header() {
 
   const userInitial = user?.name?.trim()?.[0]?.toUpperCase() || "U";
 
-  const toggleCategoryList = () => setOpenCategoryList((p) => !p);
+  const toggleCategoryList = () => {
+    setSearchOpen(false);
+    setOpenCategoryList((current) => !current);
+  };
 
   const handleCategoryClick = (cat) => {
     navigate(`/category/${cat.id}/products`, { state: { category: cat } });
@@ -204,6 +250,116 @@ export default function Header() {
   const actionBtn = solid
     ? "border-ink-200 text-ink-900 hover:border-primary hover:text-primary"
     : "border-ink-200 text-ink-900 hover:border-primary-light hover:text-primary-light";
+
+  const normalizedQuery = productSearch.trim().toLowerCase();
+  const searchResults = normalizedQuery
+    ? catalogueProducts
+        .filter((product) =>
+          [product.name, getProductBrand(product), getProductCategory(product)]
+            .some((value) => String(value || "").toLowerCase().includes(normalizedQuery)),
+        )
+        .slice(0, 6)
+    : [];
+
+  const selectProduct = (product) => {
+    navigate(`/product/${product.id}`);
+    setProductSearch("");
+    closeAllMenus();
+  };
+
+  const renderProductSearch = (ref, mobile = false) => (
+    <div
+      ref={ref}
+      className={mobile ? "relative mb-5" : "relative hidden min-w-0 w-[248px] shrink-0 md:block lg:w-[288px] xl:w-[250px]"}
+    >
+      <div className={`relative flex items-center rounded-lg border border-ink-200 bg-white transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 ${mobile ? "h-11" : "h-10"}`}>
+        <Search className="pointer-events-none absolute left-3 h-4 w-4 text-ink-400" />
+        <input
+          type="search"
+          value={productSearch}
+          onChange={(event) => {
+            setProductSearch(event.target.value);
+            setSearchOpen(true);
+          }}
+          onFocus={() => setSearchOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSearchOpen(false);
+            if (event.key === "Enter" && searchResults[0]) selectProduct(searchResults[0]);
+          }}
+          autoComplete="off"
+          role="combobox"
+          aria-label="Search products"
+          aria-autocomplete="list"
+          aria-expanded={Boolean(searchOpen && normalizedQuery)}
+          aria-controls={mobile ? "mobile-product-results" : "desktop-product-results"}
+          placeholder="Search products, brands..."
+          className="h-full min-w-0 w-full bg-transparent pl-10 pr-9 text-[13px] text-ink-900 outline-none placeholder:text-ink-400"
+        />
+        {productSearch && (
+          <button
+            type="button"
+            aria-label="Clear product search"
+            onClick={() => {
+              setProductSearch("");
+              setSearchOpen(true);
+            }}
+            className="absolute right-2 grid h-7 w-7 place-items-center rounded-md text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {searchOpen && normalizedQuery && (
+        <div
+          id={mobile ? "mobile-product-results" : "desktop-product-results"}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-[130] mt-2 max-h-80 overflow-y-auto rounded-xl border border-ink-200 bg-white p-1.5 shadow-[0_16px_36px_rgba(15,23,42,0.16)]"
+        >
+          {searchResults.length ? (
+            searchResults.map((product) => {
+              const image = getProductImage(product);
+              const price = Number(product.price) || 0;
+
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  onClick={() => selectProduct(product)}
+                  className="flex w-full min-w-0 items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-primary-50"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-ink-100 bg-ink-50 text-primary">
+                    {image ? (
+                      <img src={image} alt="" className="h-full w-full object-contain p-1" />
+                    ) : (
+                      <Package size={17} />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12px] font-semibold text-ink-900">{product.name}</span>
+                    <span className="mt-0.5 block truncate text-[10px] text-ink-500">
+                      {[getProductBrand(product), getProductCategory(product)].filter(Boolean).join(" · ") || "Product"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] font-semibold text-ink-700">
+                    {price.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-ink-400" />
+                </button>
+              );
+            })
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-3 text-[12px] text-ink-500">
+              <Package size={16} className="text-ink-400" />
+              No matching products found.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-[100] w-full">
@@ -299,7 +455,7 @@ export default function Header() {
           </Link>
 
           {/* ---- Desktop nav ---- */}
-          <nav className="hidden lg:flex items-center gap-1 whitespace-nowrap shrink-0">
+          <nav className="hidden xl:flex items-center gap-1 whitespace-nowrap shrink-0">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
@@ -335,63 +491,12 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* ---- Catalogue search (compact) ----
-              Behaviour is unchanged: picking a category navigates to that
-              category's products, and Browse goes to the full catalogue. Only
-              the presentation is new - a fixed medium width instead of the
-              full-width pill that used to dominate the bar. The chevron sits
-              in the flow rather than at a hardcoded offset, so it stays put
-              whatever the Browse label measures. */}
-          <div className="hidden md:block shrink-0 w-[248px] lg:w-[288px]" ref={catRef}>
-            <div className="group relative flex h-10 items-stretch overflow-hidden rounded-lg border border-ink-200 bg-white transition-colors duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-              <span className="pointer-events-none grid place-items-center pl-3 pr-1.5 text-ink-400">
-                <Search size={15} />
-              </span>
-
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedCategoryId(id);
-                  if (!id) return;
-
-                  const cat = categories.find((c) => String(c.id) === String(id));
-                  navigate(`/category/${id}/products`, {
-                    state: { category: cat },
-                  });
-                  closeAllMenus();
-                }}
-                aria-label="Search products by category"
-                className="h-full min-w-0 flex-1 cursor-pointer appearance-none bg-transparent pr-5 text-[13px] text-ink-900 outline-none"
-              >
-                <option value="">Search products…</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-
-              <ChevronDown
-                size={14}
-                aria-hidden="true"
-                className="pointer-events-none -ml-4 mr-2 self-center text-ink-400"
-              />
-
-              <button
-                type="button"
-                onClick={() => navigate("/products")}
-                className="shrink-0 bg-primary px-3.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-primary-dark"
-              >
-                Browse
-              </button>
-            </div>
-          </div>
+          {renderProductSearch(desktopSearchRef)}
 
           {/* ---- Actions ---- */}
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {/* Categories (desktop) */}
-            <div className="relative hidden lg:block">
+            <div className="relative hidden xl:block" ref={desktopCategoryRef}>
               <button
                 type="button"
                 onClick={toggleCategoryList}
@@ -515,7 +620,7 @@ export default function Header() {
               type="button"
               onClick={() => setOpenNav(true)}
               aria-label="Open menu"
-              className={`lg:hidden grid place-items-center h-10 w-10 rounded-xl border transition-colors ${actionBtn}`}
+              className={`xl:hidden grid place-items-center h-10 w-10 rounded-xl border transition-colors ${actionBtn}`}
             >
               <Menu size={17} />
             </button>
@@ -525,7 +630,7 @@ export default function Header() {
 
       {/* ================= MOBILE DRAWER ================= */}
       {openNav && (
-        <div className="fixed inset-0 z-[120] lg:hidden">
+        <div className="fixed inset-0 z-[120] xl:hidden">
           <div
             className="absolute inset-0 bg-ink-900/30 motion-safe:animate-[fadeIn_200ms_ease-out_both]"
             onClick={closeAllMenus}
@@ -558,6 +663,8 @@ export default function Header() {
             </div>
 
             <div className="relative p-5 overflow-y-auto flex-1">
+              {renderProductSearch(mobileSearchRef, true)}
+
               {/* Primary nav */}
               <nav className="flex flex-col gap-1">
                 {navLinks.map((link) => (
@@ -581,44 +688,46 @@ export default function Header() {
               </nav>
 
               {/* Categories */}
-              <button
-                type="button"
-                onClick={toggleCategoryList}
-                aria-expanded={openCategoryList}
-                className="mt-5 w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-ink-200 text-[13px] font-semibold text-ink-900 hover:bg-white transition-colors"
-              >
-                <span className="flex items-center gap-2.5">
-                  <LayoutGrid size={16} className="text-primary-light" />
-                  Shop by category
-                </span>
-                <ChevronDown
-                  size={15}
-                  className={`transition-transform duration-200 ${openCategoryList ? "rotate-180" : ""}`}
-                />
-              </button>
+              <div ref={mobileCategoryRef}>
+                <button
+                  type="button"
+                  onClick={toggleCategoryList}
+                  aria-expanded={openCategoryList}
+                  className="mt-5 w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-ink-200 text-[13px] font-semibold text-ink-900 hover:bg-white transition-colors"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <LayoutGrid size={16} className="text-primary-light" />
+                    Shop by category
+                  </span>
+                  <ChevronDown
+                    size={15}
+                    className={`transition-transform duration-200 ${openCategoryList ? "rotate-180" : ""}`}
+                  />
+                </button>
 
-              {openCategoryList && (
-                <div className="mt-2 rounded-xl border border-ink-200 overflow-hidden bg-white">
-                  <div className="max-h-56 overflow-y-auto">
-                    {catLoading ? (
-                      <p className="px-4 py-3 text-sm text-ink-500">Loading…</p>
-                    ) : categories.length === 0 ? (
-                      <p className="px-4 py-3 text-sm text-ink-500">No categories.</p>
-                    ) : (
-                      categories.map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          className="w-full text-left px-4 py-3 text-sm font-medium text-ink-700 hover:bg-primary/15 hover:text-ink-900 transition-colors"
-                          onClick={() => handleCategoryClick(cat)}
-                        >
-                          {cat.name}
-                        </button>
-                      ))
-                    )}
+                {openCategoryList && (
+                  <div className="mt-2 rounded-xl border border-ink-200 overflow-hidden bg-white">
+                    <div className="max-h-56 overflow-y-auto">
+                      {catLoading ? (
+                        <p className="px-4 py-3 text-sm text-ink-500">Loading…</p>
+                      ) : categories.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-ink-500">No categories.</p>
+                      ) : (
+                        categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            className="w-full text-left px-4 py-3 text-sm font-medium text-ink-700 hover:bg-primary/15 hover:text-ink-900 transition-colors"
+                            onClick={() => handleCategoryClick(cat)}
+                          >
+                            {cat.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Account */}
               <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-4">

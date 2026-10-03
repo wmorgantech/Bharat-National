@@ -1,5 +1,5 @@
 // src/api/Product.js
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl } from "./http";
 
 /**
  * Common response handler
@@ -27,7 +27,7 @@ async function handleResponse(response) {
  * GET /product/active
  */
 export async function getActiveProducts() {
-  const res = await fetch(`${API_URL}/product/active`, {
+  const res = await fetch(`${apiBaseUrl()}/product/active`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -39,7 +39,7 @@ export async function getActiveProducts() {
  * GET /product/limit
  */
 export async function getLimitedProducts() {
-  const res = await fetch(`${API_URL}/product/limit`, {
+  const res = await fetch(`${apiBaseUrl()}/product/limit`, {
     method: "GET",
   });
 
@@ -52,14 +52,14 @@ export async function getLimitedProducts() {
  * GET /product/:id
  */
 export async function getProductById(id) {
-  const res = await fetch(`${API_URL}/product/${id}`, {
+  const res = await fetch(`${apiBaseUrl()}/product/${id}`, {
     method: "GET",
   });
   return handleResponse(res);
 }
 
 export async function getProductsByCategory(categoryId) {
-  const res = await fetch(`${API_URL}/product/category/${categoryId}`, {
+  const res = await fetch(`${apiBaseUrl()}/product/category/${categoryId}`, {
     method: "GET",
   });
   return handleResponse(res);

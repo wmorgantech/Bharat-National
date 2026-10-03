@@ -69,7 +69,9 @@ export class RefreshTokenService {
 
     // Never let the sliding window outlive the family ceiling.
     const expiresAt =
-      slidingExpiresAt > absoluteExpiresAt ? absoluteExpiresAt : slidingExpiresAt;
+      slidingExpiresAt > absoluteExpiresAt
+        ? absoluteExpiresAt
+        : slidingExpiresAt;
 
     const familyId = family?.familyId ?? randomUUID();
 
@@ -205,7 +207,9 @@ export class RefreshTokenService {
    */
   async cleanupExpired(revokedRetentionDays = 30): Promise<number> {
     const now = new Date();
-    const revokedCutoff = new Date(now.getTime() - revokedRetentionDays * DAY_MS);
+    const revokedCutoff = new Date(
+      now.getTime() - revokedRetentionDays * DAY_MS,
+    );
 
     const result = await this.prisma.refreshToken.deleteMany({
       where: {

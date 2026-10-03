@@ -3,7 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   ConflictException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -35,7 +35,7 @@ export class AdminService {
     const existingAdmin = await this.prisma.admin.findUnique({
       where: { email },
     });
-    
+
     if (existingAdmin) {
       throw new ConflictException('Admin with this email already exists');
     }
@@ -85,17 +85,19 @@ export class AdminService {
     const { email, password } = loginAdminDto;
 
     // Find admin by email
-    const admin = await this.prisma.admin.findUnique({ 
-      where: { email } 
+    const admin = await this.prisma.admin.findUnique({
+      where: { email },
     });
-    
+
     if (!admin) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
     // Check if admin is active
     if (!admin.isActive) {
-      throw new ForbiddenException('Your account has been deactivated. Please contact an administrator.');
+      throw new ForbiddenException(
+        'Your account has been deactivated. Please contact an administrator.',
+      );
     }
 
     // Verify password
@@ -177,8 +179,4 @@ export class AdminService {
 
     return { success: true, message: 'Logged out of all sessions', revoked };
   }
-
- 
-
-
 }

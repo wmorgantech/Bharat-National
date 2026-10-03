@@ -1,5 +1,9 @@
 import { CookieOptions, Response } from 'express';
-import { getCookieSameSite, getRefreshAbsoluteTtlDays, isProduction } from '../config/env';
+import {
+  getCookieSameSite,
+  getRefreshAbsoluteTtlDays,
+  isProduction,
+} from '../config/env';
 
 /**
  * Refresh tokens live in HttpOnly cookies so page scripts cannot read them.

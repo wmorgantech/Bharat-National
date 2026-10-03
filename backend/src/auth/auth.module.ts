@@ -8,7 +8,6 @@ import { JwtStrategy } from './jwt.strategy';
 import { ACCESS_TOKEN_TTL, getJwtSecret } from '../config/env';
 import { RefreshTokenModule } from './refresh-token.module';
 
-
 @Module({
   imports: [
     PassportModule,

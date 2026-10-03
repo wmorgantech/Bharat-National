@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsBoolean,
   IsString,
-  IsNotEmpty
+  IsNotEmpty,
 } from 'class-validator';
 
 /**
@@ -50,8 +50,6 @@ export class CreateAdminDto {
   isActive?: boolean;
 }
 
-
-
 export class LoginAdminDto {
   @ApiProperty({
     example: 'admin@example.com',
@@ -73,5 +71,3 @@ export class LoginAdminDto {
   @IsNotEmpty({ message: 'Password is required' })
   password!: string;
 }
-
-

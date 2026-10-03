@@ -20,4 +20,3 @@ export class SignupDto {
   // NOTE: `role` is deliberately not accepted here. Public signup always
   // creates a USER; admin accounts are issued only from the Admin module.
 }
-

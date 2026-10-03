@@ -26,7 +26,6 @@ import {
   setAdminRefreshCookie,
 } from '../auth/refresh-cookie';
 
-
 @ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
@@ -74,7 +73,10 @@ export class AdminController {
     @Body() loginAdminDto: LoginAdminDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.withRefreshCookie(res, await this.adminService.login(loginAdminDto));
+    return this.withRefreshCookie(
+      res,
+      await this.adminService.login(loginAdminDto),
+    );
   }
 
   @Public()
@@ -116,5 +118,4 @@ export class AdminController {
 
     return this.adminService.logoutAll(req.user.userId);
   }
-
 }

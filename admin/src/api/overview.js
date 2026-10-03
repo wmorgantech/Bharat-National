@@ -1,7 +1,5 @@
 // src/api/overview.js
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 async function handleResponse(response) {
   let data;
@@ -25,7 +23,7 @@ async function handleResponse(response) {
  * GET /overview/all
  */
 export async function getOverviewData() {
-  const res = await apiFetch(`${API_URL}/overview/all`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/all`, {
     method: "GET",
   });
   const result = await handleResponse(res);
@@ -37,7 +35,7 @@ export async function getOverviewData() {
  * GET /overview/stats
  */
 export async function getOverviewStats() {
-  const res = await apiFetch(`${API_URL}/overview/stats`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/stats`, {
     method: "GET",
   });
   const result = await handleResponse(res);
@@ -49,7 +47,7 @@ export async function getOverviewStats() {
  * GET /overview/activity
  */
 export async function getRecentActivity() {
-  const res = await apiFetch(`${API_URL}/overview/activity`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/activity`, {
     method: "GET",
   });
   const result = await handleResponse(res);
@@ -61,7 +59,7 @@ export async function getRecentActivity() {
  * GET /overview/top-performers
  */
 export async function getTopPerformers() {
-  const res = await apiFetch(`${API_URL}/overview/top-performers`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/top-performers`, {
     method: "GET",
   });
   const result = await handleResponse(res);
@@ -73,7 +71,7 @@ export async function getTopPerformers() {
  * GET /overview/revenue
  */
 export async function getTotalRevenue() {
-  const res = await apiFetch(`${API_URL}/overview/revenue`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/revenue`, {
     method: "GET",
   });
   const result = await handleResponse(res);
@@ -85,7 +83,7 @@ export async function getTotalRevenue() {
  * GET /overview/chart
  */
 export async function getChartData() {
-  const res = await apiFetch(`${API_URL}/overview/chart`, {
+  const res = await apiFetch(`${apiBaseUrl()}/overview/chart`, {
     method: "GET",
   });
   const result = await handleResponse(res);

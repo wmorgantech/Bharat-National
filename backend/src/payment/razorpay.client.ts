@@ -33,4 +33,8 @@ export class RazorpayClient {
   createOrder(request: RazorpayOrderRequest) {
     return this.getClient().orders.create(request);
   }
+
+  fetchPayment(paymentId: string) {
+    return this.getClient().payments.fetch(paymentId);
+  }
 }

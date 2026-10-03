@@ -15,18 +15,18 @@ export class DashboardService {
     const orders = await this.prisma.order.findMany({
       where: {
         status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED']
+          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
         },
         createdAt: {
-          gte: threeDaysAgo
-        }
-      }
+          gte: threeDaysAgo,
+        },
+      },
     });
 
     // Group by date
     const dailyRevenue: Record<string, number> = {};
     const today = new Date();
-    
+
     for (let i = 0; i < 3; i++) {
       const date = new Date();
       date.setDate(today.getDate() - i);
@@ -34,19 +34,22 @@ export class DashboardService {
       dailyRevenue[dateKey] = 0;
     }
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const dateKey = order.createdAt.toISOString().split('T')[0];
       if (dailyRevenue[dateKey] !== undefined) {
         dailyRevenue[dateKey] += order.totalAmount;
       }
     });
 
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + order.totalAmount,
+      0,
+    );
 
     return {
       totalRevenue,
       dailyRevenue,
-      orderCount: orders.length
+      orderCount: orders.length,
     };
   }
 
@@ -59,31 +62,40 @@ export class DashboardService {
     const orders = await this.prisma.order.findMany({
       where: {
         status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED']
+          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
         },
         createdAt: {
-          gte: thirtyDaysAgo
-        }
+          gte: thirtyDaysAgo,
+        },
       },
       include: {
         orderItem: true,
-        user: true
-      }
+        user: true,
+      },
     });
 
     // Calculate totals
     const totalOrders = orders.length;
     const totalQuantity = orders.reduce((sum, order) => {
-      const qty = order.orderItem.reduce((itemSum, item) => itemSum + item.quantity, 0);
+      const qty = order.orderItem.reduce(
+        (itemSum, item) => itemSum + item.quantity,
+        0,
+      );
       return sum + qty;
     }, 0);
-    const uniqueCustomers = new Set(orders.map(order => order.userId)).size;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const uniqueCustomers = new Set(orders.map((order) => order.userId)).size;
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + order.totalAmount,
+      0,
+    );
 
     // Prepare daily stats for chart (last 30 days)
-    const dailyStats: Record<string, { orders: number; revenue: number; quantity: number }> = {};
+    const dailyStats: Record<
+      string,
+      { orders: number; revenue: number; quantity: number }
+    > = {};
     const today = new Date();
-    
+
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(today.getDate() - i);
@@ -91,27 +103,33 @@ export class DashboardService {
       dailyStats[dateKey] = {
         orders: 0,
         revenue: 0,
-        quantity: 0
+        quantity: 0,
       };
     }
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const dateKey = order.createdAt.toISOString().split('T')[0];
       if (dailyStats[dateKey]) {
         dailyStats[dateKey].orders++;
         dailyStats[dateKey].revenue += order.totalAmount;
-        const qty = order.orderItem.reduce((sum, item) => sum + item.quantity, 0);
+        const qty = order.orderItem.reduce(
+          (sum, item) => sum + item.quantity,
+          0,
+        );
         dailyStats[dateKey].quantity += qty;
       }
     });
 
     // Convert to array for frontend
     const chartData = Object.entries(dailyStats).map(([date, stats]) => ({
-      date: new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+      date: new Date(date).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+      }),
       fullDate: date,
       orders: stats.orders,
       revenue: stats.revenue,
-      quantity: stats.quantity
+      quantity: stats.quantity,
     }));
 
     return {
@@ -119,7 +137,7 @@ export class DashboardService {
       totalQuantity,
       uniqueCustomers,
       totalRevenue,
-      chartData
+      chartData,
     };
   }
 
@@ -128,26 +146,26 @@ export class DashboardService {
     const orders = await this.prisma.order.findMany({
       take: 10,
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       include: {
         user: {
           select: {
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         orderItem: {
           take: 1,
           select: {
             productName: true,
-            quantity: true
-          }
-        }
-      }
+            quantity: true,
+          },
+        },
+      },
     });
 
-    return orders.map(order => ({
+    return orders.map((order) => ({
       id: order.id,
       customerName: order.user?.name || order.fullName || 'Guest',
       email: order.user?.email || order.email || 'N/A',
@@ -156,7 +174,7 @@ export class DashboardService {
       date: order.createdAt,
       items: order.orderItem.length,
       quantity: order.orderItem.reduce((sum, item) => sum + item.quantity, 0),
-      productName: order.orderItem[0]?.productName || 'Multiple Items'
+      productName: order.orderItem[0]?.productName || 'Multiple Items',
     }));
   }
 
@@ -170,11 +188,11 @@ export class DashboardService {
     const orders = await this.prisma.order.findMany({
       where: {
         status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED']
+          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
         },
         createdAt: {
-          gte: thirtyDaysAgo
-        }
+          gte: thirtyDaysAgo,
+        },
       },
       select: {
         id: true,
@@ -183,24 +201,32 @@ export class DashboardService {
             productId: true,
             productName: true,
             quantity: true,
-            unitPrice: true
-          }
-        }
-      }
+            unitPrice: true,
+          },
+        },
+      },
     });
 
     // Aggregate product sales
-    const productSales: Record<string, { productId: number; productName: string; totalQuantity: number; revenue: number }> = {};
-    
-    orders.forEach(order => {
-      order.orderItem.forEach(item => {
+    const productSales: Record<
+      string,
+      {
+        productId: number;
+        productName: string;
+        totalQuantity: number;
+        revenue: number;
+      }
+    > = {};
+
+    orders.forEach((order) => {
+      order.orderItem.forEach((item) => {
         const key = item.productId.toString();
         if (!productSales[key]) {
           productSales[key] = {
             productId: item.productId,
             productName: item.productName,
             totalQuantity: 0,
-            revenue: 0
+            revenue: 0,
           };
         }
         productSales[key].totalQuantity += item.quantity;
@@ -214,47 +240,50 @@ export class DashboardService {
       .slice(0, limit);
 
     // Get product images
-    const productIds = topProducts.map(p => p.productId);
+    const productIds = topProducts.map((p) => p.productId);
     const products = await this.prisma.product.findMany({
       where: {
-        id: { in: productIds }
+        id: { in: productIds },
       },
       select: {
         id: true,
-        imageUrl: true
-      }
+        imageUrl: true,
+      },
     });
 
-    return topProducts.map(product => {
-      const productData = products.find(p => p.id === product.productId);
-      const imageUrl = productData?.imageUrl 
-        ? (Array.isArray(productData.imageUrl) ? productData.imageUrl[0] : productData.imageUrl)
+    return topProducts.map((product) => {
+      const productData = products.find((p) => p.id === product.productId);
+      const imageUrl = productData?.imageUrl
+        ? Array.isArray(productData.imageUrl)
+          ? productData.imageUrl[0]
+          : productData.imageUrl
         : null;
-      
+
       return {
         productId: product.productId,
         productName: product.productName,
         totalQuantity: product.totalQuantity,
         revenue: product.revenue,
-        imageUrl
+        imageUrl,
       };
     });
   }
 
   // Get all dashboard data
   async getDashboardData() {
-    const [revenue3Days, stats30Days, latestOrders, topProducts] = await Promise.all([
-      this.getLast3DaysRevenue(),
-      this.getLast30DaysStats(),
-      this.getLatestOrders(),
-      this.getTopSellingProducts(5)
-    ]);
+    const [revenue3Days, stats30Days, latestOrders, topProducts] =
+      await Promise.all([
+        this.getLast3DaysRevenue(),
+        this.getLast30DaysStats(),
+        this.getLatestOrders(),
+        this.getTopSellingProducts(5),
+      ]);
 
     return {
       revenue3Days,
       stats30Days,
       latestOrders,
-      topProducts
+      topProducts,
     };
   }
 }

@@ -1,4 +1,3 @@
-
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -11,7 +10,6 @@ export class CreateBrandDto {
     example: 'Leading global electronics brand',
   })
   @IsString()
-  
   description: string;
 
   @ApiProperty({

@@ -3,7 +3,6 @@ import { CreateContactDto } from './dto/create-contact.dto';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-
 @Injectable()
 export class ContactService {
   private readonly logger = new Logger(ContactService.name);
@@ -94,6 +93,3 @@ export class ContactService {
     });
   }
 }
-
-
-

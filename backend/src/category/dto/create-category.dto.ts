@@ -3,14 +3,13 @@ import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
-  @ApiProperty({ example: "SmartPhone" })
+  @ApiProperty({ example: 'SmartPhone' })
   @IsString()
   name: string;
 
   @ApiPropertyOptional({
     example: 'Latest Android Smartphone',
   })
-
   @IsString()
   description: string;
 

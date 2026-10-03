@@ -72,9 +72,67 @@ export function isProduction(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
+export function getCorsOrigins(): string[] {
+  const origins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (isProduction() && origins.length === 0) {
+    throw new Error('CORS_ORIGINS is required in production.');
+  }
+
+  return origins.map((origin) => {
+    let parsed: URL;
+    try {
+      parsed = new URL(origin);
+    } catch {
+      throw new Error('CORS_ORIGINS must contain absolute origin URLs.');
+    }
+
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== '/' ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      throw new Error(
+        'CORS_ORIGINS entries must be origins without paths or credentials.',
+      );
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    const isLocalHost =
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname === '[::1]';
+
+    if (isProduction() && (parsed.protocol !== 'https:' || isLocalHost)) {
+      throw new Error(
+        'Production CORS_ORIGINS entries must use HTTPS and public hostnames.',
+      );
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error('CORS_ORIGINS entries must use HTTP or HTTPS.');
+    }
+
+    return parsed.origin;
+  });
+}
+
 export function validateRazorpayKeySafety(): void {
   const keyId = process.env.RAZORPAY_KEY_ID?.trim();
   const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+
+  if (isProduction() && (!keyId || !keySecret)) {
+    throw new Error(
+      'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required in production.',
+    );
+  }
 
   if (!keyId && !keySecret) return;
   if (!keyId || !keySecret) {
@@ -88,6 +146,12 @@ export function validateRazorpayKeySafety(): void {
     throw new Error(
       `RAZORPAY_KEY_ID must use a ${isProduction() ? 'live' : 'test'} Razorpay key in ${process.env.NODE_ENV ?? 'development'} environments.`,
     );
+  }
+}
+
+export function validateRazorpayWebhookSecret(): void {
+  if (isProduction()) {
+    requireEnv('RAZORPAY_WEBHOOK_SECRET');
   }
 }
 

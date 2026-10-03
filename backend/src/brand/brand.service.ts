@@ -39,7 +39,6 @@ export class BrandService {
   }
 
   async update(id: number, updateBrandDto: UpdateBrandDto) {
-  
     await this.findOne(id);
 
     const brand = await this.prisma.brand.update({

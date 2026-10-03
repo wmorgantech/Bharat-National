@@ -1,7 +1,5 @@
 // src/api/Brand.js
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 /**
  * Common response handler
@@ -28,7 +26,7 @@ async function handleResponse(response) {
  * GET /brand
  */
 export async function getBrands() {
-  const res = await apiFetch(`${API_URL}/brand`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -39,7 +37,7 @@ export async function getBrands() {
  * GET /brand/active
  */
 export async function getActiveBrands() {
-  const res = await apiFetch(`${API_URL}/brand/active`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand/active`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -50,7 +48,7 @@ export async function getActiveBrands() {
  * GET /brand/:id
  */
 export async function getBrandById(id) {
-  const res = await apiFetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand/${id}`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -67,7 +65,7 @@ export async function createBrand({
   description = "",
   isActive = true,
 }) {
-  const res = await apiFetch(`${API_URL}/brand`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand`, {
     method: "POST",
     body: JSON.stringify({
       name,
@@ -85,7 +83,7 @@ export async function createBrand({
  * PATCH /brand/:id
  */
 export async function updateBrand(id, data) {
-  const res = await apiFetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data), // e.g. { name, description, imageUrl, isActive }
   });
@@ -98,7 +96,7 @@ export async function updateBrand(id, data) {
  * DELETE /brand/:id
  */
 export async function deleteBrand(id) {
-  const res = await apiFetch(`${API_URL}/brand/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/brand/${id}`, {
     method: "DELETE",
   });
 

@@ -1,7 +1,5 @@
 // src/api/Order.js
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 /**
  * Common response handler
@@ -28,7 +26,7 @@ async function handleResponse(response) {
  * GET /order
  */
 export async function getOrders() {
-  const res = await apiFetch(`${API_URL}/order`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -39,7 +37,7 @@ export async function getOrders() {
  * GET /order/:id
  */
 export async function getOrderById(id) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -51,7 +49,7 @@ export async function getOrderById(id) {
  * body: { ...updates }
  */
 export async function updateOrder(id, updates) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "PATCH",
     body: JSON.stringify(updates),
   });
@@ -64,7 +62,7 @@ export async function updateOrder(id, updates) {
  * DELETE /order/:id
  */
 export async function deleteOrder(id) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "DELETE",
   });
 
@@ -73,7 +71,7 @@ export async function deleteOrder(id) {
 
 
 export async function getUserStats() {
-  const res = await apiFetch(`${API_URL}/user/stats`, {
+  const res = await apiFetch(`${apiBaseUrl()}/user/stats`, {
     method: "GET",
   });
 
@@ -81,7 +79,7 @@ export async function getUserStats() {
 }
 
 export async function getValidOrders() {
-  const res = await apiFetch(`${API_URL}/order/valid`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/valid`, {
     method: "GET",
   });
 
@@ -89,7 +87,7 @@ export async function getValidOrders() {
 }
 
 export async function getAllUsersWithOrderStats() {
-  const res = await apiFetch(`${API_URL}/order/users/all`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/users/all`, {
     method: "GET",
   });
   return handleResponse(res);

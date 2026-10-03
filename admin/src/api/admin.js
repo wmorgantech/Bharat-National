@@ -1,11 +1,9 @@
-import { apiFetch, clearSession } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, clearSession } from "./http";
 
 export async function loginAdmin(email, password) {
   try {
     // credentials are required for the server to set the HttpOnly refresh cookie
-    const response = await fetch(`${API_URL}/admin/login`, {
+    const response = await fetch(`${apiBaseUrl()}/admin/login`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -38,7 +36,7 @@ export async function loginAdmin(email, password) {
 /** Per-device logout: the server reads and clears the refresh cookie. */
 export async function logoutSession() {
   try {
-    await fetch(`${API_URL}/admin/logout`, {
+    await fetch(`${apiBaseUrl()}/admin/logout`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -54,7 +52,7 @@ export async function logoutSession() {
 export async function logoutAllSessions() {
   try {
     // credentials so the server can clear the refresh cookie on this device too
-    await apiFetch(`${API_URL}/admin/logout-all`, {
+    await apiFetch(`${apiBaseUrl()}/admin/logout-all`, {
       method: "POST",
       credentials: "include",
     });

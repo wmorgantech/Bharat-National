@@ -1,7 +1,5 @@
 
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 
 async function handleResponse(response) {
@@ -23,7 +21,7 @@ async function handleResponse(response) {
 
 
 export async function getProducts() {
-  const res = await apiFetch(`${API_URL}/product`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -32,14 +30,14 @@ export async function getProducts() {
 
 
 export async function getActiveProducts() {
-  const res = await apiFetch(`${API_URL}/product/active`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product/active`, {
     method: "GET",
   });
   return handleResponse(res);
 }
 
 export async function getProductById(id) {
-  const res = await apiFetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product/${id}`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -56,7 +54,7 @@ export async function createProduct({
   brandId,
   isActive = true,
 }) {
-  const res = await apiFetch(`${API_URL}/product`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product`, {
     method: "POST",
     body: JSON.stringify({
       name,
@@ -76,7 +74,7 @@ export async function createProduct({
 
 
 export async function updateProduct(id, data) {
-  const res = await apiFetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
@@ -85,7 +83,7 @@ export async function updateProduct(id, data) {
 }
 
 export async function deleteProduct(id) {
-  const res = await apiFetch(`${API_URL}/product/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/product/${id}`, {
     method: "DELETE",
   });
 

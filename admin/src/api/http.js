@@ -23,7 +23,38 @@ export function apiBaseUrl() {
     );
   }
 
-  return base.trim();
+  let parsed;
+  try {
+    parsed = new URL(base.trim());
+  } catch {
+    throw new Error('VITE_API_URL must be an absolute HTTP or HTTPS URL.');
+  }
+
+  if (
+    (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error('VITE_API_URL must be an absolute HTTP or HTTPS base URL.');
+  }
+
+  if (import.meta.env.PROD) {
+    const hostname = parsed.hostname.toLowerCase();
+    const isLocalHost =
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '[::1]';
+
+    if (parsed.protocol !== 'https:' || isLocalHost) {
+      throw new Error('Production VITE_API_URL must use HTTPS and a public hostname.');
+    }
+  }
+
+  return base.trim().replace(/\/+$/, '');
 }
 
 const ACCESS_TOKEN_KEY = "authToken";

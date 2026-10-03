@@ -1,7 +1,5 @@
 // src/api/contact.js
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 /**
  * Common response handler
@@ -32,7 +30,7 @@ async function handleResponse(response) {
  * so the array is unwrapped here and callers get a plain list.
  */
 export async function getContacts() {
-  const res = await apiFetch(`${API_URL}/contact`, {
+  const res = await apiFetch(`${apiBaseUrl()}/contact`, {
     method: "GET",
   });
 

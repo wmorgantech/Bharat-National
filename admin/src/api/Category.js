@@ -1,7 +1,5 @@
 
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 /**
  * Handle fetch responses in one place
@@ -28,7 +26,7 @@ async function handleResponse(response) {
  * GET /category
  */
 export async function getCategories() {
-  const res = await apiFetch(`${API_URL}/category`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -39,7 +37,7 @@ export async function getCategories() {
  * GET /category/active
  */
 export async function getActiveCategories() {
-  const res = await apiFetch(`${API_URL}/category/active`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category/active`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -50,7 +48,7 @@ export async function getActiveCategories() {
  * GET /category/:id
  */
 export async function getCategoryById(id) {
-  const res = await apiFetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category/${id}`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -62,7 +60,7 @@ export async function getCategoryById(id) {
  * body: { name, imageUrl, description?, isActive? }
  */
 export async function createCategory({ name, imageUrl, description = "", isActive = true }) {
-  const res = await apiFetch(`${API_URL}/category`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category`, {
     method: "POST",
     body: JSON.stringify({
       name,
@@ -80,7 +78,7 @@ export async function createCategory({ name, imageUrl, description = "", isActiv
  * PATCH /category/:id
  */
 export async function updateCategory(id, data) {
-  const res = await apiFetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data), // e.g. { name, description, isActive }
   });
@@ -93,7 +91,7 @@ export async function updateCategory(id, data) {
  * DELETE /category/:id
  */
 export async function deleteCategory(id) {
-  const res = await apiFetch(`${API_URL}/category/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/category/${id}`, {
     method: "DELETE",
   });
 

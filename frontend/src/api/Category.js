@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl } from "./http";
 
 /**
  * Handle fetch responses in one place
@@ -25,7 +25,7 @@ async function handleResponse(response) {
  * GET /category/active
  */
 export async function getActiveCategories() {
-  const res = await fetch(`${API_URL}/category/active`, {
+  const res = await fetch(`${apiBaseUrl()}/category/active`, {
     method: "GET",
   });
   return handleResponse(res);
@@ -36,7 +36,7 @@ export async function getActiveCategories() {
  * GET /category/:id
  */
 export async function getCategoryById(id) {
-  const res = await fetch(`${API_URL}/category/${id}`, {
+  const res = await fetch(`${apiBaseUrl()}/category/${id}`, {
     method: "GET",
   });
   return handleResponse(res);

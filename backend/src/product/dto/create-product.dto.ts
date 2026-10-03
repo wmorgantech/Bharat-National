@@ -17,7 +17,6 @@ export class CreateProductDto {
     example: 'Latest Apple smartphone with A18 chip',
   })
   @IsString()
-  
   description: string;
 
   @ApiProperty({
@@ -26,8 +25,6 @@ export class CreateProductDto {
   })
   @IsNumber()
   price: number;
-
- 
 
   @ApiProperty({
     example: [

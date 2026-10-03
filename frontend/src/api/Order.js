@@ -1,7 +1,5 @@
 
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 // Common response handler
 async function handleResponse(response) {
@@ -28,7 +26,7 @@ async function handleResponse(response) {
  * The server takes ownership from the auth token; any userId in the payload is ignored.
  */
 export async function createOrder(payload) {
-  const res = await apiFetch(`${API_URL}/order`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -41,7 +39,7 @@ export async function createOrder(payload) {
  * GET /order
  */
 export async function getOrders() {
-  const res = await apiFetch(`${API_URL}/order`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order`, {
     method: "GET",
   });
 
@@ -54,7 +52,7 @@ export async function getOrders() {
  * Server-side this is always scoped to the authenticated user.
  */
 export async function getOrdersByUser(userId) {
-  const res = await apiFetch(`${API_URL}/order?userId=${userId}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order?userId=${userId}`, {
     method: "GET",
   });
 
@@ -66,7 +64,7 @@ export async function getOrdersByUser(userId) {
  * GET /order/active
  */
 export async function getActiveOrders() {
-  const res = await apiFetch(`${API_URL}/order/active`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/active`, {
     method: "GET",
   });
 
@@ -78,7 +76,7 @@ export async function getActiveOrders() {
  * GET /order/:id
  */
 export async function getOrderById(id) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "GET",
   });
 
@@ -90,7 +88,7 @@ export async function getOrderById(id) {
  * PATCH /order/:id
  */
 export async function updateOrder(id, updates) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "PATCH",
     body: JSON.stringify(updates),
   });
@@ -103,7 +101,7 @@ export async function updateOrder(id, updates) {
  * DELETE /order/:id
  */
 export async function deleteOrder(id) {
-  const res = await apiFetch(`${API_URL}/order/${id}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/${id}`, {
     method: "DELETE",
   });
 
@@ -111,7 +109,7 @@ export async function deleteOrder(id) {
 }
 
 export const getLastOrderForUser = async (userId) => {
-  const res = await apiFetch(`${API_URL}/order/last?userId=${userId}`, {
+  const res = await apiFetch(`${apiBaseUrl()}/order/last?userId=${userId}`, {
     method: 'GET',
   });
   return handleResponse(res);

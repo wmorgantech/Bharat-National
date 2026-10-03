@@ -1,4 +1,3 @@
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -28,17 +27,17 @@ export class ProductService {
       orderBy: { createdAt: 'desc' },
     });
   }
-// Get latest 10 ACTIVE products
-async findLimit() {
-  return this.prisma.product.findMany({
-    where: {
-      isActive: true,        
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-    include: { category: true, brand: true },
-  });
-}
+  // Get latest 10 ACTIVE products
+  async findLimit() {
+    return this.prisma.product.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: { category: true, brand: true },
+    });
+  }
 
   findActive() {
     return this.prisma.product.findMany({

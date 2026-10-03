@@ -1,5 +1,5 @@
 
-  const BASE_URL  = import.meta.env.VITE_API_URL;
+import { apiBaseUrl } from "./http";
 
 
 async function parseResponse(res) {
@@ -18,7 +18,7 @@ async function parseResponse(res) {
 
 // ✅ POST /contact
 export async function createContact(payload) {
-  const res = await fetch(`${BASE_URL}/contact`, {
+  const res = await fetch(`${apiBaseUrl()}/contact`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -29,7 +29,7 @@ export async function createContact(payload) {
 
 
 export async function getContacts() {
-  const res = await fetch(`${BASE_URL}/contact`, {
+  const res = await fetch(`${apiBaseUrl()}/contact`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

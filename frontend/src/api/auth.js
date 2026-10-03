@@ -1,6 +1,4 @@
-import { clearSession, setTokens } from "./http";
-
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, clearSession, setTokens } from "./http";
 
 // helper
 const handleResponse = async (response) => {
@@ -17,7 +15,7 @@ export const auth = {
   // ✅ SIGNUP
   async signup(userData) {
     // credentials are required for the server to set the HttpOnly refresh cookie
-    const response = await fetch(`${VITE_API_URL}/auth/signup`, {
+    const response = await fetch(`${apiBaseUrl()}/auth/signup`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -29,7 +27,7 @@ export const auth = {
 
   // ✅ LOGIN (NEW)
   async login(mobilenumber, password) {
-    const response = await fetch(`${VITE_API_URL}/auth/login`, {
+    const response = await fetch(`${apiBaseUrl()}/auth/login`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -49,7 +47,7 @@ export const auth = {
   async logout() {
     try {
       // No body: the server reads and clears the refresh cookie.
-      await fetch(`${VITE_API_URL}/auth/logout`, {
+      await fetch(`${apiBaseUrl()}/auth/logout`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

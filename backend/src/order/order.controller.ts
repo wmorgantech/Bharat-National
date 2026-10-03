@@ -79,7 +79,9 @@ export class OrderController {
   @Get('all/with-users')
   @Roles('ADMIN')
   async findAllWithUsers(@Query('userId') userId?: string) {
-    return this.orderService.findAllWithUsers(userId ? Number(userId) : undefined);
+    return this.orderService.findAllWithUsers(
+      userId ? Number(userId) : undefined,
+    );
   }
 
   @Get(':id')

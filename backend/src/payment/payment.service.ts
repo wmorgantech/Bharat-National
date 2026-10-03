@@ -6,12 +6,13 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Prisma, Payment } from '@prisma/client';
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { AuthUser } from '../auth/jwt.strategy';
 import { requireEnv } from '../config/env';
-import { MailService } from '../mail/mail.service';
+import { OrderConfirmationOutboxService } from '../mail/order-confirmation-outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentOrderDto } from './dto/create-payment-order.dto';
 import { RazorpayClient } from './razorpay.client';
@@ -37,6 +38,25 @@ export interface VerifyPaymentResponse {
   paymentStatus: 'PAID';
 }
 
+interface RazorpayWebhookPayment {
+  id?: unknown;
+  order_id?: unknown;
+  amount?: unknown;
+  currency?: unknown;
+  status?: unknown;
+  method?: unknown;
+  error_code?: unknown;
+  error_description?: unknown;
+  error_reason?: unknown;
+}
+
+interface RazorpayWebhookPayload {
+  event?: unknown;
+  payload?: {
+    payment?: { entity?: RazorpayWebhookPayment };
+  };
+}
+
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
@@ -44,56 +64,15 @@ export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly razorpay: RazorpayClient,
-    private readonly mailService: MailService,
+    private readonly confirmationOutbox: OrderConfirmationOutboxService,
   ) {}
 
-  /**
-   * Best-effort order confirmation mail, sent after a payment is verified.
-   *
-   * Never throws. The payment is already committed and the customer has been
-   * charged, so nothing here may turn a successful payment into an error
-   * response - that would make the caller retry a payment that went through.
-   */
-  private async sendOrderConfirmation(orderId: number): Promise<void> {
+  private async dispatchOrderConfirmation(orderId: number): Promise<void> {
     try {
-      const order = await this.prisma.order.findUnique({
-        where: { id: orderId },
-        include: { orderItem: true },
-      });
-
-      if (!order) {
-        this.logger.warn(
-          `Order ${orderId} was paid but could not be loaded for the confirmation email.`,
-        );
-        return;
-      }
-
-      if (!order.email) {
-        this.logger.warn(
-          `Order #${order.id} was paid but has no email address; confirmation mail skipped.`,
-        );
-        return;
-      }
-
-      await this.mailService.sendOrderPlacedToUser({
-        id: order.id,
-        fullName: order.fullName,
-        email: order.email,
-        phone: order.phone,
-        place: order.place,
-        totalAmount: order.totalAmount,
-        createdAt: order.createdAt,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        paymentMethod: order.paymentMethod,
-        orderItem: order.orderItem,
-      });
+      await this.confirmationOutbox.processOrder(orderId);
     } catch (error) {
-      this.logger.error(
-        `Payment for order ${orderId} succeeded, but the confirmation email could not be sent: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-        error instanceof Error ? error.stack : undefined,
+      this.logger.warn(
+        `Confirmation outbox dispatch deferred for order ${orderId} (${error instanceof Error ? error.name : 'unknown error'}).`,
       );
     }
   }
@@ -145,7 +124,9 @@ export class PaymentService {
           }
 
           if (order.paymentMethod?.toLowerCase() !== 'online') {
-            throw new BadRequestException('Order is not eligible for online payment');
+            throw new BadRequestException(
+              'Order is not eligible for online payment',
+            );
           }
 
           const amount = this.validateAmount(order.totalAmount);
@@ -190,9 +171,7 @@ export class PaymentService {
         `Payment order creation failed for order ${dto.orderId}`,
         error instanceof Error ? error.message : undefined,
       );
-      throw new InternalServerErrorException(
-        'Unable to create payment order',
-      );
+      throw new InternalServerErrorException('Unable to create payment order');
     }
   }
 
@@ -205,6 +184,24 @@ export class PaymentService {
     }
 
     this.verifySignature(dto);
+    const providerPayment = await this.razorpay.fetchPayment(
+      dto.razorpayPaymentId,
+    );
+
+    if (
+      !providerPayment ||
+      typeof providerPayment !== 'object' ||
+      providerPayment.id !== dto.razorpayPaymentId ||
+      providerPayment.order_id !== dto.razorpayOrderId
+    ) {
+      throw new BadRequestException(
+        'Payment does not match the Razorpay order',
+      );
+    }
+
+    if (providerPayment.status !== 'captured') {
+      throw new ConflictException('Payment has not been captured');
+    }
 
     // Set inside the transaction only on the path that actually flips the
     // payment to SUCCESS, so re-verifying an already-verified payment (the
@@ -242,16 +239,31 @@ export class PaymentService {
           throw new BadRequestException('Payment amount is invalid');
         }
 
+        if (
+          providerPayment.amount !== payment.amount ||
+          providerPayment.currency !== payment.currency ||
+          payment.currency !== PAYMENT_CURRENCY
+        ) {
+          throw new BadRequestException(
+            'Payment amount or currency is invalid',
+          );
+        }
+
         if (payment.status === 'SUCCESS') {
           if (payment.razorpayPaymentId !== dto.razorpayPaymentId) {
             throw new ConflictException('Payment has already been verified');
           }
 
-          return this.verificationResponse(payment.orderId, dto.razorpayPaymentId);
+          return this.verificationResponse(
+            payment.orderId,
+            dto.razorpayPaymentId,
+          );
         }
 
         if (!['CREATED', 'PENDING'].includes(payment.status)) {
-          throw new ConflictException('Payment is not eligible for verification');
+          throw new ConflictException(
+            'Payment is not eligible for verification',
+          );
         }
 
         const now = new Date();
@@ -277,19 +289,27 @@ export class PaymentService {
           data: {
             paymentStatus: 'PAID',
             paidAt: now,
+            checkoutFingerprint: null,
           },
+        });
+        await transaction.orderConfirmationOutbox.createMany({
+          data: { orderId: payment.orderId },
+          skipDuplicates: true,
         });
 
         newlyPaidOrderId = payment.orderId;
 
-        return this.verificationResponse(payment.orderId, dto.razorpayPaymentId);
+        return this.verificationResponse(
+          payment.orderId,
+          dto.razorpayPaymentId,
+        );
       });
 
       // Deliberately outside the transaction: SMTP is slow and must not be
       // held inside a Serializable transaction, and the mail must only go out
       // once the payment is actually committed - never on a rolled-back one.
       if (newlyPaidOrderId !== null) {
-        await this.sendOrderConfirmation(newlyPaidOrderId);
+        await this.dispatchOrderConfirmation(newlyPaidOrderId);
       }
 
       return result;
@@ -308,6 +328,297 @@ export class PaymentService {
         error instanceof Error ? error.message : undefined,
       );
       throw new InternalServerErrorException('Unable to verify payment');
+    }
+  }
+
+  async handleWebhook(
+    rawBody: Buffer | undefined,
+    signature: string | undefined,
+    eventId: string | undefined,
+  ): Promise<{ received: true; duplicate: boolean; processed: boolean }> {
+    if (!rawBody?.length) {
+      throw new BadRequestException('Webhook request body is missing');
+    }
+    if (!eventId?.trim() || eventId.length > 255) {
+      throw new BadRequestException('Webhook event ID is invalid');
+    }
+
+    this.verifyWebhookSignature(rawBody, signature);
+
+    let webhook: RazorpayWebhookPayload;
+    try {
+      webhook = JSON.parse(rawBody.toString('utf8')) as RazorpayWebhookPayload;
+    } catch {
+      throw new BadRequestException('Webhook request body is invalid');
+    }
+
+    if (typeof webhook.event !== 'string') {
+      throw new BadRequestException('Webhook event type is missing');
+    }
+
+    const eventType = webhook.event;
+    let action: 'authorized' | 'captured' | 'failed' | null = null;
+    if (eventType === 'payment.authorized') action = 'authorized';
+    if (eventType === 'payment.captured') action = 'captured';
+    if (eventType === 'payment.failed') action = 'failed';
+
+    const paymentEntity = webhook.payload?.payment?.entity;
+    if (
+      action &&
+      (!paymentEntity ||
+        typeof paymentEntity.id !== 'string' ||
+        typeof paymentEntity.order_id !== 'string' ||
+        !Number.isSafeInteger(paymentEntity.amount) ||
+        typeof paymentEntity.currency !== 'string')
+    ) {
+      throw new BadRequestException('Webhook payment details are invalid');
+    }
+
+    if (action === 'captured' && paymentEntity?.status !== 'captured') {
+      throw new BadRequestException('Captured payment event is not captured');
+    }
+    if (action === 'authorized' && paymentEntity?.status !== 'authorized') {
+      throw new BadRequestException('Authorized payment event is invalid');
+    }
+    if (action === 'failed' && paymentEntity?.status !== 'failed') {
+      throw new BadRequestException('Failed payment event is invalid');
+    }
+
+    let confirmationOrderId: number | null = null;
+    let warning: string | null = null;
+    let retryEvent = false;
+
+    try {
+      const result = await this.prisma.$transaction(async (transaction) => {
+        const inserted = await transaction.webhookEvent.createMany({
+          data: {
+            provider: PAYMENT_PROVIDER,
+            eventId: eventId.trim(),
+            eventType,
+            processedAt: null,
+          },
+          skipDuplicates: true,
+        });
+
+        if (inserted.count === 0) {
+          const existingEvent = await transaction.webhookEvent.findUnique({
+            where: {
+              provider_eventId: {
+                provider: PAYMENT_PROVIDER,
+                eventId: eventId.trim(),
+              },
+            },
+          });
+          if (existingEvent?.processedAt) {
+            return { duplicate: true, processed: true };
+          }
+        }
+
+        const markProcessed = () =>
+          transaction.webhookEvent.update({
+            where: {
+              provider_eventId: {
+                provider: PAYMENT_PROVIDER,
+                eventId: eventId.trim(),
+              },
+            },
+            data: { processedAt: new Date() },
+          });
+
+        if (!action || !paymentEntity) {
+          await markProcessed();
+          return { duplicate: false, processed: false };
+        }
+
+        const payment = await transaction.payment.findUnique({
+          where: { razorpayOrderId: paymentEntity.order_id as string },
+          include: { order: true },
+        });
+
+        if (!payment || payment.provider !== PAYMENT_PROVIDER) {
+          warning = `Ignored ${eventType} for an unknown Razorpay order`;
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        const amount = paymentEntity.amount as number;
+        if (
+          payment.amount !== amount ||
+          payment.currency !== paymentEntity.currency ||
+          payment.amount !== this.validateAmount(payment.order.totalAmount)
+        ) {
+          warning = `Ignored ${eventType} with an amount or currency mismatch for order ${payment.orderId}`;
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        if ((payment.order.paymentMethod ?? '').toLowerCase() !== 'online') {
+          warning = `Ignored ${eventType} for a non-online order ${payment.orderId}`;
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        if (action === 'authorized') {
+          await transaction.payment.updateMany({
+            where: { id: payment.id, status: 'CREATED' },
+            data: {
+              status: 'PENDING',
+              method:
+                typeof paymentEntity.method === 'string'
+                  ? paymentEntity.method
+                  : undefined,
+            },
+          });
+          await markProcessed();
+          return { duplicate: false, processed: true };
+        }
+
+        if (action === 'failed') {
+          const failureReason = [
+            paymentEntity.error_description,
+            paymentEntity.error_reason,
+            paymentEntity.error_code,
+          ]
+            .filter(
+              (value): value is string =>
+                typeof value === 'string' && value.length > 0,
+            )
+            .join(': ')
+            .slice(0, 500);
+
+          await transaction.payment.updateMany({
+            where: { id: payment.id, status: { in: ['CREATED', 'PENDING'] } },
+            data: {
+              status: 'FAILED',
+              failureReason: failureReason || null,
+              razorpayPaymentId: paymentEntity.id as string,
+              method:
+                typeof paymentEntity.method === 'string'
+                  ? paymentEntity.method
+                  : undefined,
+            },
+          });
+          await markProcessed();
+          return { duplicate: false, processed: true };
+        }
+
+        if (
+          SUCCESSFUL_PAYMENT_STATUSES.includes(payment.status) &&
+          payment.razorpayPaymentId !== paymentEntity.id
+        ) {
+          warning = `Ignored a conflicting captured payment for order ${payment.orderId}`;
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        const wasAlreadySuccessful = SUCCESSFUL_PAYMENT_STATUSES.includes(
+          payment.status,
+        );
+        let paymentConfirmed = wasAlreadySuccessful;
+        if (!paymentConfirmed) {
+          const updatedPayment = await transaction.payment.updateMany({
+            where: {
+              id: payment.id,
+              status: { in: ['CREATED', 'PENDING', 'FAILED'] },
+            },
+            data: {
+              razorpayPaymentId: paymentEntity.id as string,
+              status: 'SUCCESS',
+              paidAt: new Date(),
+              method:
+                typeof paymentEntity.method === 'string'
+                  ? paymentEntity.method
+                  : undefined,
+            },
+          });
+          paymentConfirmed = updatedPayment.count === 1;
+        }
+
+        if (!paymentConfirmed) {
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        const updatedOrder = await transaction.order.updateMany({
+          where: { id: payment.orderId, paymentStatus: { not: 'PAID' } },
+          data: {
+            paymentStatus: 'PAID',
+            paidAt: payment.paidAt ?? new Date(),
+            checkoutFingerprint: null,
+          },
+        });
+
+        if (updatedOrder.count === 1) {
+          if (payment.order.status === 'CANCELLED') {
+            warning = `Payment captured for cancelled order ${payment.orderId}; review for refund`;
+          } else {
+            confirmationOrderId = payment.orderId;
+            await transaction.orderConfirmationOutbox.createMany({
+              data: { orderId: payment.orderId },
+              skipDuplicates: true,
+            });
+          }
+        } else if (
+          payment.order.paymentStatus === 'PAID' &&
+          !wasAlreadySuccessful
+        ) {
+          warning = `Additional payment captured for already-paid order ${payment.orderId}; review for refund`;
+        }
+
+        await markProcessed();
+
+        return { duplicate: false, processed: true };
+      });
+
+      if (warning) this.logger.warn(warning);
+      if (retryEvent) {
+        throw new ServiceUnavailableException(
+          'Payment webhook is awaiting reconciliation; retry delivery',
+        );
+      }
+      if (confirmationOrderId !== null) {
+        await this.dispatchOrderConfirmation(confirmationOrderId);
+      }
+
+      return {
+        received: true,
+        duplicate: result.duplicate,
+        processed: result.processed,
+      };
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error;
+      this.logger.error(
+        `Razorpay webhook processing failed for event ${eventType}`,
+        error instanceof Error ? error.name : undefined,
+      );
+      throw new InternalServerErrorException(
+        'Unable to process payment webhook',
+      );
+    }
+  }
+
+  private verifyWebhookSignature(
+    rawBody: Buffer,
+    signature: string | undefined,
+  ): void {
+    if (!signature || !/^[a-f0-9]{64}$/i.test(signature)) {
+      throw new BadRequestException('Invalid webhook signature');
+    }
+
+    const expectedSignature = createHmac(
+      'sha256',
+      requireEnv('RAZORPAY_WEBHOOK_SECRET'),
+    )
+      .update(rawBody)
+      .digest('hex');
+    const supplied = Buffer.from(signature, 'hex');
+    const expected = Buffer.from(expectedSignature, 'hex');
+
+    if (
+      supplied.length !== expected.length ||
+      !timingSafeEqual(supplied, expected)
+    ) {
+      throw new BadRequestException('Invalid webhook signature');
     }
   }
 
@@ -395,13 +706,13 @@ export class PaymentService {
         `Razorpay order creation failed for order ${orderId}`,
         error instanceof Error ? error.message : undefined,
       );
-      throw new InternalServerErrorException(
-        'Unable to create payment order',
-      );
+      throw new InternalServerErrorException('Unable to create payment order');
     }
   }
 
-  private responseForPayment(payment: Pick<Payment, 'razorpayOrderId' | 'amount' | 'currency'>) {
+  private responseForPayment(
+    payment: Pick<Payment, 'razorpayOrderId' | 'amount' | 'currency'>,
+  ) {
     return {
       razorpayOrderId: payment.razorpayOrderId,
       amount: payment.amount,

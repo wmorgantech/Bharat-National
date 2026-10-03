@@ -28,8 +28,30 @@ import mastercardLogo from "../assets/mastercard.png";
 import netbankingLogo from "../assets/netbanking.png";
 
 const PENDING_CART_KEY = "pendingCheckoutCart";
+const CHECKOUT_KEY_STORAGE = "pendingCheckoutIdempotency";
 const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 let razorpayScriptPromise;
+
+function getCheckoutFingerprint(items) {
+  return items
+    .map((item) => `${item.id ?? item.productId}:${item.quantity}`)
+    .sort()
+    .join("|");
+}
+
+function getCheckoutIdempotencyKey(items) {
+  const fingerprint = getCheckoutFingerprint(items);
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHECKOUT_KEY_STORAGE) || "null");
+    if (saved?.fingerprint === fingerprint && saved?.key) return saved.key;
+  } catch {
+    // Replace malformed local checkout state with a fresh key.
+  }
+
+  const key = window.crypto.randomUUID();
+  localStorage.setItem(CHECKOUT_KEY_STORAGE, JSON.stringify({ fingerprint, key }));
+  return key;
+}
 
 /**
  * Checkout accent stays aligned with the storefront's BNC teal.
@@ -132,6 +154,7 @@ export default function CheckoutPage() {
  const [showSuccess, setShowSuccess] = useState(false);
  const [submitting, setSubmitting] = useState(false);
  const [pendingOnlineOrderId, setPendingOnlineOrderId] = useState(null);
+  const [serverOrder, setServerOrder] = useState(null);
 
  const [viewMode, setViewMode] = useState("form");
  const [hasSavedAddress, setHasSavedAddress] = useState(false);
@@ -145,7 +168,20 @@ export default function CheckoutPage() {
  }, [cartItems]);
 
  const shippingLabel = subtotal > 0 ? "Free" : "—";
- const total = subtotal;
+  const total = paymentMethod === "online" && serverOrder
+    ? serverOrder.totalAmount
+    : subtotal;
+  const displayedItems = paymentMethod === "online" && serverOrder
+    ? cartItems.map((item) => {
+        const itemId = item.id ?? item.productId;
+        const serverItem = serverOrder.orderItem?.find(
+          (orderItem) => orderItem.productId === itemId,
+        );
+        return serverItem
+          ? { ...item, name: serverItem.productName, price: serverItem.unitPrice }
+          : item;
+      })
+    : cartItems;
  const isCartEmpty = cartItems.length === 0;
 
  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -254,11 +290,13 @@ export default function CheckoutPage() {
  return;
  }
 
+ let paymentWindowOpened = false;
  try {
  setSubmitting(true);
 
  let orderId = pendingOnlineOrderId;
- if (paymentMethod === "online" && !orderId) {
+ const orderAlreadyPrepared = Boolean(orderId && serverOrder);
+ if (paymentMethod === "online") {
  const payload = {
  userId: currentUser.id,
  fullName: fullName.trim(),
@@ -270,12 +308,27 @@ export default function CheckoutPage() {
  pincode: pincode.trim(),
  status: "PLACED",
  paymentMethod,
+ checkoutKey: getCheckoutIdempotencyKey(cartItems),
  items: cartItems.map((item) => ({ productId: item.id ?? item.productId, quantity: item.quantity })),
  };
  const createdOrder = await createOrder(payload);
  orderId = createdOrder?.order?.id;
  if (!orderId) throw new Error("Order could not be created");
+ if (createdOrder.order.paymentStatus === "PAID") {
+ clearCart();
+ localStorage.removeItem(PENDING_CART_KEY);
+ localStorage.removeItem(CHECKOUT_KEY_STORAGE);
+ setPendingOnlineOrderId(null);
+ setServerOrder(null);
+ setShowSuccess(true);
+ return;
+ }
+ if (!Number.isSafeInteger(createdOrder.order.totalAmount) || createdOrder.order.totalAmount <= 0) {
+ throw new Error("The server returned an invalid order total");
+ }
  setPendingOnlineOrderId(orderId);
+ setServerOrder(createdOrder.order);
+ if (!orderAlreadyPrepared) return;
  }
 
  if (paymentMethod === "cod") {
@@ -295,6 +348,7 @@ export default function CheckoutPage() {
  await createOrder(payload);
  clearCart();
  localStorage.removeItem(PENDING_CART_KEY);
+ localStorage.removeItem(CHECKOUT_KEY_STORAGE);
  window.history.replaceState({}, document.title);
  // Single notification for this action: the confirmation screen below.
  // A success toast here duplicated it.
@@ -305,6 +359,12 @@ export default function CheckoutPage() {
  const paymentOrder = await createPaymentOrder(orderId);
  if (!paymentOrder?.razorpayOrderId || !paymentOrder?.amount || !paymentOrder?.currency || !paymentOrder?.keyId) {
  throw new Error("Payment order could not be created");
+ }
+ if (
+ paymentOrder.currency !== "INR" ||
+ paymentOrder.amount !== serverOrder?.totalAmount * 100
+ ) {
+ throw new Error("The payment amount changed. Please review the updated order total.");
  }
 
  const Razorpay = await loadRazorpayCheckout();
@@ -334,6 +394,7 @@ export default function CheckoutPage() {
  localStorage.removeItem(PENDING_CART_KEY);
  window.history.replaceState({}, document.title);
  setPendingOnlineOrderId(null);
+ setServerOrder(null);
  // Single notification for this action: the confirmation screen below.
  setShowSuccess(true);
  } catch (error) {
@@ -371,13 +432,14 @@ export default function CheckoutPage() {
  setSubmitting(false);
  toast.error("Payment failed. Your cart is saved; please try again.");
  });
+ paymentWindowOpened = true;
  checkout.open();
  } catch (err) {
  console.error(err);
  setSubmitting(false);
  toast.error(paymentMethod === "online" ? "Unable to start online payment. Please try again." : "Failed to place order. Please try again.");
  } finally {
- if (paymentMethod === "cod") setSubmitting(false);
+ if (paymentMethod === "cod" || !paymentWindowOpened) setSubmitting(false);
  }
  };
 
@@ -680,7 +742,7 @@ export default function CheckoutPage() {
 
  {/* Items */}
  <ul className="max-h-[248px] space-y-4 overflow-y-auto pr-1 custom-scrollbar">
- {cartItems.map((item) => (
+ {displayedItems.map((item) => (
  <li
  key={item.id || item.productId}
  className="flex min-w-0 items-center gap-3"
@@ -716,7 +778,7 @@ export default function CheckoutPage() {
  Subtotal ({totalItems} {totalItems !== 1 ? "items" : "item"})
  </dt>
  <dd className="font-semibold tabular-nums text-ink-900">
- ₹{subtotal.toLocaleString()}
+ ₹{total.toLocaleString()}
  </dd>
  </div>
  <div className="flex items-center justify-between">
@@ -765,6 +827,8 @@ export default function CheckoutPage() {
  </>
  ) : viewMode === "form" ? (
  "Save address to continue"
+ ) : paymentMethod === "online" && !serverOrder ? (
+ "Confirm details and calculate total"
  ) : paymentMethod === "online" ? (
  <>
  <LockKeyhole className="h-4 w-4" />

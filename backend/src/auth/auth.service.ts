@@ -36,7 +36,9 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User already exists with this mobile number');
+      throw new ConflictException(
+        'User already exists with this mobile number',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);

@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AuthUser } from '../auth/jwt.strategy';
@@ -43,7 +46,7 @@ export class OrderService {
   }
 
   async create(createOrderDto: CreateOrderDto, requester: AuthUser) {
-      const { items, state,  cancelRemarks } = createOrderDto;
+    const { items, state, cancelRemarks } = createOrderDto;
 
     if (!items || items.length === 0) {
       throw new BadRequestException('Items are required');
@@ -57,6 +60,10 @@ export class OrderService {
 
     if (!userId) {
       throw new BadRequestException('userId is required');
+    }
+
+    if ((createOrderDto.paymentMethod ?? '').toLowerCase() === 'online') {
+      return this.createOnlineOrderIdempotently(createOrderDto, userId);
     }
 
     // ✅ Validate user
@@ -102,15 +109,15 @@ export class OrderService {
       data: {
         userId,
         fullName: createOrderDto.fullName,
-        email: createOrderDto.email ?? "",
+        email: createOrderDto.email ?? '',
         phone: createOrderDto.phone,
         address: createOrderDto.address,
         place: createOrderDto.place,
         pincode: createOrderDto.pincode,
-         state: state || createOrderDto.state,
+        state: state || createOrderDto.state,
         paymentMethod: createOrderDto.paymentMethod,
-   status: 'PLACED',
-      cancelRemarks:  cancelRemarks || 'Order placed successfully', 
+        status: 'PLACED',
+        cancelRemarks: cancelRemarks || 'Order placed successfully',
         totalAmount,
         orderItem: {
           create: orderItemData,
@@ -135,6 +142,129 @@ export class OrderService {
       message: 'Order created successfully',
       order,
     };
+  }
+
+  private async createOnlineOrderIdempotently(
+    createOrderDto: CreateOrderDto,
+    userId: number,
+  ) {
+    const checkoutKey = createOrderDto.checkoutKey;
+    if (!checkoutKey) {
+      throw new BadRequestException('Checkout idempotency key is required');
+    }
+
+    const order = await this.prisma.$transaction(async (transaction) => {
+      const [lockedUser] = await transaction.$queryRaw<{ id: number }[]>(
+        Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`,
+      );
+      if (!lockedUser) throw new NotFoundException('User not found');
+
+      const products = await transaction.product.findMany({
+        where: {
+          id: { in: createOrderDto.items.map((item) => item.productId) },
+        },
+        select: { id: true, name: true, price: true },
+      });
+      if (products.length !== createOrderDto.items.length) {
+        throw new BadRequestException('One or more products not found');
+      }
+
+      const orderItemData = createOrderDto.items.map((item) => {
+        const product = products.find(({ id }) => id === item.productId)!;
+        return {
+          productId: product.id,
+          productName: product.name,
+          unitPrice: product.price,
+          quantity: item.quantity,
+        };
+      });
+      const checkoutFingerprint = createHash('sha256')
+        .update(
+          orderItemData
+            .map(({ productId, quantity }) => `${productId}:${quantity}`)
+            .sort()
+            .join('|'),
+        )
+        .digest('hex');
+
+      const existingOrder =
+        (await transaction.order.findUnique({
+          where: { userId_checkoutKey: { userId, checkoutKey } },
+          include: { orderItem: true },
+        })) ??
+        (await transaction.order.findUnique({
+          where: {
+            userId_checkoutFingerprint: { userId, checkoutFingerprint },
+          },
+          include: { orderItem: true },
+        }));
+
+      if (existingOrder) {
+        if (
+          existingOrder.checkoutFingerprint &&
+          existingOrder.checkoutFingerprint !== checkoutFingerprint
+        ) {
+          throw new ConflictException(
+            'Checkout idempotency key was already used for a different cart',
+          );
+        }
+        if (existingOrder.status === 'CANCELLED') {
+          throw new ConflictException('This checkout order was cancelled');
+        }
+        if (existingOrder.paymentStatus === 'PAID') return existingOrder;
+
+        return transaction.order.update({
+          where: { id: existingOrder.id },
+          data: {
+            fullName: createOrderDto.fullName,
+            email: createOrderDto.email ?? '',
+            phone: createOrderDto.phone,
+            address: createOrderDto.address,
+            place: createOrderDto.place,
+            pincode: createOrderDto.pincode,
+            state: createOrderDto.state,
+            checkoutKey,
+            checkoutFingerprint,
+          },
+          include: { orderItem: true },
+        });
+      }
+
+      const totalAmount = orderItemData.reduce(
+        (sum, item) => sum + item.unitPrice * item.quantity,
+        0,
+      );
+      if (
+        !Number.isSafeInteger(totalAmount) ||
+        totalAmount <= 0 ||
+        totalAmount > 10_000_000
+      ) {
+        throw new BadRequestException('Order amount is invalid');
+      }
+
+      return transaction.order.create({
+        data: {
+          userId,
+          fullName: createOrderDto.fullName,
+          email: createOrderDto.email ?? '',
+          phone: createOrderDto.phone,
+          address: createOrderDto.address,
+          place: createOrderDto.place,
+          pincode: createOrderDto.pincode,
+          state: createOrderDto.state,
+          paymentMethod: 'online',
+          status: 'PLACED',
+          cancelRemarks:
+            createOrderDto.cancelRemarks ?? 'Order placed successfully',
+          totalAmount,
+          checkoutKey,
+          checkoutFingerprint,
+          orderItem: { create: orderItemData },
+        },
+        include: { orderItem: true },
+      });
+    });
+    return { message: 'Order ready for payment', order };
   }
 
   /**
@@ -192,19 +322,19 @@ export class OrderService {
     }
   }
 
- findAll(requester: AuthUser, userId?: number) {
-  // Non-admins are always scoped to their own orders; any userId supplied by
-  // the client is ignored rather than trusted.
-  const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
+  findAll(requester: AuthUser, userId?: number) {
+    // Non-admins are always scoped to their own orders; any userId supplied by
+    // the client is ignored rather than trusted.
+    const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
 
-  return this.prisma.order.findMany({
-    where: scopedUserId ? { userId: scopedUserId } : {},
-    orderBy: { createdAt: 'desc' },
-    include: {
-      orderItem: { include: { product: true } },
-    },
-  });
-}
+    return this.prisma.order.findMany({
+      where: scopedUserId ? { userId: scopedUserId } : {},
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orderItem: { include: { product: true } },
+      },
+    });
+  }
 
   findActive() {
     return this.prisma.order.findMany({
@@ -241,48 +371,66 @@ export class OrderService {
     return order;
   }
 
-// src/order/order.service.ts
+  // src/order/order.service.ts
 
-async update(id: number, updateOrderDto: UpdateOrderDto) {
-  await this.findOne(id);
+  async update(id: number, updateOrderDto: UpdateOrderDto) {
+    const existingOrder = await this.findOne(id);
 
-  const data: any = { ...updateOrderDto };
-  delete data.items;
-  delete data.totalAmount;
-
-  // If status is being changed to CANCELLED, require cancelRemarks
-  if (updateOrderDto.status === 'CANCELLED') {
-    if (!updateOrderDto.cancelRemarks) {
-      throw new BadRequestException('Cancellation remarks are required when cancelling an order');
+    const fulfillmentStatuses = [
+      'ACCEPTED',
+      'SHIPPED',
+      'DELIVERED',
+      'COMPLETED',
+    ];
+    if (
+      updateOrderDto.status &&
+      fulfillmentStatuses.includes(updateOrderDto.status) &&
+      (existingOrder.paymentMethod ?? '').toLowerCase() === 'online' &&
+      existingOrder.paymentStatus !== 'PAID'
+    ) {
+      throw new ConflictException(
+        'Online order must be paid before fulfillment can proceed',
+      );
     }
-    data.cancelRemarks = updateOrderDto.cancelRemarks;
-  } else if (updateOrderDto.status && updateOrderDto.status !== 'CANCELLED') {
-    // For non-cancellation status updates, you might want to add status remarks
-    // But don't use cancelRemarks for these
-    if (updateOrderDto.cancelRemarks) {
-      // Optional: You could store this in a different field like 'statusRemarks'
-      // For now, we'll ignore it for non-cancellation statuses
+
+    const data: Prisma.OrderUpdateInput = { ...updateOrderDto };
+
+    // If status is being changed to CANCELLED, require cancelRemarks
+    if (updateOrderDto.status === 'CANCELLED') {
+      if (!updateOrderDto.cancelRemarks) {
+        throw new BadRequestException(
+          'Cancellation remarks are required when cancelling an order',
+        );
+      }
+      data.cancelRemarks = updateOrderDto.cancelRemarks;
+      data.checkoutFingerprint = null;
+    } else if (updateOrderDto.status && updateOrderDto.status !== 'CANCELLED') {
+      // For non-cancellation status updates, you might want to add status remarks
+      // But don't use cancelRemarks for these
+      if (updateOrderDto.cancelRemarks) {
+        // Optional: You could store this in a different field like 'statusRemarks'
+        // For now, we'll ignore it for non-cancellation statuses
+      }
     }
+
+    // Remove cancelRemarks from data if it's not a cancellation
+    if (updateOrderDto.status !== 'CANCELLED') {
+      delete data.cancelRemarks;
+    }
+
+    const order = await this.prisma.order.update({
+      where: { id },
+      data,
+      include: {
+        orderItem: { include: { product: true } },
+      },
+    });
+
+    return {
+      message: 'Order updated successfully',
+      order,
+    };
   }
-
-  // Remove cancelRemarks from data if it's not a cancellation
-  if (updateOrderDto.status !== 'CANCELLED') {
-    delete data.cancelRemarks;
-  }
-
-  const order = await this.prisma.order.update({
-    where: { id },
-    data,
-    include: {
-      orderItem: { include: { product: true } },
-    },
-  });
-
-  return {
-    message: 'Order updated successfully',
-    order,
-  };
-}
 
   async remove(id: number) {
     const existing = await this.findOne(id);
@@ -309,191 +457,203 @@ async update(id: number, updateOrderDto: UpdateOrderDto) {
   }
 
   async findLastByUser(requester: AuthUser, userId?: number) {
-  const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
+    const scopedUserId = this.isAdmin(requester) ? userId : requester.userId;
 
-  if (!scopedUserId) {
-    throw new BadRequestException('userId is required');
+    if (!scopedUserId) {
+      throw new BadRequestException('userId is required');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: { userId: scopedUserId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orderItem: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('No orders found for this user');
+    }
+
+    return order;
   }
 
-  const order = await this.prisma.order.findFirst({
-    where: { userId: scopedUserId },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      orderItem: true,
-    },
-  });
+  async getOrderStatusStats() {
+    const statuses = [
+      'PLACED',
+      'ACCEPTED',
+      'SHIPPED',
+      'DELIVERED',
+      'CANCELLED',
+    ];
 
-  if (!order) {
-    throw new NotFoundException('No orders found for this user');
+    const results = await Promise.all(
+      statuses.map(async (status) => {
+        const count = await this.prisma.order.count({
+          where: { status },
+        });
+
+        return { status, count };
+      }),
+    );
+
+    return {
+      total: results.reduce((sum, r) => sum + r.count, 0),
+      data: results,
+    };
   }
 
-  return order;
-}
+  async getFilteredStats() {
+    const validStatuses = ['ACCEPTED', 'SHIPPED', 'DELIVERED'];
 
-async getOrderStatusStats() {
-  const statuses = ['PLACED', 'ACCEPTED', 'SHIPPED', 'DELIVERED','CANCELLED',];
-
-  const results = await Promise.all(
-    statuses.map(async (status) => {
-      const count = await this.prisma.order.count({
-        where: { status },
-      });
-
-      return { status, count };
-    }),
-  );
-
-  return {
-    total: results.reduce((sum, r) => sum + r.count, 0),
-    data: results,
-  };
-}
-
-async getFilteredStats() {
-  const validStatuses = ['ACCEPTED', 'SHIPPED', 'DELIVERED'];
-
-  const totalSales = await this.prisma.order.count({
-    where: {
-      status: { in: validStatuses },
-    },
-  });
-
-  const uniqueCustomersData = await this.prisma.order.groupBy({
-    by: ['userId'],
-    where: {
-      status: { in: validStatuses },
-    },
-  });
-
-  const totalQuantityData = await this.prisma.orderItem.aggregate({
-    _sum: { quantity: true },
-    where: {
-      order: {
+    const totalSales = await this.prisma.order.count({
+      where: {
         status: { in: validStatuses },
       },
-    },
-  });
+    });
 
-  const totalValueData = await this.prisma.order.aggregate({
-    _sum: { totalAmount: true },
-    where: {
-      status: { in: validStatuses },
-    },
-  });
-
-  return {
-    totalSales,
-    uniqueCustomers: uniqueCustomersData.length,
-    totalQuantity: totalQuantityData._sum.quantity || 0,
-    totalValue: totalValueData._sum.totalAmount || 0,
-  };
-}
-
-async findValidOrders() {
-  const validStatuses = ['ACCEPTED', 'SHIPPED', 'DELIVERED'];
-
-  const orders = await this.prisma.order.findMany({
-    where: {
-      status: {
-        in: validStatuses,
+    const uniqueCustomersData = await this.prisma.order.groupBy({
+      by: ['userId'],
+      where: {
+        status: { in: validStatuses },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      orderItem: true,
-    },
-  });
+    });
 
-  return orders;
-}
-
-// Add this method to your OrderService
-async findAllWithUsers(userId?: number) {
-  const orders = await this.prisma.order.findMany({
-    where: userId ? { userId } : {},
-    orderBy: { createdAt: 'desc' },
-    include: {
-      orderItem: {
-        include: { product: true }
+    const totalQuantityData = await this.prisma.orderItem.aggregate({
+      _sum: { quantity: true },
+      where: {
+        order: {
+          status: { in: validStatuses },
+        },
       },
-      user: { select: SAFE_USER_SELECT },
-    },
-  });
-  return orders;
-}
+    });
 
-async getAllUsersWithOrderStats() {
-  const users = await this.prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      mobilenumber: true,
-      city: true,
-      createdAt: true,
-      orders: {
-        select: {
-          status: true,
-          totalAmount: true,
-          createdAt: true,
-          orderItem: {
-            select: {
-              quantity: true,
+    const totalValueData = await this.prisma.order.aggregate({
+      _sum: { totalAmount: true },
+      where: {
+        status: { in: validStatuses },
+      },
+    });
+
+    return {
+      totalSales,
+      uniqueCustomers: uniqueCustomersData.length,
+      totalQuantity: totalQuantityData._sum.quantity || 0,
+      totalValue: totalValueData._sum.totalAmount || 0,
+    };
+  }
+
+  async findValidOrders() {
+    const validStatuses = ['ACCEPTED', 'SHIPPED', 'DELIVERED'];
+
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: {
+          in: validStatuses,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orderItem: true,
+      },
+    });
+
+    return orders;
+  }
+
+  // Add this method to your OrderService
+  async findAllWithUsers(userId?: number) {
+    const orders = await this.prisma.order.findMany({
+      where: userId ? { userId } : {},
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orderItem: {
+          include: { product: true },
+        },
+        user: { select: SAFE_USER_SELECT },
+      },
+    });
+    return orders;
+  }
+
+  async getAllUsersWithOrderStats() {
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        mobilenumber: true,
+        city: true,
+        createdAt: true,
+        orders: {
+          select: {
+            status: true,
+            totalAmount: true,
+            createdAt: true,
+            orderItem: {
+              select: {
+                quantity: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  const result = users.map(user => {
-    const orders = user.orders || [];
-    
-    // Get successful orders (ACCEPTED, SHIPPED, DELIVERED)
-    const successfulOrders = orders.filter(o => 
-      ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(o.status)
-    );
-    
-    const hasOrdered = successfulOrders.length > 0;
-    const hasCancelled = orders.some(o => o.status === 'CANCELLED');
-    const hasAbandoned = orders.some(o => o.status === 'ABANDONED');
-    
-    const totalSpent = successfulOrders
-      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-    
-    const totalQuantity = successfulOrders
-      .flatMap(o => o.orderItem || [])
-      .reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const result = users.map((user) => {
+      const orders = user.orders || [];
 
-    const lastOrderAt = successfulOrders.length > 0 
-      ? successfulOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
-      : null;
+      // Get successful orders (ACCEPTED, SHIPPED, DELIVERED)
+      const successfulOrders = orders.filter((o) =>
+        ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(o.status),
+      );
 
-    return {
-      id: user.id,
-      fullName: user.name,
-      email: user.email || "",
-      phone: user.mobilenumber || "",
-      city: user.city || "",
-      joinDate: user.createdAt,
-      lastOrderAt,
-      ordersCount: successfulOrders.length,  // ← Only ACCEPTED/SHIPPED/DELIVERED orders
-      totalSpent,
-      totalQuantity,
-      hasOrdered,
-      hasCancelled,
-      hasAbandoned,
-    };
-  });
+      const hasOrdered = successfulOrders.length > 0;
+      const hasCancelled = orders.some((o) => o.status === 'CANCELLED');
+      const hasAbandoned = orders.some((o) => o.status === 'ABANDONED');
 
-  // Sort by last order date
-  result.sort((a, b) => {
-    const aTime = a.lastOrderAt ? new Date(a.lastOrderAt).getTime() : 0;
-    const bTime = b.lastOrderAt ? new Date(b.lastOrderAt).getTime() : 0;
-    return bTime - aTime;
-  });
+      const totalSpent = successfulOrders.reduce(
+        (sum, o) => sum + (o.totalAmount || 0),
+        0,
+      );
 
-  return result;
-}
+      const totalQuantity = successfulOrders
+        .flatMap((o) => o.orderItem || [])
+        .reduce((sum, item) => sum + (item.quantity || 0), 0);
 
+      const lastOrderAt =
+        successfulOrders.length > 0
+          ? successfulOrders.sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            )[0].createdAt
+          : null;
+
+      return {
+        id: user.id,
+        fullName: user.name,
+        email: user.email || '',
+        phone: user.mobilenumber || '',
+        city: user.city || '',
+        joinDate: user.createdAt,
+        lastOrderAt,
+        ordersCount: successfulOrders.length, // ← Only ACCEPTED/SHIPPED/DELIVERED orders
+        totalSpent,
+        totalQuantity,
+        hasOrdered,
+        hasCancelled,
+        hasAbandoned,
+      };
+    });
+
+    // Sort by last order date
+    result.sort((a, b) => {
+      const aTime = a.lastOrderAt ? new Date(a.lastOrderAt).getTime() : 0;
+      const bTime = b.lastOrderAt ? new Date(b.lastOrderAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    return result;
+  }
 }

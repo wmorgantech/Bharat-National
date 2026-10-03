@@ -1,6 +1,4 @@
-import { apiFetch, handleUnauthorized } from "./http";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiBaseUrl, apiFetch, handleUnauthorized } from "./http";
 
 async function handleResponse(response) {
   let data;
@@ -20,7 +18,7 @@ async function handleResponse(response) {
 }
 
 export async function createPaymentOrder(orderId) {
-  const response = await apiFetch(`${API_URL}/payment/create-order`, {
+  const response = await apiFetch(`${apiBaseUrl()}/payment/create-order`, {
     method: "POST",
     body: JSON.stringify({ orderId }),
   });
@@ -29,7 +27,7 @@ export async function createPaymentOrder(orderId) {
 }
 
 export async function verifyPayment(payment) {
-  const response = await apiFetch(`${API_URL}/payment/verify`, {
+  const response = await apiFetch(`${apiBaseUrl()}/payment/verify`, {
     method: "POST",
     body: JSON.stringify(payment),
   });

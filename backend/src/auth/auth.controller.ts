@@ -26,7 +26,6 @@ import {
   SIGNUP_THROTTLE,
 } from '../common/throttle.config';
 
-
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -54,7 +53,10 @@ export class AuthController {
   @Post('signup')
   @ApiOperation({ summary: 'User signup' })
   @ApiBody({ type: SignupDto })
-  async signup(@Body() body: SignupDto, @Res({ passthrough: true }) res: Response) {
+  async signup(
+    @Body() body: SignupDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.withRefreshCookie(res, await this.authService.signup(body));
   }
 
@@ -63,7 +65,10 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginDto })
-  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() body: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.withRefreshCookie(res, await this.authService.login(body));
   }
 
@@ -74,7 +79,9 @@ export class AuthController {
   @Public()
   @Throttle(REFRESH_THROTTLE)
   @Post('refresh')
-  @ApiOperation({ summary: 'Rotate refresh token and issue a new access token' })
+  @ApiOperation({
+    summary: 'Rotate refresh token and issue a new access token',
+  })
   async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
     const token = readUserRefreshCookie(req);
 

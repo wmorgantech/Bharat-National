@@ -21,9 +21,24 @@ import { THROTTLER_CONFIG } from './common/throttle.config';
 import { PrismaModule } from './prisma/prisma.module';
 import { PaymentModule } from './payment/payment.module';
 
-
 @Module({
-  imports: [PrismaModule, PaymentModule, ThrottlerModule.forRoot(THROTTLER_CONFIG), AdminModule, CategoryModule, UploadModule, BrandModule, ProductModule, OrderModule, OrderitemModule, ContactModule, UserModule, AuthModule, DashboardModule, OverviewModule],
+  imports: [
+    PrismaModule,
+    PaymentModule,
+    ThrottlerModule.forRoot(THROTTLER_CONFIG),
+    AdminModule,
+    CategoryModule,
+    UploadModule,
+    BrandModule,
+    ProductModule,
+    OrderModule,
+    OrderitemModule,
+    ContactModule,
+    UserModule,
+    AuthModule,
+    DashboardModule,
+    OverviewModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

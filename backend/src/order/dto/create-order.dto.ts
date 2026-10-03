@@ -1,14 +1,15 @@
 // src/order/dto/create-order.dto.ts
 import {
-  ArrayMinSize, 
-  IsEmail, 
-  IsInt, 
-  IsNotEmpty, 
-  IsOptional, 
-  IsString, 
-  Min, 
-  MinLength, 
-  ValidateNested 
+  ArrayMinSize,
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -35,6 +36,14 @@ export class CreateOrderDto {
   @IsInt()
   @Min(1)
   userId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Client-generated online checkout idempotency key',
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID()
+  checkoutKey?: string;
 
   @ApiProperty({
     example: 'John Doe',
@@ -79,7 +88,7 @@ export class CreateOrderDto {
   })
   @IsOptional()
   @IsString()
-  state?: string;  // ✅ Added state field
+  state?: string; // ✅ Added state field
 
   @ApiPropertyOptional({
     example: '600001',
@@ -109,11 +118,11 @@ export class CreateOrderDto {
   @ApiPropertyOptional({
     example: 'PLACED',
     description: 'Order status',
-    enum: ['PLACED', 'ACCEPTED', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+    enum: ['PLACED', 'ACCEPTED', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
   })
   @IsOptional()
   @IsString()
-  status?: string;  // Made optional, defaults to 'PLACED' in service
+  status?: string; // Made optional, defaults to 'PLACED' in service
 
   @ApiPropertyOptional({
     example: 'Order placed successfully',
@@ -121,5 +130,5 @@ export class CreateOrderDto {
   })
   @IsOptional()
   @IsString()
-   cancelRemarks?: string;  // ✅ Added status remarks field
+  cancelRemarks?: string; // ✅ Added status remarks field
 }

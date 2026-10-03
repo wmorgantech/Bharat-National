@@ -37,7 +37,7 @@ export class OverviewController {
     return {
       totalRevenue: stats.totalRevenue,
       totalOrders: stats.totalOrders,
-      avgOrderValue: stats.avgOrderValue
+      avgOrderValue: stats.avgOrderValue,
     };
   }
 

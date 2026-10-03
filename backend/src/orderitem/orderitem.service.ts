@@ -7,14 +7,11 @@ import { CreateOrderItemDto } from './dto/create-orderitem.dto';
 import { UpdateOrderitemDto } from './dto/update-orderitem.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
-
-
 @Injectable()
 export class OrderItemService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createOrderItemDto: CreateOrderItemDto) {
-    
     const order = await this.prisma.order.findUnique({
       where: { id: createOrderItemDto.orderId },
       select: { id: true, isActive: true },
@@ -25,7 +22,6 @@ export class OrderItemService {
       );
     }
 
-    
     const product = await this.prisma.product.findUnique({
       where: { id: createOrderItemDto.productId },
       select: { id: true },
@@ -37,7 +33,7 @@ export class OrderItemService {
     }
 
     return this.prisma.orderItem.create({
-      data: { ...createOrderItemDto }, 
+      data: { ...createOrderItemDto },
       include: { product: true, order: true },
     });
   }
@@ -64,7 +60,6 @@ export class OrderItemService {
     const existing = await this.prisma.orderItem.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException(`OrderItem #${id} not found`);
 
-    
     if (updateOrderItemDto.orderId) {
       const order = await this.prisma.order.findUnique({
         where: { id: updateOrderItemDto.orderId },

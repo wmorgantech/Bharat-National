@@ -8,7 +8,13 @@ import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
-import { isProduction, requireEnv, validateRazorpayKeySafety } from './config/env';
+import {
+  isProduction,
+  getCorsOrigins,
+  requireEnv,
+  validateRazorpayKeySafety,
+  validateRazorpayWebhookSecret,
+} from './config/env';
 
 const SWAGGER_PATH = 'api-docs';
 
@@ -26,10 +32,7 @@ const UPLOADS_DIR = 'uploads';
  * and cannot silently fall back to a development host.
  */
 function resolveAllowedOrigins(logger: Logger): string[] {
-  const configured = (process.env.CORS_ORIGINS ?? '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  const configured = getCorsOrigins();
 
   if (configured.length > 0) {
     return configured;
@@ -41,7 +44,6 @@ function resolveAllowedOrigins(logger: Logger): string[] {
 
   return [];
 }
-
 
 function applyTrustProxy(app: NestExpressApplication, logger: Logger): void {
   const raw = (process.env.TRUST_PROXY ?? '0').trim();
@@ -68,12 +70,14 @@ async function bootstrap() {
   // point of use so the failure surfaces at boot, not on the first upload.
   requireEnv('UPLOAD_URL');
   validateRazorpayKeySafety();
+  validateRazorpayWebhookSecret();
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   applyTrustProxy(app, logger);
 
-  
   const apiHelmet = helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
@@ -108,7 +112,10 @@ async function bootstrap() {
   const allowedOrigins = resolveAllowedOrigins(logger);
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       // Requests without an Origin header (curl, server-to-server, health
       // checks) are not subject to the browser same-origin policy.
       if (!origin) {
@@ -129,7 +136,6 @@ async function bootstrap() {
     maxAge: 86400,
   });
 
-  
   app.useStaticAssets(join(process.cwd(), UPLOADS_DIR), {
     prefix: `/${UPLOADS_DIR}`,
     // No directory listing and no implicit index file.
@@ -139,14 +145,15 @@ async function bootstrap() {
     redirect: false,
   });
 
-  
   const swaggerEnabled =
     !isProduction() || process.env.SWAGGER_ENABLED === 'true';
 
   if (swaggerEnabled) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Bharath National Computers API')
-      .setDescription('API documentation for the Bharath National Computers application')
+      .setDescription(
+        'API documentation for the Bharath National Computers application',
+      )
       .setVersion('1.0')
       .addBearerAuth()
       .build();

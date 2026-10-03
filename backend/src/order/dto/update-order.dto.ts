@@ -5,12 +5,12 @@ import { IsString, IsOptional, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateOrderDto extends PartialType(
-  OmitType(CreateOrderDto, ['items', 'userId'] as const),
+  OmitType(CreateOrderDto, ['items', 'userId', 'checkoutKey'] as const),
 ) {
   @ApiPropertyOptional({
     example: 'SHIPPED',
     description: 'Order status',
-    enum: ['PLACED', 'ACCEPTED', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+    enum: ['PLACED', 'ACCEPTED', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
   })
   @IsOptional()
   @IsString()
@@ -23,7 +23,7 @@ export class UpdateOrderDto extends PartialType(
   })
   @IsOptional()
   @IsString()
-  cancelRemarks?: string;  // ✅ Added status remarks for update
+  cancelRemarks?: string; // ✅ Added status remarks for update
 
   @ApiPropertyOptional({
     example: 'Tamil Nadu',
@@ -31,5 +31,5 @@ export class UpdateOrderDto extends PartialType(
   })
   @IsOptional()
   @IsString()
-  state?: string;  // ✅ Added state field for update
+  state?: string; // ✅ Added state field for update
 }

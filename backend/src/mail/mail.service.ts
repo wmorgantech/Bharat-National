@@ -265,7 +265,7 @@ export class MailService {
     const transporter = this.getTransporter();
 
     if (!transporter) {
-      return undefined;
+      throw new Error('SMTP is not configured for order confirmation mail');
     }
 
     try {

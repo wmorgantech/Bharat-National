@@ -64,18 +64,12 @@ const activityConfig = {
 };
 
 // Stat Card Component
-const StatCard = ({ title, value, icon: Icon, iconBg, iconColor, trend }) => (
+const StatCard = ({ title, value, icon: Icon, iconBg, iconColor }) => (
   <div className="bg-white rounded-xl border border-ink-100 p-5 shadow-sm hover:shadow-md transition-all duration-200">
     <div className="flex items-center justify-between">
       <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
-        <Icon className={`w-6 h-6 ${iconColor}`} />
+        {React.createElement(Icon, { className: `w-6 h-6 ${iconColor}` })}
       </div>
-      {trend && (
-        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center gap-1">
-          <ArrowUpRight className="w-3 h-3" />
-          {trend}
-        </span>
-      )}
     </div>
     <p className="text-2xl font-bold text-ink-900 mt-3">{value}</p>
     <p className="text-sm text-ink-500 mt-1">{title}</p>
@@ -140,6 +134,7 @@ const TopPerformerItem = ({ product, rank, isLast }) => (
 const AdminOverview = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -148,11 +143,14 @@ const AdminOverview = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError("");
       const result = await getOverviewData();
       setData(result);
     } catch (err) {
       console.error(err);
-      toast.error(err?.message || "Failed to load overview data");
+      const message = err?.message || "Failed to load overview data";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -187,6 +185,22 @@ const AdminOverview = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div role="alert" className="surface p-10 md:p-16 text-center">
+        <span className="grid place-items-center h-14 w-14 mx-auto rounded-2xl bg-red-50 text-red-600">
+          <AlertTriangle className="w-6 h-6" />
+        </span>
+        <h2 className="mt-5 text-lg font-semibold text-ink-900">Could not load analytics</h2>
+        <p className="mt-2 text-sm text-ink-500">{error}</p>
+        <button type="button" onClick={loadData} className="btn-primary btn-md mt-6">
+          <RefreshCw className="w-4 h-4" />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   const { stats, recentActivity, topPerformers } = data || {};
 
   const statCards = [
@@ -196,7 +210,6 @@ const AdminOverview = () => {
       icon: IndianRupee,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
-      trend: "+12.5%",
     },
     {
       title: "Total Orders",
@@ -204,7 +217,6 @@ const AdminOverview = () => {
       icon: ShoppingCart,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
-      trend: "+8.2%",
     },
     {
       title: "Total Customers",
@@ -212,7 +224,6 @@ const AdminOverview = () => {
       icon: Users,
       iconBg: "bg-purple-50",
       iconColor: "text-purple-600",
-      trend: "+5.3%",
     },
     {
       title: "Avg. Order Value",
@@ -220,7 +231,6 @@ const AdminOverview = () => {
       icon: TrendingUp,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-600",
-      trend: null,
     },
   ];
 

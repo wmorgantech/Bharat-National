@@ -59,7 +59,7 @@ const AdminTopbar = ({ setSidebarOpen }) => {
 
   // Get admin name from email
   const adminName = adminData?.email ? adminData.email.split('@')[0] : 'Admin';
-  const adminEmail = adminData?.email || 'admin@example.com';
+  const adminEmail = adminData?.email || '—';
   const initial = adminName.charAt(0).toUpperCase();
 
   return (

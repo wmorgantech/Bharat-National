@@ -295,7 +295,7 @@ export default function CheckoutPage() {
  setSubmitting(true);
 
  let orderId = pendingOnlineOrderId;
- const orderAlreadyPrepared = Boolean(orderId && serverOrder);
+ let currentOrderAmount = serverOrder?.totalAmount;
  if (paymentMethod === "online") {
  const payload = {
  userId: currentUser.id,
@@ -328,7 +328,7 @@ export default function CheckoutPage() {
  }
  setPendingOnlineOrderId(orderId);
  setServerOrder(createdOrder.order);
- if (!orderAlreadyPrepared) return;
+ currentOrderAmount = createdOrder.order.totalAmount;
  }
 
  if (paymentMethod === "cod") {
@@ -362,7 +362,7 @@ export default function CheckoutPage() {
  }
  if (
  paymentOrder.currency !== "INR" ||
- paymentOrder.amount !== serverOrder?.totalAmount * 100
+ paymentOrder.amount !== currentOrderAmount * 100
  ) {
  throw new Error("The payment amount changed. Please review the updated order total.");
  }
@@ -827,8 +827,6 @@ export default function CheckoutPage() {
  </>
  ) : viewMode === "form" ? (
  "Save address to continue"
- ) : paymentMethod === "online" && !serverOrder ? (
- "Confirm details and calculate total"
  ) : paymentMethod === "online" ? (
  <>
  <LockKeyhole className="h-4 w-4" />

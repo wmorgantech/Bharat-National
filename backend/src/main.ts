@@ -13,7 +13,6 @@ import {
   getCorsOrigins,
   requireEnv,
   validateRazorpayKeySafety,
-  validateRazorpayWebhookSecret,
 } from './config/env';
 
 const SWAGGER_PATH = 'api-docs';
@@ -70,7 +69,6 @@ async function bootstrap() {
   // point of use so the failure surfaces at boot, not on the first upload.
   requireEnv('UPLOAD_URL');
   validateRazorpayKeySafety();
-  validateRazorpayWebhookSecret();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,

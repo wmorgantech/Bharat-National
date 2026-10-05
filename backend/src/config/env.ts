@@ -141,17 +141,11 @@ export function validateRazorpayKeySafety(): void {
     );
   }
 
-  const expectedPrefix = isProduction() ? 'rzp_live_' : 'rzp_test_';
+  const expectedPrefix = 'rzp_live_';
   if (!keyId.startsWith(expectedPrefix)) {
     throw new Error(
-      `RAZORPAY_KEY_ID must use a ${isProduction() ? 'live' : 'test'} Razorpay key in ${process.env.NODE_ENV ?? 'development'} environments.`,
+      `RAZORPAY_KEY_ID must use a live Razorpay key.`,
     );
-  }
-}
-
-export function validateRazorpayWebhookSecret(): void {
-  if (isProduction()) {
-    requireEnv('RAZORPAY_WEBHOOK_SECRET');
   }
 }
 

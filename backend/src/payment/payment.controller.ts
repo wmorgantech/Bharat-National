@@ -54,17 +54,4 @@ export class PaymentController {
     return this.paymentService.verifyPayment(dto, request.user);
   }
 
-  @Post('webhook')
-  @Public()
-  webhook(
-    @Req() request: RawBodyRequest<ExpressRequest>,
-    @Headers('x-razorpay-signature') signature: string,
-    @Headers('x-razorpay-event-id') eventId: string,
-  ) {
-    return this.paymentService.handleWebhook(
-      request.rawBody,
-      signature,
-      eventId,
-    );
-  }
 }

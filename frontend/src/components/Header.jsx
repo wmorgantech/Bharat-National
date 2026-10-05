@@ -27,6 +27,36 @@ import { getActiveProducts } from "../api/Product";
 import { auth } from "../api/auth";
 import { loadCart } from "../utils/CartStorage";
 
+const BODY_SCROLL_LOCK = Symbol.for("bnc.bodyScrollLock");
+
+function acquireBodyScrollLock() {
+  const state =
+    document[BODY_SCROLL_LOCK] ||
+    (document[BODY_SCROLL_LOCK] = {
+      count: 0,
+      previousOverflow: document.body.style.overflow,
+    });
+
+  if (state.count === 0) state.previousOverflow = document.body.style.overflow;
+  state.count += 1;
+  document.body.style.overflow = "hidden";
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+
+    const currentState = document[BODY_SCROLL_LOCK];
+    if (!currentState) return;
+
+    currentState.count -= 1;
+    if (currentState.count === 0) {
+      document.body.style.overflow = currentState.previousOverflow;
+      delete document[BODY_SCROLL_LOCK];
+    }
+  };
+}
+
 const SOCIALS = [
   { Icon: FaFacebookF, href: "https://www.facebook.com/share/1EAEtbPJU8/", label: "Facebook" },
   { Icon: FaInstagram, href: "https://www.instagram.com/bncbalaji?igsh=MThrZXo4M2IzeWRpeQ%3D%3D", label: "Instagram" },
@@ -199,11 +229,7 @@ export default function Header() {
   // Lock background scroll while the mobile drawer is open.
   useEffect(() => {
     if (!openNav) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return acquireBodyScrollLock();
   }, [openNav]);
 
   const closeAllMenus = () => {

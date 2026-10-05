@@ -3,6 +3,36 @@ import { X, Minus, Plus, Trash2, ArrowRight, ShoppingCart, ShieldCheck } from "l
 import { useNavigate } from "react-router-dom";
 import { loadCart, saveCart } from "../utils/CartStorage";
 
+const BODY_SCROLL_LOCK = Symbol.for("bnc.bodyScrollLock");
+
+function acquireBodyScrollLock() {
+ const state =
+ document[BODY_SCROLL_LOCK] ||
+ (document[BODY_SCROLL_LOCK] = {
+ count: 0,
+ previousOverflow: document.body.style.overflow,
+ });
+
+ if (state.count === 0) state.previousOverflow = document.body.style.overflow;
+ state.count += 1;
+ document.body.style.overflow = "hidden";
+
+ let released = false;
+ return () => {
+ if (released) return;
+ released = true;
+
+ const currentState = document[BODY_SCROLL_LOCK];
+ if (!currentState) return;
+
+ currentState.count -= 1;
+ if (currentState.count === 0) {
+ document.body.style.overflow = currentState.previousOverflow;
+ delete document[BODY_SCROLL_LOCK];
+ }
+ };
+}
+
 /**
  * Floating glass side console for the cart.
  *
@@ -25,11 +55,10 @@ export default function CartDrawer({ open, onClose }) {
  if (e.key === "Escape") onClose?.();
  };
  document.addEventListener("keydown", onKey);
- const prev = document.body.style.overflow;
- document.body.style.overflow = "hidden";
+ const releaseBodyScrollLock = acquireBodyScrollLock();
  return () => {
  document.removeEventListener("keydown", onKey);
- document.body.style.overflow = prev;
+ releaseBodyScrollLock();
  };
  }, [open, onClose]);
 

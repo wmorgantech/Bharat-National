@@ -4,6 +4,36 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import Logo from "../assets/logo.jpeg";
 
+const BODY_SCROLL_LOCK = Symbol.for("bnc.bodyScrollLock");
+
+function acquireBodyScrollLock() {
+  const state =
+    document[BODY_SCROLL_LOCK] ||
+    (document[BODY_SCROLL_LOCK] = {
+      count: 0,
+      previousOverflow: document.body.style.overflow,
+    });
+
+  if (state.count === 0) state.previousOverflow = document.body.style.overflow;
+  state.count += 1;
+  document.body.style.overflow = "hidden";
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+
+    const currentState = document[BODY_SCROLL_LOCK];
+    if (!currentState) return;
+
+    currentState.count -= 1;
+    if (currentState.count === 0) {
+      document.body.style.overflow = currentState.previousOverflow;
+      delete document[BODY_SCROLL_LOCK];
+    }
+  };
+}
+
 /**
  * Shared shell for the Login and Signup screens.
  *
@@ -37,12 +67,11 @@ export default function AuthModal({
       if (e.key === "Escape") onClose?.();
     };
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseBodyScrollLock = acquireBodyScrollLock();
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseBodyScrollLock();
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose]);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   Users,
   ShoppingBag,
@@ -35,14 +35,6 @@ const getInitial = (name) => {
   return name?.trim()?.[0]?.toUpperCase() || "C";
 };
 
-const DEFAULT_USER_STATS = {
-  totalUsers: 0,
-  nonOrderCustomers: 0,
-  orderedCustomers: 0,
-  cancelledCustomers: 0,
-  abandonedCustomers: 0,
-};
-
 const normalizeUserStats = (response) => {
   const data = response?.data ?? response ?? {};
   return {
@@ -56,40 +48,45 @@ const normalizeUserStats = (response) => {
 
 const CustomerList = () => {
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("ALL");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [userStats, setUserStats] = useState(DEFAULT_USER_STATS);
+  const [userStats, setUserStats] = useState(null);
   const [page, setPage] = useState(1);
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const limit = 10;
   const summaryCardRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [usersData, statsData] = await Promise.all([
-          getAllUsersWithOrderStats(),
-          getUserStats(),
-        ]);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      setCustomers([]);
+      setUserStats(null);
+      const [usersData, statsData] = await Promise.all([
+        getAllUsersWithOrderStats(),
+        getUserStats(),
+      ]);
 
-        const users = usersData?.data ?? usersData ?? [];
-        
-        setCustomers(users);
-        setUserStats(normalizeUserStats(statsData));
-        
-      } catch (err) {
-        console.error(err);
-        toast.error(err?.message || "Failed to load customers");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+      const users = usersData?.data ?? usersData ?? [];
+      setCustomers(users);
+      setUserStats(normalizeUserStats(statsData));
+    } catch (err) {
+      console.error(err);
+      const message = err?.message || "Failed to load customers";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     setPage(1);
@@ -250,13 +247,13 @@ const handleDownloadCSV = () => {
 
 };
  
-  const summaryCards = [
+  const summaryCards = userStats ? [
     { label: "Total Customers", value: userStats.totalUsers, icon: Users, color: "text-primary", bg: "bg-primary/10" },
     { label: "Non Order Customers", value: userStats.nonOrderCustomers, icon: UserCheck, color: "text-primary", bg: "bg-primary/10" },
     { label: "Ordered Customers", value: userStats.orderedCustomers, icon: ShoppingBag, color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Cancelled Customers", value: userStats.cancelledCustomers, icon: UserX, color: "text-red-600", bg: "bg-red-50" },
     { label: "Abandoned Customers", value: userStats.abandonedCustomers, icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
-  ];
+  ] : [];
 
   const tabs = [
     { key: "ALL", label: "All Customers", count: searchedCustomers.length },
@@ -297,7 +294,9 @@ const handleDownloadCSV = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {summaryCards.map((item) => (
+              {loading ? (
+                <p className="col-span-full text-sm text-ink-500">Loading customer summary...</p>
+              ) : summaryCards.map((item) => (
                 <div key={item.label} className="flex items-center gap-3 border border-ink-100 bg-ink-50 rounded-xl p-4 shadow-sm">
                   <div className={`w-11 h-11 rounded-xl ${item.bg} flex items-center justify-center`}>
                     <item.icon className={`w-5 h-5 ${item.color}`} />
@@ -312,7 +311,12 @@ const handleDownloadCSV = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-ink-200 shadow-sm overflow-hidden">
+        {error ? (
+          <div role="alert" className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-700">
+            <p>Could not load customer data: {error}</p>
+            <button type="button" onClick={fetchData} className="mt-3 font-semibold underline">Retry</button>
+          </div>
+        ) : <div className="bg-white rounded-2xl border border-ink-200 shadow-sm overflow-hidden">
           <div className="px-4 pt-4 overflow-x-auto">
             <div className="flex items-center gap-8 min-w-max border-b border-ink-200">
               {tabs.map((tab) => (
@@ -437,7 +441,7 @@ const handleDownloadCSV = () => {
           <div className="p-4 border-t border-ink-200">
             <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

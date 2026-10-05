@@ -104,72 +104,57 @@ const generateInvoicePDF = async (order) => {
     // ================= HEADER =================
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("BHARAT NATIONAL COMPUTERS", 20, 25);
+    doc.text("INVOICE", 20, 25);
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("INVOICE", 150, 25);
-    doc.text(`#INV-${order.id}`, 150, 32);
-    doc.text(`Order ID: ORD-${order.id}`, 150, 38);
+    doc.text(`#INV-${order.id}`, 150, 25);
+    doc.text(`Order ID: ORD-${order.id}`, 150, 32);
 
     doc.text(
       `Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`,
       150,
-      44
+      38
     );
 
-    // ================= COMPANY INFO =================
-    doc.setFontSize(10);
-    doc.text("Bharat National Computers", 20, 55);
-    doc.text("Dno - 333- F2 - Geetha Building", 20, 61);
-    doc.text("Nehru St, Ram Nagar, Coimbatore", 20, 67);
-    doc.text("Tamil Nadu - 641009", 20, 73);
-    doc.text("Phone: 9789345333 / 8903037883", 20, 79);
-    doc.text("Email: bncbalajicbe@gmail.com", 20, 85);
-    doc.text("GST: 33ABCDE1234F1Z5", 20, 91);
-
-    doc.line(20, 96, 190, 96);
+    doc.line(20, 45, 190, 45);
 
     // ================= BILL TO =================
     doc.setFont("helvetica", "bold");
-    doc.text("BILL TO:", 20, 106);
+    doc.text("BILL TO:", 20, 55);
 
     doc.setFont("helvetica", "normal");
-    doc.text(order.fullName || "Customer", 20, 114);
-    doc.text(order.address || "No address provided", 20, 120);
+    doc.text(order.fullName || "Customer", 20, 63);
+    doc.text(order.address || "No address provided", 20, 69);
     doc.text(
       `${order.place || ""}${order.state ? ", " + order.state : ""}`,
       20,
-      126
+      75
     );
-    doc.text(order.pincode ? `Pincode: ${order.pincode}` : "", 20, 132);
-    doc.text(`Phone: ${order.phone || "N/A"}`, 20, 138);
-    doc.text(`Email: ${order.email || "N/A"}`, 20, 144);
+    doc.text(order.pincode ? `Pincode: ${order.pincode}` : "", 20, 81);
+    doc.text(`Phone: ${order.phone || "N/A"}`, 20, 87);
+    doc.text(`Email: ${order.email || "N/A"}`, 20, 93);
 
     // ================= ORDER DETAILS =================
     doc.setFont("helvetica", "bold");
-    doc.text("ORDER DETAILS:", 20, 156);
+    doc.text("ORDER DETAILS:", 20, 105);
 
     doc.setFont("helvetica", "normal");
     doc.text(
       `Payment Method: ${order.paymentMethod?.toUpperCase() || "N/A"}`,
       20,
-      164
+      113
     );
-    doc.text(`Order Status: ${order.status}`, 20, 170);
+    doc.text(`Order Status: ${order.status}`, 20, 119);
 
     // ================= TABLE =================
     const tableColumn = ["S.No", "Product Name", "Qty", "Unit Price", "Total"];
     const tableRows = [];
 
-    let subtotal = 0;
-
     order.orderItem?.forEach((item, index) => {
       const qty = toNumber(item.quantity);
       const unitPrice = toNumber(item.unitPrice);
       const total = qty * unitPrice;
-
-      subtotal += total;
 
       tableRows.push([
         index + 1,
@@ -180,7 +165,7 @@ const generateInvoicePDF = async (order) => {
       ]);
     });
 
-    const startY = 178;
+    const startY = 130;
 
     autoTable(doc, {
       head: [tableColumn],
@@ -209,59 +194,26 @@ const generateInvoicePDF = async (order) => {
     // ================= TOTALS =================
     const finalY = doc.lastAutoTable.finalY + 10;
 
-    const gst = Math.round(subtotal * 0.18);
-    const grandTotal = subtotal + gst;
-
     doc.setFontSize(10);
-
     doc.setFont("helvetica", "normal");
-
-    doc.text("Subtotal:", 140, finalY);
-    doc.text(formatMoney(subtotal), 180, finalY, { align: "right" });
-
-    doc.text("GST (18%):", 140, finalY + 7);
-    doc.text(formatMoney(gst), 180, finalY + 7, { align: "right" });
-
-    doc.line(130, finalY + 12, 190, finalY + 12);
+    doc.text("Payment Status:", 20, finalY + 10);
+    doc.text(getPaymentStatusConfig(order.paymentStatus).label, 60, finalY + 10);
+    doc.line(130, finalY + 2, 190, finalY + 2);
 
     doc.setFont("helvetica", "bold");
-    doc.text("GRAND TOTAL:", 140, finalY + 20);
-    doc.text(formatMoney(grandTotal), 180, finalY + 20, {
+    doc.text("ORDER TOTAL:", 140, finalY + 10);
+    doc.text(formatMoney(order.totalAmount), 180, finalY + 10, {
       align: "right",
     });
 
-    // ================= PAYMENT STATUS =================
-    doc.setFont("helvetica", "normal");
-    doc.text("Payment Status:", 20, finalY + 20);
-    doc.text(
-      order.paymentMethod === "cod" ? "Pending (COD)" : "Paid",
-      60,
-      finalY + 20
-    );
-
     // ================= FOOTER =================
-    const footerY = finalY + 45;
+    const footerY = finalY + 35;
 
     doc.setFontSize(8);
     doc.text(
-      "Thank you for choosing Bharat National Computers!",
-      105,
-      footerY,
-      { align: "center" }
-    );
-
-    doc.text("Contact: 9789345333 / 8903037883", 105, footerY + 6, {
-      align: "center",
-    });
-
-    doc.text("Email: bncbalajicbe@gmail.com", 105, footerY + 12, {
-      align: "center",
-    });
-
-    doc.text(
       `Generated on: ${new Date().toLocaleString("en-IN")}`,
       105,
-      footerY + 18,
+      footerY,
       { align: "center" }
     );
 
@@ -277,6 +229,11 @@ const generateInvoicePDF = async (order) => {
 const getStatusConfig = (status) => {
   return statusConfig[status || "PLACED"] || statusConfig.PLACED;
 };
+
+const getPaymentStatusConfig = (status) =>
+  status?.toUpperCase() === "PAID"
+    ? { label: "Paid", pill: "bg-green-100 text-green-700 border-green-200" }
+    : { label: "Pending", pill: "bg-amber-100 text-amber-700 border-amber-200" };
 
 const formatCurrency = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -323,7 +280,8 @@ const OrderList = () => {
   const [orders, setOrders] = useState([]);
   // Only the setter is used; the stored value is never read back.
   const [, setApiStatusStats] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [activeStatus, setActiveStatus] = useState("ALL");
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
@@ -344,12 +302,9 @@ const OrderList = () => {
   const [cancelRemarks, setCancelRemarks] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    uniqueCustomers: 0,
-    totalQuantity: 0,
-    totalValue: 0,
-  });
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState("");
   
   const [screenshotLoading, setScreenshotLoading] = useState({
     statusCard: false,
@@ -364,6 +319,7 @@ const OrderList = () => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
+        setLoadError("");
         const [ordersData, statsData] = await Promise.all([
           getOrders(),
           getOrderStatusStats(),
@@ -379,7 +335,9 @@ const OrderList = () => {
         setApiStatusStats(formattedStats);
       } catch (err) {
         console.error(err);
-        toast.error(err?.message || "Failed to load orders");
+        const message = err?.message || "Failed to load orders";
+        setLoadError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -391,6 +349,8 @@ const OrderList = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setStatsLoading(true);
+        setStatsError("");
         const res = await getSalesStats();
         const data = res?.data || res;
         setStats({
@@ -401,6 +361,9 @@ const OrderList = () => {
         });
       } catch (err) {
         console.error(err);
+        setStatsError(err?.message || "Failed to load sales summary");
+      } finally {
+        setStatsLoading(false);
       }
     };
     fetchStats();
@@ -682,7 +645,11 @@ const OrderList = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
-            {ORDER_STATUSES.map((status) => {
+            {loading ? (
+              <p className="col-span-full text-sm text-ink-500">Loading order status counts...</p>
+            ) : loadError ? (
+              <p role="alert" className="col-span-full text-sm text-red-700">Order status counts unavailable: {loadError}</p>
+            ) : ORDER_STATUSES.map((status) => {
               const cfg = getStatusConfig(status);
               const Icon = statusIconMap[status] || Package;
               return (
@@ -728,7 +695,11 @@ const OrderList = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-            {[
+            {statsLoading ? (
+              <p className="col-span-full text-sm text-ink-500">Loading sales summary...</p>
+            ) : statsError ? (
+              <p role="alert" className="col-span-full text-sm text-red-700">Sales summary unavailable: {statsError}</p>
+            ) : [
               { label: "Total Orders", val: stats.totalSales, icon: Package, color: "text-primary", bg: "bg-primary/10" },
               { label: "Total Customers", val: stats.uniqueCustomers, icon: Users, color: "text-primary", bg: "bg-primary/10" },
               { label: "Total Quantity", val: stats.totalQuantity, icon: Layers, color: "text-amber-600", bg: "bg-amber-50" },
@@ -771,7 +742,7 @@ const OrderList = () => {
                   }`}
                 >
                   {tab.label}
-                  {tab.key !== "ALL" && (
+                  {!loading && !loadError && tab.key !== "ALL" && (
                     <span className="ml-1 text-[11px] sm:text-xs text-ink-500">
                       ({tab.count})
                     </span>
@@ -860,7 +831,13 @@ const OrderList = () => {
                       Loading orders...
                     </td>
                   </tr>
-                ) : paginated.length === 0 ? (
+                ) : loadError ? (
+                    <tr>
+                      <td colSpan={9} role="alert" className="px-3 sm:px-4 py-8 sm:py-10 text-center text-red-700">
+                        Could not load orders: {loadError}
+                      </td>
+                    </tr>
+                  ) : paginated.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-3 sm:px-4 py-8 sm:py-10 text-center text-ink-500">
                       No orders found
@@ -894,7 +871,10 @@ const OrderList = () => {
                           </span>
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap hidden md:table-cell text-xs">
-                          {o.paymentMethod || "-"}
+                          <div>{o.paymentMethod || "-"}</div>
+                          <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getPaymentStatusConfig(o.paymentStatus).pill}`}>
+                            {getPaymentStatusConfig(o.paymentStatus).label}
+                          </span>
                         </td>
                
 
@@ -1015,6 +995,7 @@ const OrderList = () => {
                 </span>
               </div>
               <p><span className="font-semibold text-ink-500">Payment:</span> {viewData.paymentMethod?.toLowerCase() || "online"}</p>
+              <p className="flex items-center gap-2"><span className="font-semibold text-ink-500">Payment Status:</span><span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${getPaymentStatusConfig(viewData.paymentStatus).pill}`}>{getPaymentStatusConfig(viewData.paymentStatus).label}</span></p>
               <p><span className="font-semibold text-ink-500">State:</span> {viewData.state || "—"}</p>
               <div className="border-t pt-2 sm:pt-3 mt-2">
                 <p className="font-bold text-base sm:text-lg pt-1"><span className="text-ink-600">Total:</span> {formatCurrency(viewData.totalAmount)}</p>

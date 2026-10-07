@@ -1,6 +1,20 @@
 // src/overview/overview.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PAID_ORDER_WHERE } from '../common/paid-order-metrics';
+
+function utcMonthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLabel(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleString('en-IN', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 // Export interfaces so they can be used in controller
 export interface Activity {
@@ -54,51 +68,54 @@ export class OverviewService {
 
   // Get overview statistics (ALL TIME)
   async getOverviewStats(): Promise<OverviewStats> {
-    // Get ALL successful orders
-    const successfulOrders = await this.prisma.order.findMany({
-      where: {
-        status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'] as any,
+    // Financial totals include only paid, active, non-cancelled orders.
+    const [paidOrders, totalOrders] = await Promise.all([
+      this.prisma.order.findMany({
+        where: PAID_ORDER_WHERE,
+        select: { totalAmount: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          status: { in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'] },
         },
-      } as any,
-      select: {
-        totalAmount: true,
-        userId: true,
-        createdAt: true,
-      },
-    });
+      }),
+    ]);
 
     // Total Revenue (ALL TIME)
-    const totalRevenue = successfulOrders.reduce(
+    const totalRevenue = paidOrders.reduce(
       (sum, order) => sum + order.totalAmount,
       0,
     );
 
-    // Total Orders (ALL TIME)
-    const totalOrders = successfulOrders.length;
-
     // Total Users (ALL TIME)
     const totalUsers = await this.prisma.user.count();
 
-    // Average Order Value
+    // Average order value uses the same paid-order population as revenue.
     const avgOrderValue =
-      totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+      paidOrders.length > 0 ? Math.round(totalRevenue / paidOrders.length) : 0;
 
     // Get monthly revenue for chart (last 12 months)
-    const twelveMonthsAgo = new Date();
-    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-    twelveMonthsAgo.setDate(1);
-    twelveMonthsAgo.setHours(0, 0, 0, 0);
+    const currentMonth = new Date();
+    const monthStart = new Date(
+      Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth(), 1),
+    );
+    monthStart.setUTCMonth(monthStart.getUTCMonth() - 11);
+    const nextMonthStart = new Date(
+      Date.UTC(
+        currentMonth.getUTCFullYear(),
+        currentMonth.getUTCMonth() + 1,
+        1,
+      ),
+    );
 
     const monthlyOrders = await this.prisma.order.findMany({
       where: {
-        status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'] as any,
-        },
+        ...PAID_ORDER_WHERE,
         createdAt: {
-          gte: twelveMonthsAgo,
+          gte: monthStart,
+          lt: nextMonthStart,
         },
-      } as any,
+      },
       select: {
         totalAmount: true,
         createdAt: true,
@@ -107,28 +124,24 @@ export class OverviewService {
 
     const monthlyRevenue: Record<string, number> = {};
     for (let i = 0; i < 12; i++) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthKey = date.toLocaleString('default', {
-        month: 'short',
-        year: 'numeric',
-      });
-      monthlyRevenue[monthKey] = 0;
+      const date = new Date(monthStart);
+      date.setUTCMonth(monthStart.getUTCMonth() + i);
+      monthlyRevenue[utcMonthKey(date)] = 0;
     }
 
     monthlyOrders.forEach((order) => {
-      const monthKey = order.createdAt.toLocaleString('default', {
-        month: 'short',
-        year: 'numeric',
-      });
+      const monthKey = utcMonthKey(order.createdAt);
       if (monthlyRevenue[monthKey] !== undefined) {
         monthlyRevenue[monthKey] += order.totalAmount;
       }
     });
 
-    const chartData = Object.entries(monthlyRevenue)
-      .map(([month, revenue]) => ({ month, revenue }))
-      .reverse();
+    const chartData = Object.entries(monthlyRevenue).map(
+      ([monthKey, revenue]) => ({
+        month: monthLabel(monthKey),
+        revenue,
+      }),
+    );
 
     return {
       totalRevenue,
@@ -226,12 +239,8 @@ export class OverviewService {
     // Get ALL order items from successful orders
     const orderItems = await this.prisma.orderItem.findMany({
       where: {
-        order: {
-          status: {
-            in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'] as any,
-          },
-        },
-      } as any,
+        order: { is: PAID_ORDER_WHERE },
+      },
       select: {
         productId: true,
         productName: true,

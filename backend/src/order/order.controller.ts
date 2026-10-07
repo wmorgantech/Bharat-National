@@ -15,6 +15,7 @@ import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Roles } from 'src/auth/roles.decorator';
+import { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Order')
 @ApiBearerAuth()
@@ -24,13 +25,19 @@ export class OrderController {
 
   // ✅ Create Order (ownership taken from the authenticated token)
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto, @Request() req) {
+  create(
+    @Body() createOrderDto: CreateOrderDto,
+    @Request() req: { user: AuthUser },
+  ) {
     return this.orderService.create(createOrderDto, req.user);
   }
 
   // Customers see only their own orders; admins see all, or filter by userId.
   @Get()
-  findAll(@Request() req, @Query('userId') userId?: string) {
+  findAll(
+    @Request() req: { user: AuthUser },
+    @Query('userId') userId?: string,
+  ) {
     return this.orderService.findAll(
       req.user,
       userId ? Number(userId) : undefined,
@@ -45,7 +52,10 @@ export class OrderController {
   }
 
   @Get('last')
-  findLast(@Request() req, @Query('userId') userId?: string) {
+  findLast(
+    @Request() req: { user: AuthUser },
+    @Query('userId') userId?: string,
+  ) {
     return this.orderService.findLastByUser(
       req.user,
       userId ? Number(userId) : undefined,
@@ -85,8 +95,20 @@ export class OrderController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: { user: AuthUser },
+  ) {
     return this.orderService.findOneForRequester(id, req.user);
+  }
+
+  @Post(':id/cod-collection')
+  @Roles('ADMIN')
+  collectCodPayment(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: { user: AuthUser },
+  ) {
+    return this.orderService.collectCodPayment(id, req.user);
   }
 
   // ✅ Update Order (status workflow is back-office only)

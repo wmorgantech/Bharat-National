@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsIn,
   IsUUID,
   Min,
   MinLength,
@@ -98,13 +99,14 @@ export class CreateOrderDto {
   @IsString()
   pincode?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'online',
-    description: 'Payment method (online or cod)',
+    description: 'Payment method. The /order endpoint accepts COD orders only.',
+    enum: ['cod', 'online'],
   })
-  @IsOptional()
   @IsString()
-  paymentMethod?: string;
+  @IsIn(['cod', 'online'])
+  paymentMethod: string;
 
   @ApiProperty({
     type: [OrderItemInputDto],

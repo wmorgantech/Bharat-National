@@ -5,7 +5,12 @@ import { IsString, IsOptional, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateOrderDto extends PartialType(
-  OmitType(CreateOrderDto, ['items', 'userId', 'checkoutKey'] as const),
+  OmitType(CreateOrderDto, [
+    'items',
+    'userId',
+    'checkoutKey',
+    'paymentMethod',
+  ] as const),
 ) {
   @ApiPropertyOptional({
     example: 'SHIPPED',

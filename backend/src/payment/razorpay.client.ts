@@ -8,6 +8,13 @@ export interface RazorpayOrderRequest {
   receipt: string;
 }
 
+export interface RazorpayOrderLookup {
+  id: string;
+  receipt?: string;
+  amount: number | string;
+  currency: string;
+}
+
 @Injectable()
 export class RazorpayClient {
   private client?: Razorpay;
@@ -32,6 +39,13 @@ export class RazorpayClient {
 
   createOrder(request: RazorpayOrderRequest) {
     return this.getClient().orders.create(request);
+  }
+
+  findOrdersByReceipt(receipt: string): Promise<{
+    count: number;
+    items: RazorpayOrderLookup[];
+  }> {
+    return this.getClient().orders.all({ receipt, count: 100 });
   }
 
   fetchPayment(paymentId: string) {

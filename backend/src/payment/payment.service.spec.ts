@@ -1,91 +1,374 @@
 import 'reflect-metadata';
 import { createHmac } from 'crypto';
+import { IS_PUBLIC_KEY } from '../auth/public.decorator';
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  InternalServerErrorException,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
-import {
-  THROTTLER_LIMIT,
-  THROTTLER_TTL,
-} from '@nestjs/throttler/dist/throttler.constants';
 import { PaymentController } from './payment.controller';
-import { THROTTLE_LONG, THROTTLE_SHORT } from '../common/throttle.config';
-import { IS_PUBLIC_KEY } from '../auth/public.decorator';
 import { PaymentService } from './payment.service';
-import { CreatePaymentOrderDto } from './dto/create-payment-order.dto';
 
 const user = { userId: 7, role: 'USER', type: 'USER' as const };
 const verificationSecret = 'test_secret';
+const intentItems = [
+  {
+    id: 31,
+    intentId: 55,
+    productId: 3,
+    productName: 'Snapshot product',
+    unitPrice: 999,
+    quantity: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
-function signature(orderId: string, paymentId: string): string {
-  return require('crypto')
-    .createHmac('sha256', verificationSecret)
-    .update(`${orderId}|${paymentId}`)
-    .digest('hex');
+type PaymentAttemptRecord = {
+  id: number;
+  status: string;
+  updatedAt: Date;
+  notes?: unknown;
+  [key: string]: unknown;
+};
+
+function intent(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 55,
+    userId: 7,
+    fullName: 'Customer',
+    email: 'customer@example.test',
+    phone: '9876543210',
+    address: '1 Main Street',
+    place: 'Springfield',
+    state: 'CA',
+    pincode: '12345',
+    checkoutKey: 'checkout-key',
+    checkoutFingerprint: 'fingerprint',
+    totalAmount: 999,
+    status: 'PENDING',
+    finalOrderId: null,
+    items: intentItems,
+    payments: [] as PaymentAttemptRecord[],
+    finalOrder: null,
+    ...overrides,
+  };
 }
 
 function order(overrides: Record<string, unknown> = {}) {
   return {
     id: 123,
     userId: 7,
+    fullName: 'Customer',
+    email: 'customer@example.test',
+    phone: '9876543210',
+    address: '1 Main Street',
+    place: 'Springfield',
+    state: 'CA',
+    pincode: '12345',
     status: 'PLACED',
+    isActive: true,
     paymentMethod: 'online',
     paymentStatus: 'UNPAID',
     totalAmount: 999,
-    orderItem: [{ quantity: 1, unitPrice: 999 }],
-    payments: [],
+    orderItem: intentItems.map(
+      ({ productId, productName, unitPrice, quantity }) => ({
+        productId,
+        productName,
+        unitPrice,
+        quantity,
+      }),
+    ),
     ...overrides,
   };
 }
 
-function setup(currentOrder = order()) {
+function payment(overrides: Record<string, unknown> = {}) {
+  const now = new Date();
+  return {
+    id: 88,
+    orderId: null,
+    checkoutIntentId: 55,
+    provider: 'RAZORPAY',
+    razorpayOrderId: 'rz_order_55',
+    razorpayPaymentId: null,
+    razorpaySignature: null,
+    amount: 99900,
+    currency: 'INR',
+    status: 'CREATED',
+    method: null,
+    failureReason: null,
+    paidAt: null,
+    createdAt: now,
+    updatedAt: now,
+    order: null,
+    checkoutIntent: intent(),
+    ...overrides,
+  };
+}
+
+function receiptFromNotes(notes: unknown): string | null {
+  if (
+    typeof notes !== 'object' ||
+    notes === null ||
+    Array.isArray(notes) ||
+    !('razorpayReceipt' in notes)
+  ) {
+    return null;
+  }
+  return typeof notes.razorpayReceipt === 'string'
+    ? notes.razorpayReceipt
+    : null;
+}
+
+type IntentRecord = ReturnType<typeof intent>;
+type PaymentRecord = ReturnType<typeof payment>;
+type OrderRecord = ReturnType<typeof order>;
+type OrderItemSnapshot = (typeof intentItems)[number];
+type OrderCreateData = Omit<OrderRecord, 'orderItem'> & {
+  orderItem: { create: OrderItemSnapshot[] };
+};
+
+function sign(orderId: string, paymentId: string): string {
+  return createHmac('sha256', verificationSecret)
+    .update(`${orderId}|${paymentId}`)
+    .digest('hex');
+}
+
+function verifyRequest(overrides: Record<string, string> = {}) {
+  const razorpayOrderId = overrides.razorpayOrderId ?? 'rz_order_55';
+  const razorpayPaymentId = overrides.razorpayPaymentId ?? 'rz_payment_55';
+  return {
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature:
+      overrides.razorpaySignature ?? sign(razorpayOrderId, razorpayPaymentId),
+  };
+}
+
+function setup(
+  options: {
+    intent?: ReturnType<typeof intent> | null;
+    payment?: ReturnType<typeof payment> | null;
+    order?: ReturnType<typeof order> | null;
+    providerPayment?: Record<string, unknown>;
+  } = {},
+) {
+  let currentIntent: IntentRecord | null =
+    options.intent === undefined ? intent() : options.intent;
+  let currentOrder: OrderRecord | null = options.order ?? null;
+  let currentPayment: PaymentRecord | null = options.payment ?? payment();
+  const savedOrder: OrderRecord = currentOrder ?? order({ id: 900 });
+  let transactionTail = Promise.resolve();
+  const webhookEvents = new Map<
+    string,
+    { processedAt: Date | null; eventType: string }
+  >();
+
+  const applyPaymentUpdate = (data: Partial<PaymentRecord>) => {
+    if (currentPayment) {
+      currentPayment = {
+        ...currentPayment,
+        ...data,
+        updatedAt: data.updatedAt ?? new Date(),
+      };
+      if (currentIntent?.payments) {
+        currentIntent = {
+          ...currentIntent,
+          payments: currentIntent.payments.map((current) =>
+            current.id === currentPayment?.id
+              ? { ...current, ...data, updatedAt: currentPayment.updatedAt }
+              : current,
+          ),
+        };
+      }
+    }
+  };
+
   const transaction = {
     $queryRaw: jest
       .fn()
-      .mockResolvedValue(currentOrder ? [{ id: currentOrder.id }] : []),
-    order: {
-      findUnique: jest.fn().mockResolvedValue(
-        currentOrder
-          ? {
-              ...currentOrder,
-              payments: currentOrder.payments.filter((payment) =>
-                ['CREATED', 'PENDING'].includes(payment.status),
-              ),
-            }
-          : null,
+      .mockImplementation((): Array<{ id: number }> => [{ id: 55 }]),
+    checkoutIntent: {
+      findUnique: jest.fn().mockImplementation(() => ({
+        ...currentIntent,
+        items: currentIntent?.items ?? [],
+        payments: currentIntent?.payments ?? [],
+        finalOrder: currentIntent?.finalOrder ?? currentOrder,
+      })),
+      updateMany: jest.fn().mockImplementation(
+        ({
+          data,
+        }: {
+          data: {
+            status?: string;
+            finalOrderId?: number | null;
+            checkoutFingerprint?: string | null;
+          };
+        }) => {
+          if (currentIntent) {
+            currentIntent = {
+              ...currentIntent,
+              ...data,
+              finalOrder: currentOrder,
+            };
+          }
+          return { count: 1 };
+        },
       ),
     },
     payment: {
-      create: jest.fn().mockResolvedValue({
-        razorpayOrderId: 'order_razorpay_123',
-        amount: 99900,
-        currency: 'INR',
-        status: 'CREATED',
-      }),
+      findUnique: jest.fn().mockImplementation(() =>
+        currentPayment
+          ? {
+              ...currentPayment,
+              order: currentOrder,
+              checkoutIntent: currentIntent
+                ? {
+                    ...currentIntent,
+                    items: currentIntent.items,
+                    finalOrder: currentIntent.finalOrder ?? currentOrder,
+                  }
+                : null,
+            }
+          : null,
+      ),
+      create: jest
+        .fn()
+        .mockImplementation(({ data }: { data: Partial<PaymentRecord> }) => {
+          currentPayment = payment({ id: 88, ...data });
+          return currentPayment;
+        }),
+      updateMany: jest
+        .fn()
+        .mockImplementation(({ data }: { data: Partial<PaymentRecord> }) => {
+          applyPaymentUpdate(data);
+          return { count: 1 };
+        }),
     },
-  };
-  const prisma = {
-    $transaction: jest.fn((callback: (tx: typeof transaction) => unknown) =>
-      callback(transaction),
-    ),
-    // Read outside the transaction, after a payment is verified, to build the
-    // order confirmation email.
     order: {
+      create: jest
+        .fn()
+        .mockImplementation(({ data }: { data: OrderCreateData }) => {
+          currentOrder = {
+            ...savedOrder,
+            ...data,
+            id: 900,
+            orderItem: data.orderItem.create,
+          };
+          return currentOrder;
+        }),
+      update: jest
+        .fn()
+        .mockImplementation(({ data }: { data: Partial<OrderRecord> }) => {
+          currentOrder = { ...currentOrder, ...data };
+          return currentOrder;
+        }),
+      updateMany: jest
+        .fn()
+        .mockImplementation(({ data }: { data: Partial<OrderRecord> }) => {
+          if (currentOrder) currentOrder = { ...currentOrder, ...data };
+          return { count: 1 };
+        }),
+    },
+    orderConfirmationOutbox: {
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    webhookEvent: {
+      createMany: jest
+        .fn()
+        .mockImplementation(
+          ({ data }: { data: { eventId: string; eventType: string } }) => {
+            if (webhookEvents.has(data.eventId)) return { count: 0 };
+            webhookEvents.set(data.eventId, {
+              processedAt: null,
+              eventType: data.eventType,
+            });
+            return { count: 1 };
+          },
+        ),
       findUnique: jest
         .fn()
-        .mockResolvedValue(
-          currentOrder ? { ...currentOrder, email: null, orderItem: [] } : null,
+        .mockImplementation(
+          ({ where }: { where: { provider_eventId: { eventId: string } } }) =>
+            webhookEvents.get(where.provider_eventId.eventId) ?? null,
+        ),
+      update: jest
+        .fn()
+        .mockImplementation(
+          ({
+            where,
+            data,
+          }: {
+            where: { provider_eventId: { eventId: string } };
+            data: { processedAt: Date };
+          }) => {
+            const event = webhookEvents.get(where.provider_eventId.eventId);
+            if (event) {
+              webhookEvents.set(where.provider_eventId.eventId, {
+                ...event,
+                processedAt: data.processedAt,
+              });
+            }
+            return event;
+          },
         ),
     },
   };
-  const razorpay = {
-    createOrder: jest.fn().mockResolvedValue({ id: 'order_razorpay_123' }),
-    getKeyId: jest.fn().mockReturnValue('rzp_test_public'),
+  const prisma = {
+    $transaction: jest.fn((callback: (tx: typeof transaction) => unknown) => {
+      const pending = transactionTail.then(() => callback(transaction));
+      transactionTail = pending.then(
+        () => undefined,
+        () => undefined,
+      );
+      return pending;
+    }),
+    payment: {
+      updateMany: jest
+        .fn()
+        .mockImplementation(({ data }: { data: Partial<PaymentRecord> }) => {
+          applyPaymentUpdate(data);
+          return { count: 1 };
+        }),
+    },
   };
+  const razorpay = {
+    createOrder: jest
+      .fn<
+        Promise<{ id: string }>,
+        [{ amount: number; currency: string; receipt: string }]
+      >()
+      .mockResolvedValue({ id: 'rz_order_55' }),
+    findOrdersByReceipt: jest
+      .fn<
+        Promise<{
+          count: number;
+          items: Array<{
+            id: string;
+            receipt?: string;
+            amount: number;
+            currency: string;
+          }>;
+        }>,
+        [string]
+      >()
+      .mockResolvedValue({ count: 0, items: [] }),
+    fetchPayment: jest
+      .fn<Promise<Record<string, unknown>>, [string]>()
+      .mockResolvedValue({
+        id: 'rz_payment_55',
+        order_id: 'rz_order_55',
+        status: 'captured',
+        amount: 99900,
+        currency: 'INR',
+      }),
+    getKeyId: jest.fn<string, []>().mockReturnValue('rzp_test_public'),
+  };
+  if (options.providerPayment) {
+    razorpay.fetchPayment.mockResolvedValue(options.providerPayment);
+  }
   const outbox = { processOrder: jest.fn().mockResolvedValue(undefined) };
 
   return {
@@ -94,643 +377,654 @@ function setup(currentOrder = order()) {
       razorpay as never,
       outbox as never,
     ),
-    controller: new PaymentController({
-      createOrder: jest.fn(),
-    } as never),
     transaction,
     prisma,
     razorpay,
     outbox,
+    getIntent: () => currentIntent,
+    getPayment: () => currentPayment,
+    getOrder: () => currentOrder,
   };
 }
 
-describe('PaymentService', () => {
-  it('creates a Razorpay order and CREATED payment using rupees converted to paise', async () => {
-    const { service, transaction, razorpay } = setup();
+beforeEach(() => {
+  process.env.RAZORPAY_KEY_SECRET = verificationSecret;
+  process.env.RAZORPAY_WEBHOOK_SECRET = verificationSecret;
+});
 
-    await expect(service.createOrder({ orderId: 123 }, user)).resolves.toEqual({
-      razorpayOrderId: 'order_razorpay_123',
+afterEach(() => {
+  delete process.env.RAZORPAY_KEY_SECRET;
+  delete process.env.RAZORPAY_WEBHOOK_SECRET;
+});
+
+describe('PaymentService intent-backed checkout', () => {
+  it('creates a Razorpay order and reserves a Payment without creating an Order', async () => {
+    const context = setup();
+    await expect(
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).resolves.toEqual({
+      razorpayOrderId: 'rz_order_55',
       amount: 99900,
       currency: 'INR',
       keyId: 'rzp_test_public',
     });
 
-    expect(razorpay.createOrder).toHaveBeenCalledWith({
+    expect(context.transaction.payment.create).toHaveBeenCalledTimes(1);
+    const receipt = receiptFromNotes(context.getPayment()?.notes);
+    if (!receipt) throw new Error('Expected a persisted provider receipt');
+    expect(receipt).toMatch(/^checkout_55_/);
+    expect(context.razorpay.createOrder).toHaveBeenCalledWith({
       amount: 99900,
       currency: 'INR',
-      receipt: expect.stringMatching(/^order_123_[a-f0-9]{16}$/),
+      receipt,
     });
-    expect(transaction.payment.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        orderId: 123,
-        provider: 'RAZORPAY',
-        razorpayOrderId: 'order_razorpay_123',
-        amount: 99900,
-        currency: 'INR',
-        status: 'CREATED',
-      }),
+    expect(context.prisma.payment.updateMany).toHaveBeenCalledTimes(1);
+    expect(context.getPayment()).toMatchObject({
+      status: 'CREATED',
+      razorpayOrderId: 'rz_order_55',
     });
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
   });
 
-  it('ignores a client-provided amount', async () => {
-    const { service, razorpay } = setup(order({ totalAmount: 500 }));
-
-    await service.createOrder(
-      { orderId: 123, amount: 1 } as CreatePaymentOrderDto & { amount: number },
+  it('uses the persisted intent amount and ignores any frontend amount', async () => {
+    const context = setup();
+    await context.service.createOrder(
+      { checkoutIntentId: 55, amount: 1 } as never,
       user,
     );
-
-    expect(razorpay.createOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ amount: 50000 }),
+    expect(context.razorpay.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 99900 }),
     );
   });
 
-  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER])(
-    'rejects invalid total amount %s',
-    async (totalAmount) => {
-      const { service } = setup(order({ totalAmount }));
-      await expect(service.createOrder({ orderId: 123 }, user)).rejects.toThrow(
-        'Order amount is invalid',
-      );
-    },
-  );
-
-  it('does not reveal another user order', async () => {
-    const { service, transaction } = setup();
-    transaction.$queryRaw.mockResolvedValue([]);
-
+  it('rejects another user and non-pending intents', async () => {
+    const wrongOwner = setup({ intent: intent({ userId: 99 }) });
+    wrongOwner.transaction.$queryRaw.mockResolvedValue([]);
     await expect(
-      service.createOrder({ orderId: 123 }, user),
+      wrongOwner.service.createOrder({ checkoutIntentId: 55 }, user),
     ).rejects.toBeInstanceOf(NotFoundException);
-  });
 
-  it('rejects cancelled and already-paid orders', async () => {
     await expect(
-      setup(order({ status: 'CANCELLED' })).service.createOrder(
-        { orderId: 123 },
-        user,
-      ),
-    ).rejects.toThrow('Order is not eligible for payment');
-    await expect(
-      setup(order({ paymentStatus: 'PAID' })).service.createOrder(
-        { orderId: 123 },
+      setup({ intent: intent({ status: 'COMPLETED' }) }).service.createOrder(
+        { checkoutIntentId: 55 },
         user,
       ),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('rejects invalid or missing orders and non-online payment methods', async () => {
-    const missing = setup(null as never);
-    missing.transaction.$queryRaw.mockResolvedValue([]);
+  it('rejects malformed item snapshots and invalid totals', async () => {
     await expect(
-      missing.service.createOrder({ orderId: 123 }, user),
-    ).rejects.toBeInstanceOf(NotFoundException);
-    await expect(
-      setup(order({ paymentMethod: 'cod' })).service.createOrder(
-        { orderId: 123 },
+      setup({ intent: intent({ items: [] }) }).service.createOrder(
+        { checkoutIntentId: 55 },
         user,
       ),
-    ).rejects.toThrow('Order is not eligible for online payment');
+    ).rejects.toThrow('Order items are invalid');
+    await expect(
+      setup({ intent: intent({ totalAmount: 0 }) }).service.createOrder(
+        { checkoutIntentId: 55 },
+        user,
+      ),
+    ).rejects.toThrow('Order amount is invalid');
+    const mismatch = setup({
+      intent: intent({
+        totalAmount: 1000,
+        items: [{ ...intentItems[0], unitPrice: 999 }],
+      }),
+    });
+    await expect(
+      mismatch.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).rejects.toThrow('Checkout intent total is invalid');
+    expect(mismatch.razorpay.createOrder).not.toHaveBeenCalled();
   });
 
-  it('reuses an active attempt without creating another Razorpay order', async () => {
-    const active = {
-      razorpayOrderId: 'order_existing',
+  it('reuses an existing active attempt instead of creating another provider order', async () => {
+    const context = setup({
+      intent: intent({ payments: [payment({ id: 89 })] }),
+    });
+    await expect(
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).resolves.toMatchObject({ razorpayOrderId: 'rz_order_55' });
+    expect(context.transaction.payment.create).not.toHaveBeenCalled();
+    expect(context.razorpay.createOrder).not.toHaveBeenCalled();
+  });
+
+  it('does not recover a fresh CREATING attempt', async () => {
+    const creatingAttempt = payment({
+      status: 'CREATING',
+      razorpayOrderId: null,
+      notes: { razorpayReceipt: 'checkout_55_receipt' },
+    });
+    const context = setup({
+      intent: intent({ payments: [creatingAttempt] }),
+      payment: creatingAttempt,
+    });
+
+    await expect(
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).rejects.toThrow('Payment order creation is already in progress');
+    expect(context.razorpay.findOrdersByReceipt).not.toHaveBeenCalled();
+    expect(context.razorpay.createOrder).not.toHaveBeenCalled();
+  });
+
+  it('recovers a stale CREATING attempt by finding the existing provider order', async () => {
+    const receipt = 'checkout_55_recovery';
+    const staleAttempt = payment({
+      status: 'CREATING',
+      razorpayOrderId: null,
+      updatedAt: new Date(Date.now() - 11 * 60 * 1000),
+      notes: { razorpayReceipt: receipt },
+    });
+    const context = setup({
+      intent: intent({ payments: [staleAttempt] }),
+      payment: staleAttempt,
+    });
+    context.razorpay.findOrdersByReceipt.mockResolvedValue({
+      count: 1,
+      items: [
+        {
+          id: 'rz_existing_55',
+          receipt,
+          amount: 99900,
+          currency: 'INR',
+        },
+      ],
+    });
+
+    await expect(
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).resolves.toMatchObject({ razorpayOrderId: 'rz_existing_55' });
+    expect(context.razorpay.findOrdersByReceipt).toHaveBeenCalledWith(receipt);
+    expect(context.razorpay.createOrder).not.toHaveBeenCalled();
+    expect(context.prisma.payment.updateMany).toHaveBeenCalledTimes(1);
+    expect(context.getPayment()).toMatchObject({
+      id: staleAttempt.id,
+      status: 'CREATED',
+      razorpayOrderId: 'rz_existing_55',
+    });
+  });
+
+  it('serializes concurrent stale recovery and reuses the recovered payment attempt', async () => {
+    const staleAttempt = payment({
+      status: 'CREATING',
+      razorpayOrderId: null,
+      updatedAt: new Date(Date.now() - 11 * 60 * 1000),
+      notes: { razorpayReceipt: 'checkout_55_race' },
+    });
+    const context = setup({
+      intent: intent({ payments: [staleAttempt] }),
+      payment: staleAttempt,
+    });
+    context.razorpay.findOrdersByReceipt.mockResolvedValue({
+      count: 1,
+      items: [
+        {
+          id: 'rz_existing_55',
+          receipt: 'checkout_55_race',
+          amount: 99900,
+          currency: 'INR',
+        },
+      ],
+    });
+
+    const results = await Promise.allSettled([
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ]);
+
+    expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(
+      2,
+    );
+    expect(
+      results.map((result) =>
+        result.status === 'fulfilled' ? result.value.razorpayOrderId : null,
+      ),
+    ).toEqual(['rz_existing_55', 'rz_existing_55']);
+    expect(context.razorpay.findOrdersByReceipt).toHaveBeenCalledTimes(1);
+    expect(context.razorpay.createOrder).not.toHaveBeenCalled();
+    expect(context.transaction.payment.create).not.toHaveBeenCalled();
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps CREATING recoverable after provider failure instead of losing its receipt', async () => {
+    const context = setup();
+    context.razorpay.createOrder.mockRejectedValue(new Error('provider down'));
+    await expect(
+      context.service.createOrder({ checkoutIntentId: 55 }, user),
+    ).rejects.toThrow('Unable to create payment order');
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+    const receipt = receiptFromNotes(context.getPayment()?.notes);
+    if (!receipt) throw new Error('Expected a persisted provider receipt');
+    expect(receipt).toMatch(/^checkout_55_/);
+    expect(context.razorpay.createOrder).toHaveBeenCalledWith({
       amount: 99900,
       currency: 'INR',
-      status: 'CREATED',
-    };
-    const { service, razorpay, transaction } = setup(
-      order({ payments: [active] }),
-    );
-    transaction.payment.create.mockClear();
-
-    await expect(
-      service.createOrder({ orderId: 123 }, user),
-    ).resolves.toMatchObject({
-      razorpayOrderId: 'order_existing',
-      amount: 99900,
+      receipt,
     });
-    expect(razorpay.createOrder).not.toHaveBeenCalled();
-    expect(transaction.payment.create).not.toHaveBeenCalled();
+    expect(context.getPayment()).toMatchObject({ status: 'CREATING' });
+    expect(context.prisma.payment.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('PaymentService payment verification', () => {
+  it('creates one paid final Order with the trusted item snapshots and one outbox entry', async () => {
+    const context = setup();
+    const response = await context.service.verifyPayment(verifyRequest(), user);
+
+    expect(context.transaction.order.create).toHaveBeenCalledTimes(1);
+    expect(context.getOrder()).toMatchObject({
+      userId: 7,
+      paymentMethod: 'online',
+      paymentStatus: 'PAID',
+      status: 'PLACED',
+      totalAmount: 999,
+      orderItem: [
+        {
+          productId: 3,
+          productName: 'Snapshot product',
+          unitPrice: 999,
+          quantity: 1,
+        },
+      ],
+    });
+    expect(context.getPayment()).toMatchObject({
+      orderId: 900,
+      status: 'SUCCESS',
+      razorpayPaymentId: 'rz_payment_55',
+    });
+    expect(context.getIntent()).toMatchObject({
+      status: 'COMPLETED',
+      finalOrderId: 900,
+      checkoutFingerprint: null,
+    });
+    expect(
+      context.transaction.orderConfirmationOutbox.createMany,
+    ).toHaveBeenCalledWith({
+      data: { orderId: 900 },
+      skipDuplicates: true,
+    });
+    expect(response).toMatchObject({
+      success: true,
+      orderId: 900,
+      paymentStatus: 'PAID',
+    });
   });
 
-  it('creates a new attempt after a failed previous payment', async () => {
-    const { service, transaction, razorpay } = setup(
-      order({
-        payments: [{ razorpayOrderId: 'order_failed', status: 'FAILED' }],
+  it('rejects invalid signatures before making a database query', async () => {
+    const context = setup();
+    await expect(
+      context.service.verifyPayment(
+        verifyRequest({ razorpaySignature: 'invalid' }),
+        user,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(context.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects a payment ID or Razorpay order ID that differs from provider evidence', async () => {
+    const wrongPaymentId = setup({
+      providerPayment: {
+        id: 'another-payment',
+        order_id: 'rz_order_55',
+        status: 'captured',
+        amount: 99900,
+        currency: 'INR',
+      },
+    });
+    await expect(
+      wrongPaymentId.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Payment does not match the Razorpay order');
+
+    const wrongOrderId = setup({
+      providerPayment: {
+        id: 'rz_payment_55',
+        order_id: 'another-order',
+        status: 'captured',
+        amount: 99900,
+        currency: 'INR',
+      },
+    });
+    await expect(
+      wrongOrderId.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Payment does not match the Razorpay order');
+  });
+
+  it('rejects a payment that is not captured', async () => {
+    const context = setup({
+      providerPayment: {
+        id: 'rz_payment_55',
+        order_id: 'rz_order_55',
+        status: 'authorized',
+        amount: 99900,
+        currency: 'INR',
+      },
+    });
+    await expect(
+      context.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects amount and currency mismatches', async () => {
+    const wrongAmount = setup({
+      providerPayment: {
+        id: 'rz_payment_55',
+        order_id: 'rz_order_55',
+        status: 'captured',
+        amount: 100,
+        currency: 'INR',
+      },
+    });
+    await expect(
+      wrongAmount.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Payment amount or currency is invalid');
+
+    const wrongCurrency = setup({
+      providerPayment: {
+        id: 'rz_payment_55',
+        order_id: 'rz_order_55',
+        status: 'captured',
+        amount: 99900,
+        currency: 'USD',
+      },
+    });
+    await expect(
+      wrongCurrency.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Payment amount or currency is invalid');
+  });
+
+  it('does not reveal another user’s intent', async () => {
+    const context = setup({ intent: intent({ userId: 500 }) });
+    await expect(
+      context.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing final Order on duplicate successful verification', async () => {
+    const finalOrder = order({ id: 900, paymentStatus: 'PAID' });
+    const context = setup({
+      intent: intent({
+        status: 'COMPLETED',
+        finalOrderId: 900,
+        finalOrder,
       }),
-    );
-
-    await service.createOrder({ orderId: 123 }, user);
-
-    expect(razorpay.createOrder).toHaveBeenCalled();
-    expect(transaction.payment.create).toHaveBeenCalled();
+      payment: payment({
+        status: 'SUCCESS',
+        orderId: 900,
+        razorpayPaymentId: 'rz_payment_55',
+      }),
+      order: finalOrder,
+    });
+    const response = await context.service.verifyPayment(verifyRequest(), user);
+    expect(response.orderId).toBe(900);
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
   });
 
-  it('does not create a payment record when Razorpay fails', async () => {
-    const { service, transaction, razorpay } = setup();
-    razorpay.createOrder.mockRejectedValue(new Error('provider unavailable'));
+  it('returns the existing Order after a successful verification response is lost', async () => {
+    const context = setup();
+    const request = verifyRequest();
+    const first = await context.service.verifyPayment(request, user);
+    const retry = await context.service.verifyPayment(request, user);
 
-    await expect(
-      service.createOrder({ orderId: 123 }, user),
-    ).rejects.toBeInstanceOf(InternalServerErrorException);
-    expect(transaction.payment.create).not.toHaveBeenCalled();
+    expect(first.orderId).toBe(900);
+    expect(retry.orderId).toBe(900);
+    expect(context.transaction.order.create).toHaveBeenCalledTimes(1);
+    expect(
+      context.transaction.orderConfirmationOutbox.createMany,
+    ).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects admin identities at the service boundary', async () => {
-    const { service } = setup();
+  it('rejects a different Razorpay payment ID for an already-successful attempt', async () => {
+    const finalOrder = order({ id: 900, paymentStatus: 'PAID' });
+    const context = setup({
+      intent: intent({
+        status: 'COMPLETED',
+        finalOrderId: 900,
+        finalOrder,
+      }),
+      payment: payment({
+        status: 'SUCCESS',
+        orderId: 900,
+        razorpayPaymentId: 'different-payment',
+      }),
+      order: finalOrder,
+    });
     await expect(
-      service.createOrder({ orderId: 123 }, { ...user, type: 'ADMIN' }),
+      context.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+  });
+
+  it('serializes concurrent verification so only one final Order is created', async () => {
+    const context = setup();
+    const [first, second] = await Promise.all([
+      context.service.verifyPayment(verifyRequest(), user),
+      context.service.verifyPayment(verifyRequest(), user),
+    ]);
+    expect(first.orderId).toBe(900);
+    expect(second.orderId).toBe(900);
+    expect(context.transaction.order.create).toHaveBeenCalledTimes(1);
+    expect(
+      context.transaction.orderConfirmationOutbox.createMany,
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves verification for historical Order-linked payments', async () => {
+    const historicOrder = order({ id: 123 });
+    const historicPayment = payment({
+      orderId: 123,
+      checkoutIntentId: null,
+      order: historicOrder,
+      checkoutIntent: null,
+    });
+    const context = setup({
+      intent: null,
+      order: historicOrder,
+      payment: historicPayment,
+    });
+    const response = await context.service.verifyPayment(verifyRequest(), user);
+    const retry = await context.service.verifyPayment(verifyRequest(), user);
+    expect(response.orderId).toBe(123);
+    expect(retry.orderId).toBe(123);
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
+    expect(context.transaction.order.update).toHaveBeenCalledTimes(1);
+    expect(context.getOrder()).toMatchObject({
+      id: 123,
+      paymentStatus: 'PAID',
+    });
+  });
+
+  it('rejects verification for an inactive Order-linked online order without updating payment or order', async () => {
+    const inactiveOrder = order({ id: 123, isActive: false });
+    const inactivePayment = payment({
+      orderId: 123,
+      checkoutIntentId: null,
+      order: inactiveOrder,
+      checkoutIntent: null,
+    });
+    const context = setup({
+      intent: null,
+      order: inactiveOrder,
+      payment: inactivePayment,
+    });
+
+    await expect(
+      context.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Order is not eligible for payment');
+    expect(context.transaction.payment.updateMany).not.toHaveBeenCalled();
+    expect(context.transaction.order.update).not.toHaveBeenCalled();
+    expect(context.getOrder()).toMatchObject({
+      id: 123,
+      isActive: false,
+      paymentStatus: 'UNPAID',
+    });
+  });
+
+  it('continues rejecting verification for a cancelled Order-linked online order', async () => {
+    const cancelledOrder = order({ id: 123, status: 'CANCELLED' });
+    const cancelledPayment = payment({
+      orderId: 123,
+      checkoutIntentId: null,
+      order: cancelledOrder,
+      checkoutIntent: null,
+    });
+    const context = setup({
+      intent: null,
+      order: cancelledOrder,
+      payment: cancelledPayment,
+    });
+
+    await expect(
+      context.service.verifyPayment(verifyRequest(), user),
+    ).rejects.toThrow('Order is not eligible for payment');
+    expect(context.transaction.payment.updateMany).not.toHaveBeenCalled();
+    expect(context.transaction.order.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects payment creation for admin principals', async () => {
+    await expect(
+      setup().service.createOrder({ checkoutIntentId: 55 }, {
+        ...user,
+        type: 'ADMIN',
+      } as never),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
 
-describe('PaymentController', () => {
-  it('allows the webhook through the JWT guard for signature validation', () => {
-    const webhookDescriptor = Object.getOwnPropertyDescriptor(
-      PaymentController.prototype,
-      'webhook',
-    );
-    expect(
-      Reflect.getMetadata(IS_PUBLIC_KEY, webhookDescriptor?.value as object),
-    ).toBe(true);
-  });
-
-  it('applies the payment create-order throttle', () => {
-    const handler = PaymentController.prototype.createOrder;
-
-    expect(
-      Reflect.getMetadata(`${THROTTLER_LIMIT}${THROTTLE_SHORT}`, handler),
-    ).toBe(10);
-    expect(
-      Reflect.getMetadata(`${THROTTLER_TTL}${THROTTLE_SHORT}`, handler),
-    ).toBe(60_000);
-    expect(
-      Reflect.getMetadata(`${THROTTLER_LIMIT}${THROTTLE_LONG}`, handler),
-    ).toBe(30);
-  });
-
-  it('applies the payment verification throttle', () => {
-    const handler = PaymentController.prototype.verify;
-
-    expect(
-      Reflect.getMetadata(`${THROTTLER_LIMIT}${THROTTLE_SHORT}`, handler),
-    ).toBe(20);
-    expect(
-      Reflect.getMetadata(`${THROTTLER_LIMIT}${THROTTLE_LONG}`, handler),
-    ).toBe(60);
-  });
-
-  it('rejects missing authentication before calling the service', async () => {
-    const paymentService = { createOrder: jest.fn() };
-    const controller = new PaymentController(paymentService as never);
-
-    expect(() => controller.createOrder({ orderId: 123 }, {})).toThrow(
-      'Authentication required',
-    );
-    expect(paymentService.createOrder).not.toHaveBeenCalled();
-  });
-
-  it('allows only USER identities', () => {
-    const paymentService = { createOrder: jest.fn() };
-    const controller = new PaymentController(paymentService as never);
-
-    expect(() =>
-      controller.createOrder({ orderId: 123 }, { user: { type: 'ADMIN' } }),
-    ).toThrow('User access required');
-  });
-});
-
-describe('PaymentService.verifyPayment', () => {
-  const dto = {
-    razorpayOrderId: 'order_123',
-    razorpayPaymentId: 'pay_123',
-    razorpaySignature: signature('order_123', 'pay_123'),
-  };
-
-  function verificationSetup(
-    paymentOverrides: Record<string, unknown> = {},
-    email: string | null = null,
-  ) {
-    const payment = {
-      id: 1,
-      orderId: 123,
-      provider: 'RAZORPAY',
-      razorpayOrderId: 'order_123',
-      razorpayPaymentId: null,
-      amount: 99900,
-      currency: 'INR',
-      status: 'CREATED',
-      order: {
-        id: 123,
-        userId: 7,
-        paymentMethod: 'online',
-        totalAmount: 999,
-        status: 'PLACED',
-        paymentStatus: 'UNPAID',
-      },
-      ...paymentOverrides,
-    };
-    const transaction = {
-      payment: {
-        findUnique: jest.fn().mockResolvedValue(payment),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue(payment),
-      },
-      order: {
-        update: jest.fn().mockResolvedValue({}),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
-      orderConfirmationOutbox: {
-        create: jest.fn().mockResolvedValue({ id: 1 }),
-        createMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
-      webhookEvent: {
-        createMany: jest.fn().mockResolvedValue({ count: 1 }),
-        findUnique: jest.fn().mockResolvedValue(null),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-    const prisma = {
-      $transaction: jest.fn((callback: (tx: typeof transaction) => unknown) =>
-        callback(transaction),
-      ),
-      // Read outside the transaction, after verification succeeds, to build
-      // the order confirmation email.
-      order: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ ...payment.order, email, orderItem: [] }),
-      },
-    };
-    const razorpay = {
-      createOrder: jest.fn(),
-      fetchPayment: jest.fn().mockResolvedValue({
-        id: 'pay_123',
-        order_id: 'order_123',
-        status: 'captured',
-        amount: 99900,
-        currency: 'INR',
-      }),
-      getKeyId: jest.fn(),
-    };
-    const outbox = { processOrder: jest.fn().mockResolvedValue(undefined) };
-
-    process.env.RAZORPAY_KEY_SECRET = verificationSecret;
-    process.env.RAZORPAY_WEBHOOK_SECRET = verificationSecret;
-    return {
-      service: new PaymentService(
-        prisma as never,
-        razorpay as never,
-        outbox as never,
-      ),
-      transaction,
-      prisma,
-      razorpay,
-      outbox,
-    };
-  }
-
-  afterAll(() => {
-    delete process.env.RAZORPAY_KEY_SECRET;
-    delete process.env.RAZORPAY_WEBHOOK_SECRET;
-  });
-
-  function webhookPayload(event: string, status: string): Buffer {
-    return Buffer.from(
+describe('PaymentService webhook reconciliation', () => {
+  it('uses the shared finalizer for a captured intent payment', async () => {
+    const context = setup();
+    const rawBody = Buffer.from(
       JSON.stringify({
-        event,
+        event: 'payment.captured',
         payload: {
           payment: {
             entity: {
-              id: 'pay_123',
-              order_id: 'order_123',
+              id: 'rz_payment_55',
+              order_id: 'rz_order_55',
               amount: 99900,
               currency: 'INR',
-              status,
-              method: 'card',
+              status: 'captured',
             },
           },
         },
       }),
     );
-  }
-
-  function webhookSignature(rawBody: Buffer): string {
-    return createHmac('sha256', verificationSecret)
+    const webhookSignature = createHmac('sha256', verificationSecret)
       .update(rawBody)
       .digest('hex');
-  }
 
-  it('verifies HMAC and marks payment and order paid atomically', async () => {
-    const { service, transaction } = verificationSetup();
-
-    await expect(service.verifyPayment(dto, user)).resolves.toEqual({
-      success: true,
-      paymentId: 'pay_123',
-      orderId: 123,
-      paymentStatus: 'PAID',
+    await expect(
+      context.service.handleWebhook(rawBody, webhookSignature, 'event-55'),
+    ).resolves.toEqual({
+      received: true,
+      duplicate: false,
+      processed: true,
     });
-    expect(transaction.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 1, status: { in: ['CREATED', 'PENDING'] } },
-      data: expect.objectContaining({
-        razorpayPaymentId: 'pay_123',
-        razorpaySignature: dto.razorpaySignature,
-        status: 'SUCCESS',
-        paidAt: expect.any(Date),
+    expect(context.transaction.order.create).toHaveBeenCalledTimes(1);
+    expect(context.getPayment()).toMatchObject({
+      status: 'SUCCESS',
+      orderId: 900,
+      razorpayPaymentId: 'rz_payment_55',
+    });
+    expect(context.getIntent()).toMatchObject({
+      status: 'COMPLETED',
+      finalOrderId: 900,
+    });
+
+    await expect(
+      context.service.handleWebhook(rawBody, webhookSignature, 'event-55'),
+    ).resolves.toEqual({
+      received: true,
+      duplicate: true,
+      processed: true,
+    });
+    expect(context.transaction.order.create).toHaveBeenCalledTimes(1);
+    expect(
+      context.transaction.orderConfirmationOutbox.createMany,
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a captured webhook without a local payment-order association', async () => {
+    const context = setup();
+    context.transaction.$queryRaw.mockResolvedValueOnce([]);
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        event: 'payment.captured',
+        payload: {
+          payment: {
+            entity: {
+              id: 'rz_payment_55',
+              order_id: 'unknown_order',
+              amount: 99900,
+              currency: 'INR',
+              status: 'captured',
+            },
+          },
+        },
       }),
-    });
-    expect(transaction.order.update).toHaveBeenCalledWith({
-      where: { id: 123 },
-      data: {
-        paymentStatus: 'PAID',
-        paidAt: expect.any(Date),
-        checkoutFingerprint: null,
-      },
-    });
-  });
-
-  it('rejects an invalid HMAC before querying the database', async () => {
-    const { service, prisma } = verificationSetup();
+    );
+    const webhookSignature = createHmac('sha256', verificationSecret)
+      .update(rawBody)
+      .digest('hex');
 
     await expect(
-      service.verifyPayment({ ...dto, razorpaySignature: 'invalid' }, user),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  it('does not mark an authorized but uncaptured payment as paid', async () => {
-    const { service, transaction, razorpay } = verificationSetup();
-    razorpay.fetchPayment.mockResolvedValue({
-      id: 'pay_123',
-      order_id: 'order_123',
-      status: 'authorized',
-      amount: 99900,
-      currency: 'INR',
-    });
-
-    await expect(service.verifyPayment(dto, user)).rejects.toBeInstanceOf(
-      ConflictException,
+      context.service.handleWebhook(rawBody, webhookSignature, 'event-57'),
+    ).rejects.toThrow(
+      'Payment webhook is awaiting reconciliation; retry delivery',
     );
-    expect(transaction.payment.updateMany).not.toHaveBeenCalled();
-    expect(transaction.order.update).not.toHaveBeenCalled();
+    expect(context.transaction.order.create).not.toHaveBeenCalled();
   });
 
-  it('keeps payment confirmation successful if outbox dispatch fails', async () => {
-    const { service, transaction, outbox } = verificationSetup();
-    outbox.processOrder.mockRejectedValue(
-      new Error('temporary worker failure'),
-    );
+  it('rejects invalid webhook signatures before database access', async () => {
+    const context = setup();
+    const rawBody = Buffer.from('{"event":"payment.captured"}');
+    await expect(
+      context.service.handleWebhook(rawBody, 'invalid', 'event-56'),
+    ).rejects.toThrow('Invalid webhook signature');
+    expect(context.prisma.$transaction).not.toHaveBeenCalled();
+  });
+});
 
-    await expect(service.verifyPayment(dto, user)).resolves.toMatchObject({
-      success: true,
-      paymentStatus: 'PAID',
-    });
-    expect(transaction.order.update).toHaveBeenCalledWith({
-      where: { id: 123 },
-      data: expect.objectContaining({ paymentStatus: 'PAID' }) as Record<
-        string,
-        unknown
-      >,
-    });
-    expect(transaction.orderConfirmationOutbox.createMany).toHaveBeenCalledWith(
-      {
-        data: { orderId: 123 },
-        skipDuplicates: true,
-      },
-    );
+describe('PaymentController authentication', () => {
+  it('rejects unauthenticated and non-user payment creation before service calls', () => {
+    const paymentService = { createOrder: jest.fn() };
+    const controller = new PaymentController(paymentService as never);
+    expect(() =>
+      controller.createOrder({ checkoutIntentId: 55 }, {}),
+    ).toThrow();
+    expect(() =>
+      controller.createOrder(
+        { checkoutIntentId: 55 },
+        { user: { type: 'ADMIN' } },
+      ),
+    ).toThrow(ForbiddenException);
+    expect(paymentService.createOrder).not.toHaveBeenCalled();
   });
 
-  it('does not reveal a payment belonging to another user', async () => {
-    const { service, transaction } = verificationSetup({
-      order: { id: 123, userId: 99, totalAmount: 999 },
-    });
-
-    await expect(service.verifyPayment(dto, user)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
-    expect(transaction.payment.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('rejects a payment whose amount differs from the order amount', async () => {
-    const { service } = verificationSetup({ amount: 100 });
-
-    await expect(service.verifyPayment(dto, user)).rejects.toThrow(
-      'Payment amount is invalid',
-    );
-  });
-
-  it('is idempotent for the same already-successful payment', async () => {
-    const { service, transaction } = verificationSetup({
-      status: 'SUCCESS',
-      razorpayPaymentId: 'pay_123',
-    });
-
-    await expect(service.verifyPayment(dto, user)).resolves.toMatchObject({
-      success: true,
-      paymentStatus: 'PAID',
-    });
-    expect(transaction.payment.updateMany).not.toHaveBeenCalled();
-    expect(transaction.order.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects a different payment id for an already-successful attempt', async () => {
-    const { service } = verificationSetup({
-      status: 'SUCCESS',
-      razorpayPaymentId: 'pay_other',
-    });
-    const differentPayment = {
-      ...dto,
-      razorpayPaymentId: 'pay_123',
-      razorpaySignature: signature('order_123', 'pay_123'),
+  it('exposes the signed Razorpay webhook without JWT authentication', async () => {
+    const paymentService = {
+      createOrder: jest.fn(),
+      handleWebhook: jest.fn().mockResolvedValue({ received: true }),
     };
+    const controller = new PaymentController(paymentService as never);
+    const rawBody = Buffer.from('{"event":"payment.captured"}');
 
     await expect(
-      service.verifyPayment(differentPayment, user),
-    ).rejects.toBeInstanceOf(ConflictException);
-  });
-
-  it('rejects failed or abandoned attempts for verification', async () => {
-    const { service } = verificationSetup({ status: 'FAILED' });
-
-    await expect(service.verifyPayment(dto, user)).rejects.toBeInstanceOf(
-      ConflictException,
-    );
-  });
-
-  it('reconciles captured payments and enqueues one confirmation', async () => {
-    const { service, transaction, outbox } = verificationSetup(
-      {},
-      'buyer@example.test',
-    );
-    const rawBody = webhookPayload('payment.captured', 'captured');
-
-    await expect(
-      service.handleWebhook(
-        rawBody,
-        webhookSignature(rawBody),
-        'evt_capture_1',
-      ),
-    ).resolves.toEqual({ received: true, duplicate: false, processed: true });
-
-    expect(transaction.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 1, status: { in: ['CREATED', 'PENDING', 'FAILED'] } },
-      data: expect.objectContaining({
-        razorpayPaymentId: 'pay_123',
-        status: 'SUCCESS',
-        paidAt: expect.any(Date) as Date,
-        method: 'card',
-      }) as Record<string, unknown>,
-    });
-    expect(transaction.order.updateMany).toHaveBeenCalledWith({
-      where: { id: 123, paymentStatus: { not: 'PAID' } },
-      data: {
-        paymentStatus: 'PAID',
-        paidAt: expect.any(Date) as Date,
-        checkoutFingerprint: null,
-      },
-    });
-    expect(transaction.orderConfirmationOutbox.createMany).toHaveBeenCalledWith(
-      {
-        data: { orderId: 123 },
-        skipDuplicates: true,
-      },
-    );
-    expect(outbox.processOrder).toHaveBeenCalledWith(123);
-  });
-
-  it('rejects invalid webhook signatures before writing an event', async () => {
-    const { service, prisma, transaction } = verificationSetup();
-    const rawBody = webhookPayload('payment.captured', 'captured');
-
-    await expect(
-      service.handleWebhook(rawBody, '0'.repeat(64), 'evt_invalid'),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(transaction.webhookEvent.createMany).not.toHaveBeenCalled();
-  });
-
-  it('does not reprocess duplicate webhook event IDs', async () => {
-    const { service, transaction, outbox } = verificationSetup();
-    transaction.webhookEvent.createMany.mockResolvedValue({ count: 0 });
-    transaction.webhookEvent.findUnique.mockResolvedValue({
-      processedAt: new Date(),
-    });
-    const rawBody = webhookPayload('payment.captured', 'captured');
-
-    await expect(
-      service.handleWebhook(rawBody, webhookSignature(rawBody), 'evt_repeat'),
-    ).resolves.toEqual({ received: true, duplicate: true, processed: true });
-    expect(transaction.payment.findUnique).not.toHaveBeenCalled();
-    expect(transaction.order.updateMany).not.toHaveBeenCalled();
-    expect(outbox.processOrder).not.toHaveBeenCalled();
-  });
-
-  it('does not send another confirmation for an already-paid order', async () => {
-    const { service, transaction, outbox } = verificationSetup(
-      {
-        status: 'SUCCESS',
-        razorpayPaymentId: 'pay_123',
-        order: {
-          id: 123,
-          userId: 7,
-          paymentMethod: 'online',
-          totalAmount: 999,
-          status: 'PLACED',
-          paymentStatus: 'PAID',
-        },
-      },
-      'buyer@example.test',
-    );
-    transaction.order.updateMany.mockResolvedValue({ count: 0 });
-    const rawBody = webhookPayload('payment.captured', 'captured');
-
-    await service.handleWebhook(
+      controller.webhook({ rawBody } as never, 'signature', 'event-id'),
+    ).resolves.toEqual({ received: true });
+    expect(paymentService.handleWebhook).toHaveBeenCalledWith(
       rawBody,
-      webhookSignature(rawBody),
-      'evt_capture_replay',
+      'signature',
+      'event-id',
     );
-
-    expect(transaction.payment.updateMany).not.toHaveBeenCalled();
-    expect(transaction.order.updateMany).toHaveBeenCalledTimes(1);
-    expect(outbox.processOrder).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['unknown payment', null],
-    [
-      'amount mismatch',
-      {
-        id: 1,
-        orderId: 123,
-        provider: 'RAZORPAY',
-        razorpayOrderId: 'order_123',
-        amount: 100,
-        currency: 'INR',
-        status: 'CREATED',
-        order: {
-          id: 123,
-          userId: 7,
-          paymentMethod: 'online',
-          totalAmount: 999,
-          status: 'PLACED',
-          paymentStatus: 'UNPAID',
-        },
-      },
-    ],
-  ])('leaves %s webhook events retryable', async (_label, payment) => {
-    const { service, transaction } = verificationSetup();
-    transaction.payment.findUnique.mockResolvedValue(payment as never);
-    const rawBody = webhookPayload('payment.captured', 'captured') as never;
-
-    await expect(
-      service.handleWebhook(
-        rawBody,
-        webhookSignature(rawBody),
-        `evt_retry_${String(_label).replace(' ', '_')}`,
-      ),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
-
-    expect(transaction.webhookEvent.createMany).toHaveBeenCalledWith({
-      data: expect.objectContaining({ processedAt: null }),
-      skipDuplicates: true,
-    });
-    expect(transaction.webhookEvent.update).not.toHaveBeenCalled();
-  });
-
-  it('records authorized and failed events without marking orders paid', async () => {
-    const authorized = verificationSetup();
-    const authorizedBody = webhookPayload('payment.authorized', 'authorized');
-
-    await authorized.service.handleWebhook(
-      authorizedBody,
-      webhookSignature(authorizedBody),
-      'evt_authorized',
-    );
-    expect(authorized.transaction.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 1, status: 'CREATED' },
-      data: { status: 'PENDING', method: 'card' },
-    });
-    expect(authorized.transaction.order.updateMany).not.toHaveBeenCalled();
-
-    const failed = verificationSetup();
-    const failedBody = webhookPayload('payment.failed', 'failed');
-
-    await failed.service.handleWebhook(
-      failedBody,
-      webhookSignature(failedBody),
-      'evt_failed',
-    );
-    expect(failed.transaction.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 1, status: { in: ['CREATED', 'PENDING'] } },
-      data: {
-        status: 'FAILED',
-        failureReason: null,
-        razorpayPaymentId: 'pay_123',
-        method: 'card',
-      },
-    });
-    expect(failed.transaction.order.updateMany).not.toHaveBeenCalled();
+    const webhookHandler: unknown = Object.getOwnPropertyDescriptor(
+      PaymentController.prototype,
+      'webhook',
+    )?.value;
+    if (typeof webhookHandler !== 'function') {
+      throw new Error('Expected a webhook controller handler');
+    }
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, webhookHandler)).toBe(true);
   });
 });

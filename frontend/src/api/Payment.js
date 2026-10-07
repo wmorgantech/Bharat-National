@@ -17,10 +17,10 @@ async function handleResponse(response) {
   return data;
 }
 
-export async function createPaymentOrder(orderId) {
+export async function createPaymentOrder(checkoutIntentId) {
   const response = await apiFetch(`${apiBaseUrl()}/payment/create-order`, {
     method: "POST",
-    body: JSON.stringify({ orderId }),
+    body: JSON.stringify({ checkoutIntentId }),
   });
 
   return handleResponse(response);

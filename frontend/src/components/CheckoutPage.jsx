@@ -20,6 +20,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { TextInput } from "./FormControl";
 import { createOrder, getLastOrderForUser } from "../api/Order";
+import { createCheckoutIntent } from "../api/CheckoutIntent";
 import { createPaymentOrder, verifyPayment } from "../api/Payment";
 import { clearCart } from "../utils/CartStorage";
 import { toast } from "react-toastify";
@@ -153,8 +154,7 @@ export default function CheckoutPage() {
 
  const [showSuccess, setShowSuccess] = useState(false);
  const [submitting, setSubmitting] = useState(false);
- const [pendingOnlineOrderId, setPendingOnlineOrderId] = useState(null);
-  const [serverOrder, setServerOrder] = useState(null);
+ const [checkoutIntent, setCheckoutIntent] = useState(null);
 
  const [viewMode, setViewMode] = useState("form");
  const [hasSavedAddress, setHasSavedAddress] = useState(false);
@@ -168,17 +168,21 @@ export default function CheckoutPage() {
  }, [cartItems]);
 
  const shippingLabel = subtotal > 0 ? "Free" : "—";
-  const total = paymentMethod === "online" && serverOrder
-    ? serverOrder.totalAmount
+  const total = paymentMethod === "online" && checkoutIntent
+    ? checkoutIntent.totalAmount
     : subtotal;
-  const displayedItems = paymentMethod === "online" && serverOrder
+  const displayedItems = paymentMethod === "online" && checkoutIntent
     ? cartItems.map((item) => {
         const itemId = item.id ?? item.productId;
-        const serverItem = serverOrder.orderItem?.find(
-          (orderItem) => orderItem.productId === itemId,
+        const serverItem = checkoutIntent.items?.find(
+          (checkoutItem) => checkoutItem.productId === itemId,
         );
         return serverItem
-          ? { ...item, name: serverItem.productName, price: serverItem.unitPrice }
+          ? {
+              ...item,
+              name: serverItem.productName,
+              price: serverItem.unitPrice,
+            }
           : item;
       })
     : cartItems;
@@ -294,46 +298,9 @@ export default function CheckoutPage() {
  try {
  setSubmitting(true);
 
- let orderId = pendingOnlineOrderId;
- let currentOrderAmount = serverOrder?.totalAmount;
  if (paymentMethod === "online") {
- const payload = {
- userId: currentUser.id,
- fullName: fullName.trim(),
- email: email.trim(),
- phone: getDigits(phone),
- address: address.trim(),
- place: place.trim(),
- state: state.trim(),
- pincode: pincode.trim(),
- status: "PLACED",
- paymentMethod,
+ const intentResponse = await createCheckoutIntent({
  checkoutKey: getCheckoutIdempotencyKey(cartItems),
- items: cartItems.map((item) => ({ productId: item.id ?? item.productId, quantity: item.quantity })),
- };
- const createdOrder = await createOrder(payload);
- orderId = createdOrder?.order?.id;
- if (!orderId) throw new Error("Order could not be created");
- if (createdOrder.order.paymentStatus === "PAID") {
- clearCart();
- localStorage.removeItem(PENDING_CART_KEY);
- localStorage.removeItem(CHECKOUT_KEY_STORAGE);
- setPendingOnlineOrderId(null);
- setServerOrder(null);
- setShowSuccess(true);
- return;
- }
- if (!Number.isSafeInteger(createdOrder.order.totalAmount) || createdOrder.order.totalAmount <= 0) {
- throw new Error("The server returned an invalid order total");
- }
- setPendingOnlineOrderId(orderId);
- setServerOrder(createdOrder.order);
- currentOrderAmount = createdOrder.order.totalAmount;
- }
-
- if (paymentMethod === "cod") {
- const payload = {
- userId: currentUser.id,
  fullName: fullName.trim(),
  email: email.trim(),
  phone: getDigits(phone),
@@ -341,30 +308,34 @@ export default function CheckoutPage() {
  place: place.trim(),
  state: state.trim(),
  pincode: pincode.trim(),
- status: "PLACED",
- paymentMethod,
- items: cartItems.map((item) => ({ productId: item.id ?? item.productId, quantity: item.quantity })),
- };
- await createOrder(payload);
- clearCart();
- localStorage.removeItem(PENDING_CART_KEY);
- localStorage.removeItem(CHECKOUT_KEY_STORAGE);
- window.history.replaceState({}, document.title);
- // Single notification for this action: the confirmation screen below.
- // A success toast here duplicated it.
- setShowSuccess(true);
- return;
+ items: cartItems.map((item) => ({
+ productId: item.id ?? item.productId,
+ quantity: item.quantity,
+ })),
+ });
+ const intent = intentResponse?.intent;
+ if (!Number.isSafeInteger(intent?.id) || intent.id <= 0) {
+ throw new Error("Checkout intent could not be created");
  }
+ if (
+ !Number.isSafeInteger(intent.totalAmount) ||
+ intent.totalAmount <= 0 ||
+ !Array.isArray(intent.items) ||
+ intent.items.length === 0
+ ) {
+ throw new Error("The server returned an invalid checkout total");
+ }
+ setCheckoutIntent(intent);
 
- const paymentOrder = await createPaymentOrder(orderId);
+ const paymentOrder = await createPaymentOrder(intent.id);
  if (!paymentOrder?.razorpayOrderId || !paymentOrder?.amount || !paymentOrder?.currency || !paymentOrder?.keyId) {
  throw new Error("Payment order could not be created");
  }
  if (
  paymentOrder.currency !== "INR" ||
- paymentOrder.amount !== currentOrderAmount * 100
+ paymentOrder.amount !== intent.totalAmount * 100
  ) {
- throw new Error("The payment amount changed. Please review the updated order total.");
+ throw new Error("The payment amount changed. Please review the updated checkout total.");
  }
 
  const Razorpay = await loadRazorpayCheckout();
@@ -385,17 +356,22 @@ export default function CheckoutPage() {
  }
 
  try {
- await verifyPayment({
+ const verification = await verifyPayment({
  razorpayOrderId: paymentResponse.razorpay_order_id,
  razorpayPaymentId: paymentResponse.razorpay_payment_id,
  razorpaySignature: paymentResponse.razorpay_signature,
  });
+ if (
+ verification?.success !== true ||
+ !Number.isSafeInteger(verification?.orderId) ||
+ verification.orderId <= 0
+ ) {
+ throw new Error("Server did not confirm the payment and order");
+ }
  clearCart();
  localStorage.removeItem(PENDING_CART_KEY);
+ localStorage.removeItem(CHECKOUT_KEY_STORAGE);
  window.history.replaceState({}, document.title);
- setPendingOnlineOrderId(null);
- setServerOrder(null);
- // Single notification for this action: the confirmation screen below.
  setShowSuccess(true);
  } catch (error) {
  console.error("Payment verification failed", error);
@@ -434,6 +410,32 @@ export default function CheckoutPage() {
  });
  paymentWindowOpened = true;
  checkout.open();
+ }
+
+ if (paymentMethod === "cod") {
+ const payload = {
+ userId: currentUser.id,
+ fullName: fullName.trim(),
+ email: email.trim(),
+ phone: getDigits(phone),
+ address: address.trim(),
+ place: place.trim(),
+ state: state.trim(),
+ pincode: pincode.trim(),
+ status: "PLACED",
+ paymentMethod,
+ items: cartItems.map((item) => ({ productId: item.id ?? item.productId, quantity: item.quantity })),
+ };
+ await createOrder(payload);
+ clearCart();
+ localStorage.removeItem(PENDING_CART_KEY);
+ localStorage.removeItem(CHECKOUT_KEY_STORAGE);
+ window.history.replaceState({}, document.title);
+ // Single notification for this action: the confirmation screen below.
+ // A success toast here duplicated it.
+ setShowSuccess(true);
+ return;
+ }
  } catch (err) {
  console.error(err);
  setSubmitting(false);

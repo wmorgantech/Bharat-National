@@ -5,5 +5,5 @@ export class CreatePaymentOrderDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  orderId: number;
+  checkoutIntentId: number;
 }

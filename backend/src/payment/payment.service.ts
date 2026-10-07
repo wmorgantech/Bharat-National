@@ -23,6 +23,12 @@ const PAYMENT_CURRENCY = 'INR';
 const ACTIVE_PAYMENT_STATUSES = ['CREATED', 'PENDING'];
 const SUCCESSFUL_PAYMENT_STATUSES = ['SUCCESS', 'CAPTURED', 'PAID'];
 const MAX_ORDER_AMOUNT_RUPEES = 10_000_000;
+const INTENT_PAYMENT_STATUSES = ['CREATED', 'PENDING'];
+const CREATING_PAYMENT_STALE_AFTER_MS = 10 * 60 * 1000;
+
+type FinalizationOrder = Prisma.OrderGetPayload<{
+  include: { orderItem: true };
+}>;
 
 export interface CreatePaymentOrderResponse {
   razorpayOrderId: string;
@@ -36,6 +42,7 @@ export interface VerifyPaymentResponse {
   paymentId: string;
   orderId: number;
   paymentStatus: 'PAID';
+  order: FinalizationOrder;
 }
 
 interface RazorpayWebhookPayment {
@@ -77,6 +84,140 @@ export class PaymentService {
     }
   }
 
+  private async finalizeIntentPayment(
+    transaction: Prisma.TransactionClient,
+    payment: {
+      id: number;
+      checkoutIntentId: number | null;
+      orderId: number | null;
+      status: string;
+      razorpayPaymentId: string | null;
+    },
+    intentId: number,
+    razorpayPaymentId: string,
+    razorpaySignature?: string,
+    method?: string,
+    allowFailedAttempt = false,
+  ): Promise<{ order: FinalizationOrder; created: boolean }> {
+    const [lockedIntent] = await transaction.$queryRaw<{ id: number }[]>(
+      Prisma.sql`SELECT "id" FROM "CheckoutIntent" WHERE "id" = ${intentId} FOR UPDATE`,
+    );
+    if (!lockedIntent) {
+      throw new NotFoundException('Checkout intent not found');
+    }
+
+    const intent = await transaction.checkoutIntent.findUnique({
+      where: { id: intentId },
+      include: {
+        items: true,
+        finalOrder: { include: { orderItem: true } },
+      },
+    });
+    if (!intent) {
+      throw new NotFoundException('Checkout intent not found');
+    }
+
+    if (intent.status === 'COMPLETED' && intent.finalOrder) {
+      if (
+        payment.status === 'SUCCESS' &&
+        payment.razorpayPaymentId === razorpayPaymentId &&
+        payment.orderId === intent.finalOrder.id
+      ) {
+        return { order: intent.finalOrder, created: false };
+      }
+      throw new ConflictException('Checkout intent has already been finalized');
+    }
+    if (intent.status !== 'PENDING' || intent.finalOrderId !== null) {
+      throw new ConflictException('Checkout intent is not pending');
+    }
+    if (
+      payment.checkoutIntentId !== intent.id ||
+      payment.orderId !== null ||
+      ![
+        ...INTENT_PAYMENT_STATUSES,
+        ...(allowFailedAttempt ? ['FAILED'] : []),
+      ].includes(payment.status)
+    ) {
+      throw new ConflictException('Payment is not eligible for finalization');
+    }
+
+    this.validateIntentSnapshot(intent.totalAmount, intent.items);
+
+    const now = new Date();
+    const order = await transaction.order.create({
+      data: {
+        userId: intent.userId,
+        fullName: intent.fullName,
+        email: intent.email,
+        phone: intent.phone,
+        address: intent.address,
+        place: intent.place,
+        state: intent.state,
+        pincode: intent.pincode,
+        paymentMethod: 'online',
+        paymentStatus: 'PAID',
+        paidAt: now,
+        status: 'PLACED',
+        totalAmount: intent.totalAmount,
+        orderItem: {
+          create: intent.items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+          })),
+        },
+      },
+      include: { orderItem: true },
+    });
+
+    const eligibleStatuses = [
+      ...INTENT_PAYMENT_STATUSES,
+      ...(allowFailedAttempt ? ['FAILED'] : []),
+    ];
+    const linkedPayment = await transaction.payment.updateMany({
+      where: {
+        id: payment.id,
+        checkoutIntentId: intent.id,
+        orderId: null,
+        status: { in: eligibleStatuses },
+      },
+      data: {
+        orderId: order.id,
+        status: 'SUCCESS',
+        razorpayPaymentId,
+        razorpaySignature,
+        method,
+        paidAt: now,
+      },
+    });
+    if (linkedPayment.count !== 1) {
+      throw new ConflictException('Payment has already been finalized');
+    }
+
+    const completedIntent = await transaction.checkoutIntent.updateMany({
+      where: {
+        id: intent.id,
+        status: 'PENDING',
+        finalOrderId: null,
+      },
+      data: {
+        status: 'COMPLETED',
+        finalOrderId: order.id,
+        checkoutFingerprint: null,
+      },
+    });
+    if (completedIntent.count !== 1) {
+      throw new ConflictException('Checkout intent has already been finalized');
+    }
+
+    await transaction.orderConfirmationOutbox.createMany({
+      data: { orderId: order.id },
+      skipDuplicates: true,
+    });
+    return { order, created: true };
+  }
+
   async createOrder(
     dto: CreatePaymentOrderDto,
     requester: AuthUser,
@@ -86,89 +227,201 @@ export class PaymentService {
     }
 
     try {
-      return await this.prisma.$transaction(
+      const reservation = await this.prisma.$transaction(
         async (transaction) => {
-          // Lock the order row so concurrent requests cannot both create a new
-          // active attempt after observing the same pre-existing state.
-          const lockedOrder = await transaction.$queryRaw<{ id: number }[]>(
-            Prisma.sql`SELECT "id" FROM "Order" WHERE "id" = ${dto.orderId} AND "userId" = ${requester.userId} FOR UPDATE`,
+          const [lockedIntent] = await transaction.$queryRaw<{ id: number }[]>(
+            Prisma.sql`SELECT "id" FROM "CheckoutIntent" WHERE "id" = ${dto.checkoutIntentId} AND "userId" = ${requester.userId} FOR UPDATE`,
           );
-
-          if (lockedOrder.length === 0) {
-            // Deliberately use the same response for a missing or foreign order.
-            throw new NotFoundException('Order not found');
+          if (!lockedIntent) {
+            throw new NotFoundException('Checkout intent not found');
           }
 
-          const order = await transaction.order.findUnique({
-            where: { id: dto.orderId },
+          const intent = await transaction.checkoutIntent.findUnique({
+            where: { id: dto.checkoutIntentId },
             include: {
-              orderItem: true,
+              items: true,
               payments: {
-                where: { status: { in: ACTIVE_PAYMENT_STATUSES } },
+                where: {
+                  status: { in: [...ACTIVE_PAYMENT_STATUSES, 'CREATING'] },
+                },
                 orderBy: { createdAt: 'desc' },
                 take: 1,
               },
             },
           });
-
-          if (!order) {
-            throw new NotFoundException('Order not found');
+          if (!intent || intent.userId !== requester.userId) {
+            throw new NotFoundException('Checkout intent not found');
+          }
+          if (intent.status !== 'PENDING') {
+            throw new ConflictException('Checkout intent is not pending');
           }
 
-          if (order.status === 'CANCELLED') {
-            throw new BadRequestException('Order is not eligible for payment');
-          }
-
-          if (SUCCESSFUL_PAYMENT_STATUSES.includes(order.paymentStatus)) {
-            throw new ConflictException('Order has already been paid');
-          }
-
-          if (order.paymentMethod?.toLowerCase() !== 'online') {
-            throw new BadRequestException(
-              'Order is not eligible for online payment',
-            );
-          }
-
-          const amount = this.validateAmount(order.totalAmount);
-          this.validateOrderItems(order.orderItem);
-
-          const activePayment = order.payments[0];
-          if (activePayment) {
-            return this.responseForPayment(activePayment);
-          }
-
-          const razorpayOrder = await this.createRazorpayOrder(
-            dto.orderId,
-            amount,
+          const amount = this.validateIntentSnapshot(
+            intent.totalAmount,
+            intent.items,
           );
+          const activePayment = intent.payments[0];
+          if (activePayment) {
+            if (activePayment.status === 'CREATING') {
+              const staleBefore = Date.now() - CREATING_PAYMENT_STALE_AFTER_MS;
+              const isStale = activePayment.updatedAt.getTime() <= staleBefore;
+              if (!isStale) {
+                throw new ConflictException(
+                  'Payment order creation is already in progress',
+                );
+              }
 
+              const receipt = this.receiptFromPaymentNotes(activePayment.notes);
+              if (!receipt) {
+                throw new ConflictException(
+                  'Stale payment attempt has no provider receipt; manual reconciliation is required',
+                );
+              }
+
+              const recoveryClaimedAt = new Date();
+              const claim = await transaction.payment.updateMany({
+                where: {
+                  id: activePayment.id,
+                  status: 'CREATING',
+                  updatedAt: activePayment.updatedAt,
+                },
+                data: { updatedAt: recoveryClaimedAt },
+              });
+              if (claim.count !== 1) {
+                throw new ConflictException(
+                  'Payment order creation is already being recovered',
+                );
+              }
+
+              return {
+                payment: activePayment,
+                amount,
+                receipt,
+                createProviderOrder: true,
+                recoverProviderOrder: true,
+                claimUpdatedAt: recoveryClaimedAt,
+              };
+            }
+            if (!activePayment.razorpayOrderId) {
+              throw new ConflictException('Payment attempt is incomplete');
+            }
+            return {
+              payment: activePayment,
+              amount,
+              receipt: null,
+              createProviderOrder: false,
+              recoverProviderOrder: false,
+              claimUpdatedAt: null,
+            };
+          }
+
+          const receipt = this.newRazorpayReceipt(intent.id);
           const payment = await transaction.payment.create({
             data: {
-              orderId: dto.orderId,
+              checkoutIntentId: intent.id,
+              orderId: null,
               provider: PAYMENT_PROVIDER,
-              razorpayOrderId: razorpayOrder.id,
+              razorpayOrderId: null,
               amount,
               currency: PAYMENT_CURRENCY,
-              status: 'CREATED',
+              status: 'CREATING',
+              notes: { razorpayReceipt: receipt },
             },
           });
-
-          return this.responseForPayment(payment);
+          return {
+            payment,
+            amount,
+            receipt,
+            createProviderOrder: true,
+            recoverProviderOrder: false,
+            claimUpdatedAt: payment.updatedAt,
+          };
         },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+
+      if (!reservation.createProviderOrder) {
+        return this.responseForPayment(reservation.payment);
+      }
+      if (!reservation.receipt) {
+        throw new ConflictException('Payment provider receipt is unavailable');
+      }
+
+      let razorpayOrder: { id: string };
+      if (reservation.recoverProviderOrder) {
+        const existingOrders = await this.razorpay.findOrdersByReceipt(
+          reservation.receipt,
+        );
+        if (
+          existingOrders.count !== existingOrders.items.length ||
+          existingOrders.items.length > 1
+        ) {
+          throw new ServiceUnavailableException(
+            'Multiple provider orders match this payment attempt; manual reconciliation is required',
+          );
+        }
+        const existingOrder = existingOrders.items[0];
+        if (
+          existingOrder &&
+          (existingOrder.receipt !== reservation.receipt ||
+            Number(existingOrder.amount) !== reservation.amount ||
+            existingOrder.currency !== PAYMENT_CURRENCY)
+        ) {
+          throw new ServiceUnavailableException(
+            'Provider order does not match this payment attempt; manual reconciliation is required',
+          );
+        }
+        razorpayOrder =
+          existingOrder ??
+          (await this.createRazorpayOrder(
+            dto.checkoutIntentId,
+            reservation.amount,
+            reservation.receipt,
+          ));
+      } else {
+        razorpayOrder = await this.createRazorpayOrder(
+          dto.checkoutIntentId,
+          reservation.amount,
+          reservation.receipt,
+        );
+      }
+
+      const persistedPayment = await this.prisma.payment.updateMany({
+        where: {
+          id: reservation.payment.id,
+          status: 'CREATING',
+          ...(reservation.claimUpdatedAt
+            ? { updatedAt: reservation.claimUpdatedAt }
+            : {}),
+        },
+        data: {
+          razorpayOrderId: razorpayOrder.id,
+          status: 'CREATED',
+        },
+      });
+      if (persistedPayment.count !== 1) {
+        throw new ServiceUnavailableException(
+          'Provider order exists but its payment attempt could not be reconciled',
+        );
+      }
+
+      return this.responseForPayment({
+        ...reservation.payment,
+        razorpayOrderId: razorpayOrder.id,
+        amount: reservation.amount,
+        currency: PAYMENT_CURRENCY,
+      });
     } catch (error) {
       if (
         error instanceof BadRequestException ||
         error instanceof ConflictException ||
         error instanceof ForbiddenException ||
-        error instanceof NotFoundException
+        error instanceof NotFoundException ||
+        error instanceof ServiceUnavailableException
       ) {
         throw error;
       }
-
       this.logger.error(
-        `Payment order creation failed for order ${dto.orderId}`,
+        `Payment order creation failed for checkout intent ${dto.checkoutIntentId}`,
         error instanceof Error ? error.message : undefined,
       );
       throw new InternalServerErrorException('Unable to create payment order');
@@ -203,39 +456,73 @@ export class PaymentService {
       throw new ConflictException('Payment has not been captured');
     }
 
-    // Set inside the transaction only on the path that actually flips the
-    // payment to SUCCESS, so re-verifying an already-verified payment (the
-    // idempotent replay below) does not send a second confirmation.
     let newlyPaidOrderId: number | null = null;
-
     try {
       const result = await this.prisma.$transaction(async (transaction) => {
         newlyPaidOrderId = null;
-        const payment = await transaction.payment.findUnique({
-          where: { razorpayOrderId: dto.razorpayOrderId },
-          include: { order: true },
-        });
-
-        if (!payment || payment.order.userId !== requester.userId) {
+        const [lockedPayment] = await transaction.$queryRaw<{ id: number }[]>(
+          Prisma.sql`SELECT "id" FROM "Payment" WHERE "razorpayOrderId" = ${dto.razorpayOrderId} FOR UPDATE`,
+        );
+        if (!lockedPayment) {
           throw new NotFoundException('Payment not found');
         }
 
+        const payment = await transaction.payment.findUnique({
+          where: { razorpayOrderId: dto.razorpayOrderId },
+          include: {
+            order: { include: { orderItem: true } },
+            checkoutIntent: {
+              include: {
+                items: true,
+                finalOrder: { include: { orderItem: true } },
+              },
+            },
+          },
+        });
+
+        if (!payment) {
+          throw new NotFoundException('Payment not found');
+        }
         if (payment.provider !== PAYMENT_PROVIDER) {
           throw new BadRequestException('Payment provider is invalid');
         }
 
-        if (payment.order.status === 'CANCELLED') {
-          throw new BadRequestException('Order is not eligible for payment');
+        if (payment.checkoutIntentId === null && payment.orderId === null) {
+          throw new BadRequestException('Payment association is invalid');
         }
 
+        let intent = payment.checkoutIntent;
+        const order = payment.order;
+        if (intent) {
+          const [lockedIntent] = await transaction.$queryRaw<{ id: number }[]>(
+            Prisma.sql`SELECT "id" FROM "CheckoutIntent" WHERE "id" = ${intent.id} FOR UPDATE`,
+          );
+          if (!lockedIntent) {
+            throw new NotFoundException('Checkout intent not found');
+          }
+          if (intent.userId !== requester.userId) {
+            throw new NotFoundException('Payment not found');
+          }
+          const freshIntent = await transaction.checkoutIntent.findUnique({
+            where: { id: intent.id },
+            include: {
+              items: true,
+              finalOrder: { include: { orderItem: true } },
+            },
+          });
+          if (!freshIntent) {
+            throw new NotFoundException('Checkout intent not found');
+          }
+          intent = freshIntent;
+        } else if (!order || order.userId !== requester.userId) {
+          throw new NotFoundException('Payment not found');
+        }
+
+        const expectedTotal = intent?.totalAmount ?? order?.totalAmount;
         if (
-          payment.order.paymentStatus === 'PAID' &&
-          payment.status !== 'SUCCESS'
+          expectedTotal === undefined ||
+          payment.amount !== this.validateAmount(expectedTotal)
         ) {
-          throw new ConflictException('Order has already been paid');
-        }
-
-        if (payment.amount !== this.validateAmount(payment.order.totalAmount)) {
           throw new BadRequestException('Payment amount is invalid');
         }
 
@@ -253,10 +540,31 @@ export class PaymentService {
           if (payment.razorpayPaymentId !== dto.razorpayPaymentId) {
             throw new ConflictException('Payment has already been verified');
           }
-
+          if (intent) {
+            const finalOrder = intent.finalOrder;
+            if (
+              intent.status !== 'COMPLETED' ||
+              !finalOrder ||
+              intent.finalOrderId !== finalOrder.id ||
+              payment.orderId !== finalOrder.id
+            ) {
+              throw new ConflictException(
+                'Successful payment has not been finalized',
+              );
+            }
+            return this.verificationResponse(
+              finalOrder.id,
+              dto.razorpayPaymentId,
+              finalOrder,
+            );
+          }
+          if (!order || payment.orderId === null) {
+            throw new ConflictException('Payment order is unavailable');
+          }
           return this.verificationResponse(
             payment.orderId,
             dto.razorpayPaymentId,
+            order,
           );
         }
 
@@ -266,7 +574,36 @@ export class PaymentService {
           );
         }
 
+        if (intent) {
+          const finalized = await this.finalizeIntentPayment(
+            transaction,
+            payment,
+            intent.id,
+            dto.razorpayPaymentId,
+            dto.razorpaySignature,
+          );
+          newlyPaidOrderId = finalized.created ? finalized.order.id : null;
+          return this.verificationResponse(
+            finalized.order.id,
+            dto.razorpayPaymentId,
+            finalized.order,
+          );
+        }
+
+        if (!order || payment.orderId === null) {
+          throw new ConflictException('Payment order is unavailable');
+        }
+        if (!order.isActive) {
+          throw new BadRequestException('Order is not eligible for payment');
+        }
         const now = new Date();
+        if (order.status === 'CANCELLED') {
+          throw new BadRequestException('Order is not eligible for payment');
+        }
+        if (order.paymentStatus === 'PAID') {
+          throw new ConflictException('Order has already been paid');
+        }
+
         const updatedPayment = await transaction.payment.updateMany({
           where: {
             id: payment.id,
@@ -279,18 +616,18 @@ export class PaymentService {
             paidAt: now,
           },
         });
-
         if (updatedPayment.count !== 1) {
           throw new ConflictException('Payment has already been verified');
         }
 
-        await transaction.order.update({
+        const updatedOrder = await transaction.order.update({
           where: { id: payment.orderId },
           data: {
             paymentStatus: 'PAID',
             paidAt: now,
             checkoutFingerprint: null,
           },
+          include: { orderItem: true },
         });
         await transaction.orderConfirmationOutbox.createMany({
           data: { orderId: payment.orderId },
@@ -298,10 +635,10 @@ export class PaymentService {
         });
 
         newlyPaidOrderId = payment.orderId;
-
         return this.verificationResponse(
           payment.orderId,
           dto.razorpayPaymentId,
+          updatedOrder,
         );
       });
 
@@ -430,10 +767,23 @@ export class PaymentService {
           return { duplicate: false, processed: false };
         }
 
-        const payment = await transaction.payment.findUnique({
-          where: { razorpayOrderId: paymentEntity.order_id as string },
-          include: { order: true },
-        });
+        const [lockedPayment] = await transaction.$queryRaw<{ id: number }[]>(
+          Prisma.sql`SELECT "id" FROM "Payment" WHERE "razorpayOrderId" = ${paymentEntity.order_id as string} FOR UPDATE`,
+        );
+        const payment = lockedPayment
+          ? await transaction.payment.findUnique({
+              where: { razorpayOrderId: paymentEntity.order_id as string },
+              include: {
+                order: true,
+                checkoutIntent: {
+                  include: {
+                    items: true,
+                    finalOrder: { include: { orderItem: true } },
+                  },
+                },
+              },
+            })
+          : null;
 
         if (!payment || payment.provider !== PAYMENT_PROVIDER) {
           warning = `Ignored ${eventType} for an unknown Razorpay order`;
@@ -442,18 +792,28 @@ export class PaymentService {
         }
 
         const amount = paymentEntity.amount as number;
+        const intent = payment.checkoutIntent;
+        const order = payment.order;
+        const expectedTotal = intent?.totalAmount ?? order?.totalAmount;
         if (
           payment.amount !== amount ||
           payment.currency !== paymentEntity.currency ||
-          payment.amount !== this.validateAmount(payment.order.totalAmount)
+          expectedTotal === undefined ||
+          payment.amount !== this.validateAmount(expectedTotal) ||
+          (!intent && !order) ||
+          (intent !== null &&
+            order !== null &&
+            (intent.status !== 'COMPLETED' ||
+              intent.finalOrderId !== order.id ||
+              payment.orderId !== order.id))
         ) {
-          warning = `Ignored ${eventType} with an amount or currency mismatch for order ${payment.orderId}`;
+          warning = `Ignored ${eventType} with an amount, currency, or association mismatch for payment ${payment.id}`;
           retryEvent = true;
           return { duplicate: false, processed: false };
         }
 
-        if ((payment.order.paymentMethod ?? '').toLowerCase() !== 'online') {
-          warning = `Ignored ${eventType} for a non-online order ${payment.orderId}`;
+        if (order && (order.paymentMethod ?? '').toLowerCase() !== 'online') {
+          warning = `Ignored ${eventType} for a non-online order ${order.id}`;
           retryEvent = true;
           return { duplicate: false, processed: false };
         }
@@ -506,7 +866,32 @@ export class PaymentService {
           SUCCESSFUL_PAYMENT_STATUSES.includes(payment.status) &&
           payment.razorpayPaymentId !== paymentEntity.id
         ) {
-          warning = `Ignored a conflicting captured payment for order ${payment.orderId}`;
+          warning = `Ignored a conflicting captured payment for payment ${payment.id}`;
+          retryEvent = true;
+          return { duplicate: false, processed: false };
+        }
+
+        if (intent) {
+          const finalized = await this.finalizeIntentPayment(
+            transaction,
+            payment,
+            intent.id,
+            paymentEntity.id as string,
+            undefined,
+            typeof paymentEntity.method === 'string'
+              ? paymentEntity.method
+              : undefined,
+            true,
+          );
+          if (finalized.created) {
+            confirmationOrderId = finalized.order.id;
+          }
+          await markProcessed();
+          return { duplicate: false, processed: true };
+        }
+
+        if (!order || payment.orderId === null) {
+          warning = `Ignored ${eventType} for a payment without a valid order`;
           retryEvent = true;
           return { duplicate: false, processed: false };
         }
@@ -549,7 +934,7 @@ export class PaymentService {
         });
 
         if (updatedOrder.count === 1) {
-          if (payment.order.status === 'CANCELLED') {
+          if (order.status === 'CANCELLED') {
             warning = `Payment captured for cancelled order ${payment.orderId}; review for refund`;
           } else {
             confirmationOrderId = payment.orderId;
@@ -558,10 +943,7 @@ export class PaymentService {
               skipDuplicates: true,
             });
           }
-        } else if (
-          payment.order.paymentStatus === 'PAID' &&
-          !wasAlreadySuccessful
-        ) {
+        } else if (order.paymentStatus === 'PAID' && !wasAlreadySuccessful) {
           warning = `Additional payment captured for already-paid order ${payment.orderId}; review for refund`;
         }
 
@@ -644,12 +1026,14 @@ export class PaymentService {
   private verificationResponse(
     orderId: number,
     paymentId: string,
+    order: FinalizationOrder,
   ): VerifyPaymentResponse {
     return {
       success: true,
       paymentId,
       orderId,
       paymentStatus: 'PAID',
+      order,
     };
   }
 
@@ -687,9 +1071,45 @@ export class PaymentService {
     }
   }
 
-  private async createRazorpayOrder(orderId: number, amount: number) {
+  private validateIntentSnapshot(
+    totalAmount: number,
+    items: Array<{ quantity: number; unitPrice: number }>,
+  ): number {
+    const amount = this.validateAmount(totalAmount);
+    this.validateOrderItems(items);
+    const snapshotTotal = items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
+    if (!Number.isSafeInteger(snapshotTotal) || snapshotTotal !== totalAmount) {
+      throw new BadRequestException('Checkout intent total is invalid');
+    }
+    return amount;
+  }
+
+  private receiptFromPaymentNotes(notes: Payment['notes']): string | null {
+    if (
+      typeof notes !== 'object' ||
+      notes === null ||
+      Array.isArray(notes) ||
+      !('razorpayReceipt' in notes)
+    ) {
+      return null;
+    }
+    const receipt = notes.razorpayReceipt;
+    return typeof receipt === 'string' && receipt.length > 0 ? receipt : null;
+  }
+
+  private newRazorpayReceipt(intentId: number): string {
+    return `checkout_${intentId}_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  }
+
+  private async createRazorpayOrder(
+    intentId: number,
+    amount: number,
+    receipt: string,
+  ) {
     try {
-      const receipt = `order_${orderId}_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
       const razorpayOrder = await this.razorpay.createOrder({
         amount,
         currency: PAYMENT_CURRENCY,
@@ -703,7 +1123,7 @@ export class PaymentService {
       return razorpayOrder;
     } catch (error) {
       this.logger.error(
-        `Razorpay order creation failed for order ${orderId}`,
+        `Razorpay order creation failed for checkout intent ${intentId}`,
         error instanceof Error ? error.message : undefined,
       );
       throw new InternalServerErrorException('Unable to create payment order');
@@ -712,7 +1132,10 @@ export class PaymentService {
 
   private responseForPayment(
     payment: Pick<Payment, 'razorpayOrderId' | 'amount' | 'currency'>,
-  ) {
+  ): CreatePaymentOrderResponse {
+    if (!payment.razorpayOrderId) {
+      throw new ConflictException('Payment attempt is incomplete');
+    }
     return {
       razorpayOrderId: payment.razorpayOrderId,
       amount: payment.amount,

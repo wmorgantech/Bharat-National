@@ -20,6 +20,7 @@ import { CreatePaymentOrderDto } from './dto/create-payment-order.dto';
 import { PaymentService } from './payment.service';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { Public } from '../auth/public.decorator';
+import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Payment')
 @Controller('payment')
@@ -29,7 +30,10 @@ export class PaymentController {
   @Post('create-order')
   @ApiBearerAuth()
   @Throttle(PAYMENT_CREATE_THROTTLE)
-  createOrder(@Body() dto: CreatePaymentOrderDto, @Request() request) {
+  createOrder(
+    @Body() dto: CreatePaymentOrderDto,
+    @Request() request: { user?: AuthUser },
+  ) {
     if (!request.user) {
       throw new UnauthorizedException('Authentication required');
     }
@@ -43,7 +47,10 @@ export class PaymentController {
   @Post('verify')
   @ApiBearerAuth()
   @Throttle(PAYMENT_VERIFY_THROTTLE)
-  verify(@Body() dto: VerifyPaymentDto, @Request() request) {
+  verify(
+    @Body() dto: VerifyPaymentDto,
+    @Request() request: { user?: AuthUser },
+  ) {
     if (!request.user) {
       throw new UnauthorizedException('Authentication required');
     }
@@ -54,4 +61,17 @@ export class PaymentController {
     return this.paymentService.verifyPayment(dto, request.user);
   }
 
+  @Post('webhook')
+  @Public()
+  webhook(
+    @Req() request: RawBodyRequest<ExpressRequest>,
+    @Headers('x-razorpay-signature') signature?: string,
+    @Headers('x-razorpay-event-id') eventId?: string,
+  ) {
+    return this.paymentService.handleWebhook(
+      request.rawBody,
+      signature,
+      eventId,
+    );
+  }
 }

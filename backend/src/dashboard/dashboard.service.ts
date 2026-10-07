@@ -1,6 +1,20 @@
 // src/dashboard/dashboard.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  isPaidFinancialOrder,
+  PAID_ORDER_WHERE,
+} from '../common/paid-order-metrics';
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+}
+
+function dateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
 
 @Injectable()
 export class DashboardService {
@@ -8,36 +22,38 @@ export class DashboardService {
 
   // Get last 3 days revenue
   async getLast3DaysRevenue() {
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-    threeDaysAgo.setHours(0, 0, 0, 0);
+    const today = startOfUtcDay(new Date());
+    const startDate = new Date(today);
+    startDate.setUTCDate(startDate.getUTCDate() - 2);
+    const endDate = new Date(today);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
 
     const orders = await this.prisma.order.findMany({
       where: {
-        status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
-        },
+        ...PAID_ORDER_WHERE,
         createdAt: {
-          gte: threeDaysAgo,
+          gte: startDate,
+          lt: endDate,
         },
+      },
+      select: {
+        createdAt: true,
+        totalAmount: true,
       },
     });
 
     // Group by date
     const dailyRevenue: Record<string, number> = {};
-    const today = new Date();
-
     for (let i = 0; i < 3; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
-      const dateKey = date.toISOString().split('T')[0];
-      dailyRevenue[dateKey] = 0;
+      const date = new Date(startDate);
+      date.setUTCDate(startDate.getUTCDate() + i);
+      dailyRevenue[dateKey(date)] = 0;
     }
 
     orders.forEach((order) => {
-      const dateKey = order.createdAt.toISOString().split('T')[0];
-      if (dailyRevenue[dateKey] !== undefined) {
-        dailyRevenue[dateKey] += order.totalAmount;
+      const orderDateKey = dateKey(order.createdAt);
+      if (dailyRevenue[orderDateKey] !== undefined) {
+        dailyRevenue[orderDateKey] += order.totalAmount;
       }
     });
 
@@ -55,36 +71,48 @@ export class DashboardService {
 
   // Get last 30 days stats
   async getLast30DaysStats() {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const today = startOfUtcDay(new Date());
+    const startDate = new Date(today);
+    startDate.setUTCDate(startDate.getUTCDate() - 29);
+    const endDate = new Date(today);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
 
     const orders = await this.prisma.order.findMany({
       where: {
-        status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
-        },
         createdAt: {
-          gte: thirtyDaysAgo,
+          gte: startDate,
+          lt: endDate,
         },
       },
-      include: {
-        orderItem: true,
-        user: true,
+      select: {
+        userId: true,
+        totalAmount: true,
+        paymentStatus: true,
+        status: true,
+        isActive: true,
+        createdAt: true,
+        orderItem: {
+          select: {
+            quantity: true,
+          },
+        },
       },
     });
 
-    // Calculate totals
+    // Order count includes every order; financial/customer/item metrics only
+    // include orders whose payment has been confirmed.
+    const paidOrders = orders.filter(isPaidFinancialOrder);
     const totalOrders = orders.length;
-    const totalQuantity = orders.reduce((sum, order) => {
+    const totalQuantity = paidOrders.reduce((sum, order) => {
       const qty = order.orderItem.reduce(
         (itemSum, item) => itemSum + item.quantity,
         0,
       );
       return sum + qty;
     }, 0);
-    const uniqueCustomers = new Set(orders.map((order) => order.userId)).size;
-    const totalRevenue = orders.reduce(
+    const uniqueCustomers = new Set(paidOrders.map((order) => order.userId))
+      .size;
+    const totalRevenue = paidOrders.reduce(
       (sum, order) => sum + order.totalAmount,
       0,
     );
@@ -94,13 +122,10 @@ export class DashboardService {
       string,
       { orders: number; revenue: number; quantity: number }
     > = {};
-    const today = new Date();
-
     for (let i = 29; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
-      const dateKey = date.toISOString().split('T')[0];
-      dailyStats[dateKey] = {
+      const date = new Date(today);
+      date.setUTCDate(date.getUTCDate() - i);
+      dailyStats[dateKey(date)] = {
         orders: 0,
         revenue: 0,
         quantity: 0,
@@ -108,21 +133,24 @@ export class DashboardService {
     }
 
     orders.forEach((order) => {
-      const dateKey = order.createdAt.toISOString().split('T')[0];
-      if (dailyStats[dateKey]) {
-        dailyStats[dateKey].orders++;
-        dailyStats[dateKey].revenue += order.totalAmount;
-        const qty = order.orderItem.reduce(
-          (sum, item) => sum + item.quantity,
-          0,
-        );
-        dailyStats[dateKey].quantity += qty;
+      const orderDateKey = dateKey(order.createdAt);
+      if (dailyStats[orderDateKey]) {
+        dailyStats[orderDateKey].orders++;
+        if (isPaidFinancialOrder(order)) {
+          dailyStats[orderDateKey].revenue += order.totalAmount;
+          const qty = order.orderItem.reduce(
+            (sum, item) => sum + item.quantity,
+            0,
+          );
+          dailyStats[orderDateKey].quantity += qty;
+        }
       }
     });
 
     // Convert to array for frontend
     const chartData = Object.entries(dailyStats).map(([date, stats]) => ({
-      date: new Date(date).toLocaleDateString('en-IN', {
+      date: new Date(`${date}T00:00:00.000Z`).toLocaleDateString('en-IN', {
+        timeZone: 'UTC',
         day: '2-digit',
         month: 'short',
       }),
@@ -148,7 +176,13 @@ export class DashboardService {
       orderBy: {
         createdAt: 'desc',
       },
-      include: {
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
         user: {
           select: {
             name: true,
@@ -180,18 +214,19 @@ export class DashboardService {
 
   // Get top selling products (last 30 days)
   async getTopSellingProducts(limit: number = 5) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const today = startOfUtcDay(new Date());
+    const startDate = new Date(today);
+    startDate.setUTCDate(startDate.getUTCDate() - 29);
+    const endDate = new Date(today);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
 
-    // Get orders from last 30 days with ACCEPTED/SHIPPED/DELIVERED status
+    // Only confirmed, active, non-cancelled orders contribute to sales.
     const orders = await this.prisma.order.findMany({
       where: {
-        status: {
-          in: ['ACCEPTED', 'SHIPPED', 'DELIVERED'],
-        },
+        ...PAID_ORDER_WHERE,
         createdAt: {
-          gte: thirtyDaysAgo,
+          gte: startDate,
+          lt: endDate,
         },
       },
       select: {

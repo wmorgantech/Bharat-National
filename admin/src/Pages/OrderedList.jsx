@@ -26,7 +26,7 @@ import Pagination from "../CommonComponent/Pagination";
 import PageHeader from "../CommonComponent/PageHeader";
 import jsPDF from "jspdf";  
 import autoTable from "jspdf-autotable"; 
-import { getOrders, getOrderStatusStats, getSalesStats, updateOrder } from "../api/order";
+import { getOrders, getOrderById, getOrderStatusStats, getSalesStats, updateOrder } from "../api/order";
 
 // Updated status list
 const ORDER_STATUSES = [
@@ -141,7 +141,7 @@ const generateInvoicePDF = async (order) => {
 
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Payment Method: ${order.paymentMethod?.toUpperCase() || "N/A"}`,
+      `Payment Method: ${getPaymentMethodLabel(order.paymentMethod)}`,
       20,
       113
     );
@@ -233,7 +233,19 @@ const getStatusConfig = (status) => {
 const getPaymentStatusConfig = (status) =>
   status?.toUpperCase() === "PAID"
     ? { label: "Paid", pill: "bg-green-100 text-green-700 border-green-200" }
-    : { label: "Pending", pill: "bg-amber-100 text-amber-700 border-amber-200" };
+    : status?.toUpperCase() === "UNPAID"
+      ? { label: "Unpaid", pill: "bg-amber-100 text-amber-700 border-amber-200" }
+      : status
+        ? { label: status, pill: "bg-ink-100 text-ink-700 border-ink-200" }
+        : { label: "Unknown", pill: "bg-ink-100 text-ink-700 border-ink-200" };
+
+const getPaymentMethodLabel = (method) => {
+  if (typeof method !== "string" || !method.trim()) return "Unknown";
+  const normalized = method.trim().toLowerCase();
+  if (normalized === "online") return "ONLINE";
+  if (normalized === "cod") return "COD";
+  return method;
+};
 
 const formatCurrency = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -295,6 +307,9 @@ const OrderList = () => {
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewData, setViewData] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState("");
+  const viewRequestRef = useRef(0);
 
   const [editStatusOpen, setEditStatusOpen] = useState(false);
   const [editStatusOrder, setEditStatusOrder] = useState(null);
@@ -600,9 +615,25 @@ const OrderList = () => {
     }
   };
 
-  const openViewModal = (order) => {
-    setViewData(order);
+  const openViewModal = async (order) => {
+   const requestId = ++viewRequestRef.current;
+   setViewData(order);
     setViewModalOpen(true);
+   setViewLoading(true);
+   setViewError("");
+   try {
+     const response = await getOrderById(order.id);
+     if (requestId === viewRequestRef.current) {
+       setViewData(response?.data ?? response);
+     }
+   } catch (error) {
+     console.error(error);
+     if (requestId === viewRequestRef.current) {
+       setViewError(error?.message || "Failed to load order payment details");
+     }
+   } finally {
+     if (requestId === viewRequestRef.current) setViewLoading(false);
+   }
   };
 
   const openEditStatus = (order) => {
@@ -871,7 +902,7 @@ const OrderList = () => {
                           </span>
                         </td>
                         <td className="px-3 sm:px-4 py-2 sm:py-3 whitespace-nowrap hidden md:table-cell text-xs">
-                          <div>{o.paymentMethod || "-"}</div>
+                          <div>{getPaymentMethodLabel(o.paymentMethod)}</div>
                           <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getPaymentStatusConfig(o.paymentStatus).pill}`}>
                             {getPaymentStatusConfig(o.paymentStatus).label}
                           </span>
@@ -954,7 +985,12 @@ const OrderList = () => {
             <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
-            onClick={() => { setViewModalOpen(false); setViewData(null); }}
+            onClick={() => {
+              viewRequestRef.current += 1;
+              setViewModalOpen(false);
+              setViewData(null);
+              setViewError("");
+            }}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-ink-50 text-ink-500 hover:bg-ink-200 hover:text-ink-900 flex items-center justify-center transition"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -994,13 +1030,51 @@ const OrderList = () => {
                   {getStatusConfig(viewData.status || "PLACED").label}
                 </span>
               </div>
-              <p><span className="font-semibold text-ink-500">Payment:</span> {viewData.paymentMethod?.toLowerCase() || "online"}</p>
+              <p><span className="font-semibold text-ink-500">Created:</span> {formatDateTime(viewData.createdAt)}</p>
+              <p><span className="font-semibold text-ink-500">Payment method:</span> {getPaymentMethodLabel(viewData.paymentMethod)}</p>
               <p className="flex items-center gap-2"><span className="font-semibold text-ink-500">Payment Status:</span><span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${getPaymentStatusConfig(viewData.paymentStatus).pill}`}>{getPaymentStatusConfig(viewData.paymentStatus).label}</span></p>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-ink-500">Order record:</span>
+                <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${viewData.isActive === false ? "bg-rose-100 text-rose-700 border-rose-200" : viewData.isActive === true ? "bg-green-100 text-green-700 border-green-200" : "bg-ink-100 text-ink-700 border-ink-200"}`}>
+                  {viewData.isActive === false ? "Inactive" : viewData.isActive === true ? "Active" : "Unknown"}
+                </span>
+                {viewData.status === "CANCELLED" && (
+                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">Cancelled</span>
+                )}
+              </div>
               <p><span className="font-semibold text-ink-500">State:</span> {viewData.state || "—"}</p>
               <div className="border-t pt-2 sm:pt-3 mt-2">
                 <p className="font-bold text-base sm:text-lg pt-1"><span className="text-ink-600">Total:</span> {formatCurrency(viewData.totalAmount)}</p>
               </div>
             </div>
+          </div>
+
+          {/* Read-only payment trace */}
+          <div className="bg-white border border-ink-200 rounded-xl p-4 sm:p-5 shadow-sm">
+            <h3 className="font-bold text-ink-900 mb-3 sm:mb-4 border-b pb-2 text-sm sm:text-base">Payment Trace</h3>
+            {viewLoading ? (
+              <p className="text-xs sm:text-sm text-ink-500">Loading payment trace…</p>
+            ) : viewError ? (
+              <p role="alert" className="text-xs sm:text-sm text-rose-700">{viewError}</p>
+            ) : (
+              <div className="space-y-3 text-xs sm:text-sm">
+                <p><span className="font-semibold text-ink-500">BNC Order ID:</span> {viewData.id}</p>
+                <p><span className="font-semibold text-ink-500">CheckoutIntent ID:</span> {viewData.checkoutIntent?.id ?? "—"}</p>
+                {viewData.payments?.length ? viewData.payments.map((payment) => (
+                  <div key={payment.id} className="rounded-lg border border-ink-100 bg-ink-50 p-3 space-y-1.5">
+                    <p><span className="font-semibold text-ink-500">Payment ID:</span> {payment.id}</p>
+                    <p><span className="font-semibold text-ink-500">Provider:</span> {payment.provider || "Unknown"}</p>
+                    <p><span className="font-semibold text-ink-500">Provider payment ID:</span> {payment.razorpayPaymentId || "—"}</p>
+                    <p><span className="font-semibold text-ink-500">Razorpay order ID:</span> {payment.razorpayOrderId || "—"}</p>
+                    <p><span className="font-semibold text-ink-500">Provider status:</span> {payment.status || "Unknown"}</p>
+                    <p><span className="font-semibold text-ink-500">Provider method:</span> {payment.method || "Unknown"}</p>
+                    <p><span className="font-semibold text-ink-500">Provider paid at:</span> {formatDateTime(payment.paidAt)}</p>
+                  </div>
+                )) : (
+                  <p className="text-ink-500">No Payment record is associated with this order.</p>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Shipping Address */}

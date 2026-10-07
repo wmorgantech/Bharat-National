@@ -20,11 +20,13 @@ import { RolesGuard } from './auth/roles.guard';
 import { THROTTLER_CONFIG } from './common/throttle.config';
 import { PrismaModule } from './prisma/prisma.module';
 import { PaymentModule } from './payment/payment.module';
+import { CheckoutIntentModule } from './checkout-intent/checkout-intent.module';
 
 @Module({
   imports: [
     PrismaModule,
     PaymentModule,
+    CheckoutIntentModule,
     ThrottlerModule.forRoot(THROTTLER_CONFIG),
     AdminModule,
     CategoryModule,

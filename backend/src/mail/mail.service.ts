@@ -87,14 +87,68 @@ export class MailService {
 
     this.transporter.verify((err) => {
       if (err) {
-        this.logger.error(
-          'SMTP verification failed. For Gmail, use the SMTP_USER account with a Google App Password (not the normal account password), and confirm 2-Step Verification is enabled.',
-          err,
-        );
+        this.logReadinessFailure(err);
       } else {
         this.logger.log('SMTP ready');
       }
     });
+  }
+
+  /**
+   * Explains a failed startup verify() in terms of what actually went wrong.
+   *
+   * This used to print Gmail App Password guidance for every failure, which
+   * sent people hunting through credentials when the real cause was a network
+   * timeout - the two need completely different responses, so they are
+   * separated here.
+   *
+   * Note what this does NOT do: verification is a readiness probe, not a gate.
+   * The transporter stays configured either way, so a failure here never
+   * disables sending; the next sendMail() opens a fresh connection. Nothing is
+   * swallowed - every branch still logs at error level with the code attached.
+   */
+  private logReadinessFailure(err: unknown): void {
+    // Nodemailer surfaces the socket error code and the SMTP reply code as
+    // separate fields; both are read defensively because `verify` types its
+    // callback argument loosely.
+    const details =
+      typeof err === 'object' && err !== null
+        ? (err as { code?: unknown; responseCode?: unknown })
+        : {};
+
+    const code = typeof details.code === 'string' ? details.code : '';
+    const responseCode =
+      typeof details.responseCode === 'number'
+        ? details.responseCode
+        : undefined;
+
+    // Could not establish a connection: the host is unreachable, refused the
+    // socket, or dropped it. Nothing to do with credentials.
+    if (
+      code === 'ETIMEDOUT' ||
+      code === 'ECONNREFUSED' ||
+      code === 'ECONNRESET'
+    ) {
+      this.logger.error(
+        `Could not reach the SMTP host (${code}). This is a connectivity problem, not a credentials problem: check SMTP_HOST and SMTP_PORT, outbound firewall or VPN rules, and whether the network blocks outbound SMTP. Email is not disabled - each send opens its own connection and will be attempted normally.`,
+        err,
+      );
+      return;
+    }
+
+    // The server answered and rejected the login.
+    if (code === 'EAUTH' || responseCode === 535) {
+      this.logger.error(
+        'SMTP authentication was rejected. For Gmail, use the SMTP_USER account with a Google App Password (not the normal account password), and confirm 2-Step Verification is enabled.',
+        err,
+      );
+      return;
+    }
+
+    this.logger.error(
+      `SMTP verification failed${code ? ` (${code})` : ''}. See the attached error for details.`,
+      err,
+    );
   }
 
   /**

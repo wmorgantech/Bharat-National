@@ -23,9 +23,6 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
 
-  // "Mobile" here means "sidebar is a drawer", which is everything below lg
-  // (1024px) - matching lg:hidden on the toggles and lg:translate-x-0 on the
-  // panel. This keeps the backdrop and close-on-navigate active on tablets.
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -77,8 +74,13 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
         {/* Brand */}
         <div className="px-5 py-5 flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="grid place-items-center h-10 w-10 shrink-0 rounded-xl bg-primary text-white font-bold shadow-glow">
-              B
+
+            <span className="grid place-items-center h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white">
+              <img
+                src="/logo.jpeg"
+                alt="Bharat National Computers"
+                className="h-[85%] w-[85%] object-contain"
+              />
             </span>
             <span className="leading-none min-w-0">
               <span className="block font-bold text-[15px] text-white truncate">

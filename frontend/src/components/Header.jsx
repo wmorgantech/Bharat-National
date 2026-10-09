@@ -463,7 +463,7 @@ export default function Header() {
             className="flex items-center gap-2.5 shrink-0 group"
             onClick={closeAllMenus}
           >
-            <span className="relative h-10 w-10 lg:h-11 lg:w-11 rounded-xl overflow-hidden bg-white ring-1 ring-ink-200 grid place-items-center shadow-card">
+            <span className="relative h-10 w-10 lg:h-11 lg:w-11 rounded-full overflow-hidden bg-white ring-1 ring-ink-200 grid place-items-center shadow-card">
               <img src={Logo} alt="Bharat National Computers"className="w-[85%] h-[85%] object-contain" />
             </span>
             <span className="leading-none hidden sm:block">
@@ -667,7 +667,7 @@ export default function Header() {
             {/* Drawer header */}
             <div className="relative flex items-center justify-between p-5 border-b border-ink-200 shrink-0">
               <div className="flex items-center gap-3">
-                <span className="h-10 w-10 rounded-xl overflow-hidden bg-white grid place-items-center">
+                <span className="h-10 w-10 rounded-full overflow-hidden bg-white grid place-items-center">
                   <img src={Logo} alt="BNC"className="w-[85%] h-[85%] object-contain" />
                 </span>
                 <span className="leading-none">
